@@ -39,8 +39,8 @@ export async function getSiteConfig() {
   return wpFetch<SiteConfig>("wp-json/tripanza-headless/v1/site", 3600);
 }
 
-export async function getFeaturedTours() {
-  return wpFetch<{ items: TourSummary[]; total: number }>("wp-json/tripanza-headless/v1/tours?per_page=6", 300);
+export async function getFeaturedTours(perPage = 6) {
+  return wpFetch<{ items: TourSummary[]; total: number }>(`wp-json/tripanza-headless/v1/tours?per_page=${perPage}`, 300);
 }
 
 export async function getTourBySlug(slug: string) {
