@@ -18,6 +18,29 @@ export type TourSummary = {
   link: string;
 };
 
+export type TourDetail = TourSummary & {
+  content: string;
+  details: {
+    origin: string;
+    destination: string;
+    duration: { days: string; nights: string };
+    capacity: number;
+    video_url: string;
+    gallery: { url: string; alt: string }[];
+    reels: string[];
+    rating: { value: number; count: number };
+    pricing: { currency: string; quad: { amount: number; display: string } | null; triple: { amount: number; display: string } | null; twin: { amount: number; display: string } | null; as_of: string };
+    departures: { date: string; check_out: string; status: string; promoted: boolean; badge: string | null; benefit: string | null }[];
+    itinerary: { day: number; title: string; description: string; image_url: string }[];
+    stays: { title: string; description: string; location: string; type: string; amenities: string[]; images: string[] }[];
+    highlights: string[];
+    included: string[];
+    excluded: string[];
+    faqs: { question: string; answer: string }[];
+    partner: { name: string; logo_url: string; instagram_url: string; verified: boolean; rating: number; trip_count: number };
+  };
+};
+
 const WORDPRESS_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || "http://localhost:10005";
 
 export async function wpFetch<T>(path: string, revalidate = 300): Promise<T> {
@@ -44,5 +67,5 @@ export async function getFeaturedTours(perPage = 6) {
 }
 
 export async function getTourBySlug(slug: string) {
-  return wpFetch<any>(`wp-json/tripanza-headless/v1/tours/${slug}`, 300);
+  return wpFetch<TourDetail>(`wp-json/tripanza-headless/v1/tours/${slug}`, 0);
 }
