@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import TourAppbar from "@/components/tour/TourAppbar";
 import TourGallery from "@/components/tour/TourGallery";
 import TourOverview from "@/components/tour/TourOverview";
+import TourReels from "@/components/tour/TourReels";
 import TourInformation from "@/components/tour/TourInformation";
 import TourItinerary from "@/components/tour/TourItinerary";
 
@@ -76,6 +77,9 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
         <div style={{ padding: "0 clamp(14px, 4vw, 48px)", maxWidth: 960, margin: "0 auto" }}>
           {/* Overview: title, value card, route, AI, reels, organizer */}
           <TourOverview tour={tour} whatsappUrl={whatsappUrl} />
+
+          {/* Trip Reels */}
+          <TourReels reels={tour.details.reels} />
 
           {/* Information: stats, prices, availability dates, download CTA */}
           <TourInformation
