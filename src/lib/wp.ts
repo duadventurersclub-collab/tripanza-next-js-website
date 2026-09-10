@@ -483,7 +483,7 @@ export async function getFeaturedTours(perPage = 6): Promise<{ items: TourSummar
 
 export async function getTourById(id: number): Promise<TourDetail | null> {
   try {
-    const rawTour = await wpFetch<any>(`wp/v2/st_tours/${id}?_embed=1`);
+    const rawTour = await wpFetch<any>(`wp-json/wp/v2/st_tours/${id}?_embed=1`);
     if (!rawTour) return null;
     return transformAppTourToDetail(rawTour);
   } catch (err) {
@@ -495,9 +495,9 @@ export async function getTourById(id: number): Promise<TourDetail | null> {
 export async function getTourBySlug(slug: string): Promise<TourDetail | null> {
   const cleanSlug = encodeURIComponent(slug.trim());
 
-  // 1. Primary: Exact slug match from core WordPress REST API
+  // 1. Primary: Query the native WordPress CPT route
   try {
-    const rawTours = await wpFetch<any[]>(`wp/v2/st_tours?slug=${slug}&_embed=1`);
+    const rawTours = await wpFetch<any[]>(`wp-json/wp/v2/st_tours?slug=${cleanSlug}&_embed=1`);
     if (!rawTours || rawTours.length === 0) return null;
     return transformAppTourToDetail(rawTours[0]);
   } catch (err) {
