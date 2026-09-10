@@ -7,6 +7,7 @@ interface TourAppbarProps {
   tour: TourDetail;
 }
 
+
 export default function TourAppbar({ tour }: TourAppbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -61,9 +62,16 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
   };
 
   const rating = tour.details.rating;
-  const whatsappText = encodeURIComponent(`Have a look at this Tripanza experience: ${tour.title}`);
-  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(window?.location?.href || "")}&text=${encodeURIComponent(tour.title)}`;
-  const whatsappUrl = `https://wa.me/?text=${whatsappText}%0A${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`;
+  // Share URLs are computed client-side only to avoid SSR "window is not defined"
+  const [shareUrls, setShareUrls] = useState({ whatsapp: "#", telegram: "#" });
+  useEffect(() => {
+    const pageUrl = window.location.href;
+    const text = encodeURIComponent(`Have a look at this Tripanza experience: ${tour.title}`);
+    setShareUrls({
+      whatsapp: `https://wa.me/?text=${text}%0A${encodeURIComponent(pageUrl)}`,
+      telegram: `https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(tour.title)}`,
+    });
+  }, [tour.title]);
 
   return (
     <>
@@ -131,14 +139,14 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
           </button>
         </div>
         <div className="tp-share-sheet__options">
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+          <a href={shareUrls.whatsapp} target="_blank" rel="noopener noreferrer">
             <span className="tp-share-sheet__icon tp-share-sheet__icon--whatsapp">
               <i className="fa-brands fa-whatsapp" aria-hidden="true" />
             </span>
             <strong>WhatsApp</strong>
             <small>Send instantly</small>
           </a>
-          <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
+          <a href={shareUrls.telegram} target="_blank" rel="noopener noreferrer">
             <span className="tp-share-sheet__icon tp-share-sheet__icon--telegram">
               <i className="fa-brands fa-telegram" aria-hidden="true" />
             </span>

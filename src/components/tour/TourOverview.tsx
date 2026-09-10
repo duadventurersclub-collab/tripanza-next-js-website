@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { TourDetail } from "@/lib/wp";
 
@@ -123,21 +125,48 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
         </div>
       </div>
 
-      {/* AI Assistant */}
+      {/* AI Assistant — opens WhatsApp on click */}
       <div className="tp-tour-assistant">
         <div className="tp-tour-assistant__mark">
           <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" />
         </div>
-        <textarea
-          placeholder={`Ask me anything about ${tour.title}…`}
-          rows={1}
-          readOnly
-          onClick={() => window.open(whatsappUrl, "_blank")}
-          style={{ cursor: "pointer" }}
-        />
-        <button type="button" aria-label="Ask question" onClick={() => window.open(whatsappUrl, "_blank")}>
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            color: "#2c3240",
+            fontFamily: "inherit",
+            fontSize: 12,
+            fontWeight: 650,
+            textDecoration: "none",
+            padding: "10px 2px",
+          }}
+        >
+          Ask me anything about {tour.title}…
+        </a>
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Ask question"
+          style={{
+            display: "grid",
+            width: 42,
+            height: 42,
+            minWidth: 42,
+            placeItems: "center",
+            borderRadius: 14,
+            color: "#fff",
+            background: "#171c29",
+            textDecoration: "none",
+          }}
+        >
           <i className="fa-solid fa-arrow-up" aria-hidden="true" />
-        </button>
+        </a>
       </div>
 
       {/* Reels Shelf */}
