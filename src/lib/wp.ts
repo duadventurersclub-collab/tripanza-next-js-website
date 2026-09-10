@@ -551,3 +551,45 @@ export async function getAppTourAvailability(tourId: number): Promise<TourAvaila
 
   return [];
 }
+
+export interface UserProfile {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  display_name?: string;
+  avatar_url?: string;
+}
+
+export interface UserBooking {
+  id: number;
+  title: string;
+  status: string;
+  amount: string;
+  created_at: string;
+}
+
+export async function getUserProfile(sessionToken: string): Promise<UserProfile | null> {
+  try {
+    const res = await wpFetch<any>(`wp-json/tripanza-app/v1/profile?session_token=${sessionToken}`, 0);
+    return res;
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    return null;
+  }
+}
+
+export async function getUserBookings(sessionToken: string): Promise<UserBooking[]> {
+  try {
+    const res = await wpFetch<any>(`wp-json/tripanza-app/v1/bookings?session_token=${sessionToken}`, 0);
+    if (res && res.orders && Array.isArray(res.orders)) {
+      return res.orders;
+    }
+    return [];
+  } catch (err) {
+    console.error("Error fetching user bookings:", err);
+    return [];
+  }
+}
+
