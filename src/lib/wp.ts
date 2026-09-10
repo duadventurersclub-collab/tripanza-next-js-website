@@ -481,17 +481,28 @@ export async function getFeaturedTours(perPage = 6): Promise<{ items: TourSummar
   return { items: summaries, total: result.total };
 }
 
+export async function getTourById(id: number): Promise<TourDetail | null> {
+  try {
+    const rawTour = await wpFetch<any>(`wp/v2/st_tours/${id}?_embed=1`);
+    if (!rawTour) return null;
+    return transformAppTourToDetail(rawTour);
+  } catch (err) {
+    console.error(`Error fetching tour by ID ${id}:`, err);
+    return null;
+  }
+}
+
 export async function getTourBySlug(slug: string): Promise<TourDetail | null> {
   const cleanSlug = encodeURIComponent(slug.trim());
 
   // 1. Primary: Exact slug match from core WordPress REST API
   try {
-    const res = await wpFetch<any[]>(`wp-json/wp/v2/st_tours?slug=${cleanSlug}`, 0);
-    if (Array.isArray(res) && res.length > 0 && res[0]) {
-      return transformAppTourToDetail(res[0]);
-    }
+    const rawTours = await wpFetch<any[]>(`wp/v2/st_tours?slug=${slug}&_embed=1`);
+    if (!rawTours || rawTours.length === 0) return null;
+    return transformAppTourToDetail(rawTours[0]);
   } catch (err) {
-    console.error("Error fetching tour by slug from wp/v2/st_tours:", err);
+    console.error("Error fetching tour by slug:", err);
+    return null;
   }
 
   // 2. Secondary: Query tripanza-app/v1/tours?search=...
