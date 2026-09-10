@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #fbf8f3;
+  --foreground: #151925;
 }
 
 @theme inline {
@@ -24,7 +24,8 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -34,4 +35,9 @@ a {
 img {
   display: block;
   max-width: 100%;
+}
+
+::selection {
+  background: #d0e562;
+  color: #151925;
 }

@@ -28,22 +28,43 @@ export default function HomeClient({ tours, siteName }: { tours: TourSummary[]; 
 
   return (
     <main className="overflow-hidden bg-[#fbf8f3] text-[#151925]">
-      <nav className="sticky top-0 z-30 border-b border-[#1f2b460f] bg-white/85 px-4 py-3 shadow-[0_8px_28px_rgba(27,40,72,0.05)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-12 max-w-[1180px] items-center gap-6">
+      <nav className="sticky top-0 z-30 border-b border-[#1f2b460f] bg-white/90 px-4 py-3 shadow-[0_8px_28px_rgba(27,40,72,0.05)] backdrop-blur-xl">
+        <div className="mx-auto flex min-h-12 max-w-[1240px] items-center gap-5">
           <Link href="/" className="flex items-center gap-2 text-[19px] font-black tracking-[-0.6px]">
             <img src={logoUrl} alt="Tripanza" className="h-10 w-10 rounded-xl object-contain" />
-            {siteName || "Tripanza"}
+            <span>{siteName || "Tripanza"}</span>
           </Link>
-          <div className="ml-auto hidden items-center gap-7 text-[11px] font-extrabold text-[#586275] md:flex">
-            <a href="#trips" className="hover:text-[#3157d5]">Explore trips</a>
-            <a href="#why-tripanza" className="hover:text-[#3157d5]">Why Tripanza</a>
-            <Link href="/account" className="hover:text-[#3157d5]">My account</Link>
+          <div className="ml-auto hidden items-center gap-7 text-[11px] font-extrabold text-[#586275] lg:flex">
+            <a href="#trips" className="transition hover:text-[#3157d5]">Explore trips</a>
+            <a href="#deal-drops" className="transition hover:text-[#3157d5]">Trip drops</a>
+            <a href="#why-tripanza" className="transition hover:text-[#3157d5]">Why Tripanza</a>
+            <a href="#trip-faq" className="transition hover:text-[#3157d5]">Find my trip</a>
           </div>
-          <Link href="/login" className="rounded-[13px] bg-[#d0e562] px-4 py-3 text-[10px] font-black text-[#263407]">Find my trip</Link>
+          <Link href="/login" className="rounded-[13px] bg-[#d0e562] px-4 py-3 text-[10px] font-black text-[#263407] transition hover:-translate-y-0.5 hover:shadow-lg">Log in</Link>
         </div>
       </nav>
 
-      <header className="mx-auto grid max-w-[1180px] items-center gap-10 px-4 pb-16 pt-10 lg:grid-cols-[0.94fr_1.06fr] lg:gap-14 lg:pt-14">
+      <header className="px-4 pb-14 pt-5 sm:pt-7">
+        <div className="relative mx-auto min-h-[600px] max-w-[1240px] overflow-hidden rounded-[32px] bg-[#111624] shadow-[0_32px_75px_rgba(17,25,49,0.18)] md:min-h-[660px]">
+          <img src={tours[0]?.featured_image || gallery[0]} alt="Tripanza community trip" className="absolute inset-0 h-full w-full object-cover opacity-80" fetchPriority="high" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,15,28,.88)_0%,rgba(11,15,28,.55)_45%,rgba(11,15,28,.08)_100%)]" />
+          <div className="relative flex min-h-[600px] max-w-[780px] flex-col justify-end p-6 text-white sm:p-10 md:min-h-[660px] md:p-14">
+            <span className="mb-auto inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#d0e562] backdrop-blur">Live from the trip</span>
+            <p className="mb-4 text-[10px] font-black uppercase tracking-[0.14em] text-[#d0e562]">India&apos;s coolest travel community</p>
+            <h1 className="max-w-[700px] text-[clamp(3.7rem,8.5vw,7.1rem)] font-black leading-[.88] tracking-[-0.075em]">Your next story won&apos;t fit in the group chat.</h1>
+            <p className="mt-6 max-w-[590px] text-sm font-semibold leading-6 text-white/80 sm:text-base sm:leading-7">Solo, with your best friend, or with the whole gang — find a trip with people who make getting away feel easy.</p>
+            <div className="mt-7 flex max-w-[620px] overflow-hidden rounded-2xl border border-white/30 bg-white p-1.5 shadow-[0_16px_35px_rgba(0,0,0,.25)]">
+              <span className="grid w-11 shrink-0 place-items-center text-base text-[#3157d5]">⌕</span>
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Where do you want to go?" className="min-w-0 flex-1 bg-transparent px-1 text-sm font-semibold text-[#151925] outline-none placeholder:text-[#8a94a4]" />
+              <a href="#trips" className="rounded-xl bg-[#3157d5] px-4 py-3 text-[10px] font-black text-white">Explore trips</a>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">{["Under ₹10K", "All Girls", "Every Friday", "India trips"].map((chip) => <a key={chip} href="#trips" className="rounded-full border border-white/25 bg-white/10 px-3 py-2 text-[9px] font-black backdrop-blur transition hover:bg-white hover:text-[#151925]">{chip}</a>)}</div>
+          </div>
+          <div className="absolute bottom-7 right-7 hidden max-w-[180px] rounded-[18px] bg-[#d0e562] p-4 text-[#263407] shadow-xl md:block"><b className="block text-[10px] uppercase tracking-wide">50K+ travellers</b><p className="mt-2 text-xs font-bold leading-5">Strangers on day one. Inside jokes by day two.</p></div>
+        </div>
+      </header>
+
+      <header className="hidden">
         <div>
           <span className="inline-flex rounded-full border border-[#dbe3ff] bg-[#eef2ff] px-3 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-[#2447bd]">Community trips for 18-28</span>
           <h1 className="mt-5 max-w-[650px] text-[clamp(3.4rem,7vw,5.4rem)] font-black leading-[0.93] tracking-[-0.06em]">Your next story won&apos;t fit in the <em className="not-italic text-[#3157d5]">group chat.</em></h1>
