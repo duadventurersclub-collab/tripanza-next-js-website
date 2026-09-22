@@ -13,7 +13,6 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
   const details = tour.details;
   const partner = details.partner;
   const pricing = details.pricing;
-  const reels = details.reels;
 
   return (
     <div className="tp-tour-overview">
@@ -194,49 +193,6 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
           <i className="fa-solid fa-arrow-up" aria-hidden="true" />
         </a>
       </div>
-
-      {/* Reels Shelf */}
-      {reels.length > 0 && (
-        <div className="tp-reel-shelf">
-          <div className="tp-reel-shelf__head">
-            <div>
-              <small>Trip vibes</small>
-              <h2>See it before you live it</h2>
-            </div>
-            <a href={`/tour-reels/?t=${tour.id}`} aria-label="Watch all reels">
-              <i className="fa-solid fa-play" aria-hidden="true" />
-              See all reels
-            </a>
-          </div>
-          <div className="tp-reel-shelf__track">
-            {reels.slice(0, 5).map((reel, i) => (
-              <a
-                key={i}
-                className="tp-reel-card"
-                href={`/tour-reels/?t=${tour.id}&r=${i}`}
-                aria-label={`Watch reel ${i + 1}`}
-              >
-                <video
-                  muted
-                  loop
-                  playsInline
-                  preload="none"
-                  poster={tour.featured_image || ""}
-                  data-src={reel}
-                  aria-hidden="true"
-                />
-                <span className="tp-reel-card__play" aria-hidden="true">
-                  <i className="fa-solid fa-play" />
-                </span>
-                <div className="tp-reel-card__label">
-                  <strong>{tour.title}</strong>
-                  <small>Reel {i + 1}</small>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* In-page Nav Links */}
       <nav className="tp-overview-itinerary-nav" aria-label="Tour sections">

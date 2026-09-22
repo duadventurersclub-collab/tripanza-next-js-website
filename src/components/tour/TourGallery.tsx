@@ -126,7 +126,7 @@ export default function TourGallery({ tour }: TourGalleryProps) {
           {reelPreviewUrl && (
             <a
               className="tp-tour-gallery__reel"
-              href={`/tour-reels/?t=${tour.id}`}
+              href="#reels"
               aria-label="Watch trip videos"
             >
               <video
