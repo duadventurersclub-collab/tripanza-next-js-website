@@ -62,14 +62,14 @@ function StayGallery({ images, title }: { images: string[]; title: string }) {
   );
 }
 
-function DayCard({ day, index, title, description, imageUrl }: {
+function DayCard({ day, title, description, imageUrl, isOpen, onToggle }: {
   day: number;
-  index: number;
   title: string;
   description: string;
   imageUrl?: string;
+  isOpen: boolean;
+  onToggle: () => void;
 }) {
-  const [isOpen, setIsOpen] = useState(index === 0);
   const panelId = `tp-trip-day-content-${day}`;
   const dayLabel = String(day).padStart(2, "0");
 
@@ -93,7 +93,7 @@ function DayCard({ day, index, title, description, imageUrl }: {
           className="tp-itinerary-day__toggle"
           aria-expanded={isOpen}
           aria-controls={panelId}
-          onClick={() => setIsOpen((v) => !v)}
+          onClick={onToggle}
         >
           <span className="tp-itinerary-day__tile-number">
             <small>Day</small>
@@ -106,7 +106,7 @@ function DayCard({ day, index, title, description, imageUrl }: {
         </button>
 
         <div className="tp-itinerary-day__collapse" id={panelId} hidden={!isOpen}>
-          <div style={{ display: imageUrl ? "grid" : "block", gridTemplateColumns: imageUrl ? "minmax(180px,34%) minmax(0,1fr)" : undefined }}>
+          <div className={`tp-itinerary-day__content${imageUrl ? " tp-itinerary-day__content--visual" : ""}`}>
             {imageUrl && (
               <div className="tp-itinerary-day__media">
                 <Image src={imageUrl} alt={displayTitle} fill sizes="(max-width: 768px) 100vw, 34vw" />
@@ -168,6 +168,9 @@ function FAQPanel({ question, answer, index }: { question: string; answer: strin
 export default function TourItinerary({ tour }: TourItineraryProps) {
   const details = tour.details;
   const [viewMode, setViewMode] = useState<"short" | "detailed">("short");
+  const [openDays, setOpenDays] = useState<Set<number>>(
+    () => new Set(details.itinerary[0] ? [details.itinerary[0].day] : []),
+  );
 
   const hasItinerary = details.itinerary.length > 0;
   const hasHighlights = details.highlights.length > 0;
@@ -176,6 +179,28 @@ export default function TourItinerary({ tour }: TourItineraryProps) {
   const hasFAQs = details.faqs.length > 0;
 
   if (!hasItinerary && !hasHighlights && !hasStays && !hasIncExc && !hasFAQs) return null;
+
+  function selectViewMode(mode: "short" | "detailed") {
+    setViewMode(mode);
+    setOpenDays(
+      mode === "detailed"
+        ? new Set(details.itinerary.map((day) => day.day))
+        : new Set(details.itinerary[0] ? [details.itinerary[0].day] : []),
+    );
+  }
+
+  function toggleDay(day: number) {
+    setOpenDays((current) => {
+      if (viewMode === "short") {
+        return current.has(day) ? new Set<number>() : new Set([day]);
+      }
+
+      const next = new Set(current);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  }
 
   return (
     <section className="tp-itinerary-app" aria-labelledby="tp-itinerary-heading">
@@ -227,7 +252,7 @@ export default function TourItinerary({ tour }: TourItineraryProps) {
               type="button"
               className={viewMode === "short" ? "is-active" : ""}
               aria-pressed={viewMode === "short"}
-              onClick={() => setViewMode("short")}
+              onClick={() => selectViewMode("short")}
             >
               <i className="fa-solid fa-compress" aria-hidden="true" />
               <span>
@@ -239,7 +264,7 @@ export default function TourItinerary({ tour }: TourItineraryProps) {
               type="button"
               className={viewMode === "detailed" ? "is-active" : ""}
               aria-pressed={viewMode === "detailed"}
-              onClick={() => setViewMode("detailed")}
+              onClick={() => selectViewMode("detailed")}
             >
               <i className="fa-solid fa-expand" aria-hidden="true" />
               <span>
@@ -250,14 +275,15 @@ export default function TourItinerary({ tour }: TourItineraryProps) {
           </div>
 
           <div className="tp-itinerary-timeline">
-            {details.itinerary.map((day, idx) => (
+            {details.itinerary.map((day) => (
               <DayCard
                 key={day.day}
                 day={day.day}
-                index={viewMode === "detailed" ? -1 : idx}
                 title={day.title}
                 description={day.description}
                 imageUrl={day.image_url}
+                isOpen={openDays.has(day.day)}
+                onToggle={() => toggleDay(day.day)}
               />
             ))}
           </div>
