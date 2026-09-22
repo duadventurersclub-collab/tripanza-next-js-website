@@ -1,9 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
 import type { TourSummary } from "@/lib/wp";
+import HomeTourExplorer from "./HomeTourExplorer";
 
 const logoUrl = "https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png";
 const gallery = [
@@ -12,21 +10,6 @@ const gallery = [
 ];
 
 export default function HomeClient({ tours, siteName }: { tours: TourSummary[]; siteName: string }) {
-  const [query, setQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("All trips");
-  const [saved, setSaved] = useState<number[]>([]);
-
-  const filters = useMemo(() => ["All trips", ...Array.from(new Set(tours.map((tour) => tour.title.split(" ").at(-1) || "Trips"))).slice(0, 3)], [tours]);
-  const visibleTours = tours.filter((tour) => {
-    const matchesQuery = `${tour.title} ${tour.excerpt}`.toLowerCase().includes(query.toLowerCase());
-    const matchesFilter = activeFilter === "All trips" || tour.title.endsWith(activeFilter);
-    return matchesQuery && matchesFilter;
-  });
-
-  function toggleSaved(id: number) {
-    setSaved((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
-  }
-
   return (
     <main className="overflow-hidden bg-[#fbf8f3] text-[#151925]">
       <nav className="sticky top-0 z-30 border-b border-[#1f2b460f] bg-white/90 px-4 py-3 shadow-[0_8px_28px_rgba(27,40,72,0.05)] backdrop-blur-xl">
@@ -54,47 +37,14 @@ export default function HomeClient({ tours, siteName }: { tours: TourSummary[]; 
             <p className="mb-4 text-[10px] font-black uppercase tracking-[0.14em] text-[#d0e562]">India&apos;s coolest travel community</p>
             <h1 className="max-w-[700px] text-[clamp(3.7rem,8.5vw,7.1rem)] font-black leading-[.88] tracking-[-0.075em]">Your next story won&apos;t fit in the group chat.</h1>
             <p className="mt-6 max-w-[590px] text-sm font-semibold leading-6 text-white/80 sm:text-base sm:leading-7">Solo, with your best friend, or with the whole gang — find a trip with people who make getting away feel easy.</p>
-            <div className="mt-7 flex max-w-[620px] overflow-hidden rounded-2xl border border-white/30 bg-white p-1.5 shadow-[0_16px_35px_rgba(0,0,0,.25)]">
+            <form action="/tours" method="GET" className="mt-7 flex max-w-[620px] overflow-hidden rounded-2xl border border-white/30 bg-white p-1.5 shadow-[0_16px_35px_rgba(0,0,0,.25)]">
               <span className="grid w-11 shrink-0 place-items-center text-base text-[#3157d5]">⌕</span>
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Where do you want to go?" className="min-w-0 flex-1 bg-transparent px-1 text-sm font-semibold text-[#151925] outline-none placeholder:text-[#8a94a4]" />
-              <a href="#trips" className="rounded-xl bg-[#3157d5] px-4 py-3 text-[10px] font-black text-white">Explore trips</a>
-            </div>
+              <input name="search" placeholder="Where do you want to go?" className="min-w-0 flex-1 bg-transparent px-1 text-sm font-semibold text-[#151925] outline-none placeholder:text-[#8a94a4]" />
+              <button type="submit" className="rounded-xl bg-[#3157d5] px-4 py-3 text-[10px] font-black text-white">Explore trips</button>
+            </form>
             <div className="mt-4 flex flex-wrap gap-2">{["Under ₹10K", "All Girls", "Every Friday", "India trips"].map((chip) => <a key={chip} href="#trips" className="rounded-full border border-white/25 bg-white/10 px-3 py-2 text-[9px] font-black backdrop-blur transition hover:bg-white hover:text-[#151925]">{chip}</a>)}</div>
           </div>
           <div className="absolute bottom-7 right-7 hidden max-w-[180px] rounded-[18px] bg-[#d0e562] p-4 text-[#263407] shadow-xl md:block"><b className="block text-[10px] uppercase tracking-wide">50K+ travellers</b><p className="mt-2 text-xs font-bold leading-5">Strangers on day one. Inside jokes by day two.</p></div>
-        </div>
-      </header>
-
-      <header className="hidden">
-        <div>
-          <span className="inline-flex rounded-full border border-[#dbe3ff] bg-[#eef2ff] px-3 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-[#2447bd]">Community trips for 18-28</span>
-          <h1 className="mt-5 max-w-[650px] text-[clamp(3.4rem,7vw,5.4rem)] font-black leading-[0.93] tracking-[-0.06em]">Your next story won&apos;t fit in the <em className="not-italic text-[#3157d5]">group chat.</em></h1>
-          <p className="mt-5 max-w-xl text-base font-semibold leading-7 text-[#677285]">Join young travellers, explore somewhere unreal and come back with a camera roll full of people who stopped feeling like strangers.</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <span className="rounded-full border border-[#dbe3ff] bg-[#eef2ff] px-3 py-2 text-[9px] font-black text-[#2447bd]">Community trips</span>
-            <span className="rounded-full border border-[#d8e891] bg-[#f2f8d5] px-3 py-2 text-[9px] font-black text-[#354900]">18-28 only</span>
-            <span className="rounded-full border border-[#ffd0df] bg-[#fff0f6] px-3 py-2 text-[9px] font-black text-[#a3265d]">Women-friendly</span>
-          </div>
-          <div className="mt-6 flex max-w-[610px] overflow-hidden rounded-2xl border border-[#dce2ed] bg-white shadow-[0_12px_30px_rgba(28,41,77,0.08)]">
-            <span className="grid w-12 shrink-0 place-items-center text-xl text-[#3157d5]">⌕</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Where do you want to disappear?" className="min-w-0 flex-1 bg-transparent px-1 text-sm font-semibold outline-none placeholder:text-[#8a94a4]" />
-            <a href="#trips" className="m-1 rounded-xl bg-[#3157d5] px-4 py-3 text-[10px] font-black text-white">Show me trips</a>
-          </div>
-        </div>
-
-        <div className="relative min-h-[410px] lg:min-h-[510px]">
-          <div className="absolute inset-0 right-10 overflow-hidden rounded-[32px] bg-[#171c29] shadow-[0_30px_70px_rgba(25,39,74,0.17)] lg:-rotate-2">
-            <Image src={tours[0]?.featured_image || gallery[0]} alt="Tripanza group trip" fill sizes="50vw" className="object-cover saturate-[0.9]" />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#060910dd] to-transparent px-6 pb-7 pt-24 text-white">
-              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#d0e562]">The group chat left home</p>
-              <p className="mt-2 max-w-sm text-2xl font-black leading-tight">This is what “we should plan a trip” looks like.</p>
-            </div>
-          </div>
-          <div className="absolute right-0 top-12 w-40 rotate-3 rounded-[22px] border border-white/70 bg-white/90 p-2 shadow-[0_20px_45px_rgba(27,40,78,0.15)] backdrop-blur-xl">
-            <Image src={tours[1]?.featured_image || gallery[1]} alt="Tripanza destination" width={144} height={160} sizes="144px" className="h-40 w-full rounded-[15px] object-cover" />
-            <p className="px-1 pb-1 pt-2 text-[11px] font-extrabold">One trip away</p>
-          </div>
-          <span className="absolute bottom-2 right-4 rounded-[15px] bg-[#d0e562] px-3 py-3 text-[10px] font-black text-[#27340b] shadow-lg">Real people. Real plans.</span>
         </div>
       </header>
 
@@ -109,25 +59,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourSummary[]; 
         </div>
       </section>
 
-      <section id="trips" className="mx-auto max-w-[1180px] px-4 py-16">
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#3157d5]">Currently passing the vibe check</p><h2 className="mt-2 max-w-2xl text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">Trips worth sending to the group chat.</h2></div>
-          <Link href="/tours" className="text-xs font-black text-[#3157d5]">Explore every trip -&gt;</Link>
-        </div>
-        <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
-          {filters.map((filter) => <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`shrink-0 rounded-full border px-4 py-2 text-[10px] font-black ${activeFilter === filter ? "border-[#3157d5] bg-[#3157d5] text-white" : "border-[#dce2ed] bg-white text-[#5e6879]"}`}>{filter}</button>)}
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleTours.slice(0, 6).map((tour) => {
-            const isSaved = saved.includes(tour.id);
-            return <article key={tour.id} className="grid min-h-[226px] grid-cols-[clamp(125px,30%,165px)_minmax(0,1fr)] overflow-hidden rounded-[21px] border border-[#dce2ed] bg-white shadow-[0_10px_25px_rgba(28,41,77,0.05)]">
-              <Link href={`/tours/${tour.slug}`} className="relative min-h-[226px] bg-[#eef1f5]"><Image src={tour.featured_image || gallery[0]} alt={tour.title} fill sizes="(max-width: 768px) 40vw, 165px" className="object-cover" /><span className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" /></Link>
-              <div className="flex min-w-0 flex-col p-4"><div className="flex items-start justify-between gap-2"><Link href={`/tours/${tour.slug}`} className="line-clamp-2 text-lg font-black leading-tight">{tour.title}</Link><button type="button" onClick={() => toggleSaved(tour.id)} aria-label={isSaved ? "Remove saved trip" : "Save trip"} className={`text-xl ${isSaved ? "text-[#e84d89]" : "text-[#8994a5]"}`}>{isSaved ? "♥" : "♡"}</button></div><p className="mt-3 line-clamp-2 text-xs font-semibold leading-5 text-[#697386]">{tour.excerpt || "A real group trip, designed around people and stories."}</p><div className="mt-auto border-t border-[#edf0f5] pt-3"><small className="block text-[9px] font-bold uppercase tracking-wide text-[#747e90]">Starts from</small><strong className="text-base font-black text-[#173fb9]">{tour.price || "See price"}</strong></div></div>
-            </article>;
-          })}
-        </div>
-        {visibleTours.length === 0 && <p className="mt-8 rounded-2xl border border-dashed border-[#cdd6e6] bg-white p-8 text-center text-sm font-semibold text-[#697386]">No trip matches that yet. Try another destination.</p>}
-      </section>
+      <HomeTourExplorer tours={tours} />
 
       <section id="people-planning" className="bg-[#f6f8fc] px-4 py-16">
         <div className="mx-auto max-w-[1180px]"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#3157d5]">Dates people are planning around</p><h2 className="mt-2 max-w-2xl text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">Pick a date. We&apos;ll bring the people.</h2><div className="mt-7 flex gap-3 overflow-x-auto pb-3">{tours.slice(0, 6).map((tour, index) => <Link key={tour.id} href={`/tours/${tour.slug}`} className="grid min-w-[280px] grid-cols-[72px_1fr] overflow-hidden rounded-[22px] border border-[#dce2ed] bg-white shadow-sm"><span className={`grid place-items-center px-2 text-center text-white ${index % 3 === 1 ? "bg-[#d0e562] text-[#27340b]" : "bg-[#3157d5]"}`}><b className="text-2xl font-black">{String(index + 12).padStart(2, "0")}</b><small className="text-[9px] font-black uppercase">Jun</small></span><span className="flex min-w-0 flex-col justify-center p-4"><b className="truncate text-sm font-black">{tour.title}</b><span className="mt-2 text-[9px] font-bold text-[#697386]">{tour.excerpt || "Seats available"}</span><strong className="mt-3 text-sm font-black text-[#173fb9]">{tour.price || "See price"}</strong></span></Link>)}</div></div>
