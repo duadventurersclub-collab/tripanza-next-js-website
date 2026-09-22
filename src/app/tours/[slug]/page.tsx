@@ -77,11 +77,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
           <TourOverview tour={tour} whatsappUrl={whatsappUrl} />
 
           {/* Trip Reels */}
-          <TourReels
-            reels={tour.details.reels}
-            title={tour.title}
-            poster={tour.featured_image || tour.details.gallery[0]?.url || ""}
-          />
+          <TourReels tour={tour} />
 
           {/* Information: stats, prices, availability dates, download CTA */}
           <TourInformation
