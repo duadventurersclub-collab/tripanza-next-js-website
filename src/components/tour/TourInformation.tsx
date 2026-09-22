@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { TourDetail, TourAvailabilityBatch } from "@/lib/wp";
-import Link from "next/link";
 
 interface TourInformationProps {
   tour: TourDetail;
@@ -33,6 +32,11 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
   const pricing = details.pricing;
   const [activeMonth, setActiveMonth] = useState("All");
   const hasPricing = Boolean(pricing.quad || pricing.triple || pricing.twin);
+
+  function openBooking() {
+    window.dispatchEvent(new Event("tripanza:open-booking"));
+    document.getElementById("booking-request")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   // Build month filter list from batches
   const months = ["All"];
@@ -254,10 +258,12 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
         background: "#fff",
         boxShadow: "0 10px 30px rgba(27,35,64,.05)"
       }}>
-        <Link
-          href={`/booking?tour=${tour.id}`}
+        <button
+          type="button"
+          onClick={openBooking}
           style={{
             display: "flex",
+            width: "100%",
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
@@ -269,11 +275,13 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
             fontSize: 14,
             textDecoration: "none",
             boxShadow: "0 8px 20px rgba(170,200,0,.25)",
+            border: 0,
+            cursor: "pointer",
           }}
         >
           <i className="fa-solid fa-bolt" aria-hidden="true" />
           Book My Seat — {pricing.starting_price || tour.price}
-        </Link>
+        </button>
         <a
           href={whatsappUrl}
           target="_blank"

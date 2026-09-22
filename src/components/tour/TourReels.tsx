@@ -378,9 +378,9 @@ function ReelsViewer({
                 <strong className="block truncate text-base font-black text-[#d6eb50]">{price}</strong>
               </div>
             ) : null}
-            <a href={`/booking?tour=${tour.id}`} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[#d6eb50] px-4 text-xs font-black text-[#151900] shadow-lg transition hover:bg-[#e2f77b]">
+            <button type="button" onClick={() => { onClose(); window.setTimeout(() => { window.dispatchEvent(new Event("tripanza:open-booking")); document.getElementById("booking-request")?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 0); }} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border-0 bg-[#d6eb50] px-4 text-xs font-black text-[#151900] shadow-lg transition hover:bg-[#e2f77b]">
               <i className="fa-solid fa-bolt" aria-hidden="true" />Book this trip
-            </a>
+            </button>
           </div>
         </div>
 

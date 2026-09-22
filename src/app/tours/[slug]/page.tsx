@@ -11,6 +11,7 @@ import TourInformation from "@/components/tour/TourInformation";
 import TourItinerary from "@/components/tour/TourItinerary";
 import TourAboutDiscounts from "@/components/tour/TourAboutDiscounts";
 import TourBookingPanel from "@/components/tour/TourBookingPanel";
+import TourMobileBooking from "@/components/tour/TourMobileBooking";
 import TourReviews from "@/components/tour/TourReviews";
 
 // Scoped design CSS from PHP templates
@@ -91,79 +92,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
         <div style={{ height: 96 }} aria-hidden="true" />
       </main>
 
-      {/* Mobile Sticky Bottom Bar */}
-      <div
-        className="tp-mobile-booking-bar"
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 10010,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          padding: "12px 20px calc(12px + env(safe-area-inset-bottom))",
-          borderTop: "1px solid #e2e7f0",
-          background: "rgba(255,255,255,0.96)",
-          backdropFilter: "blur(16px)",
-          boxShadow: "0 -16px 40px rgba(27,35,64,.12)",
-          fontFamily: "var(--font-inter), ui-sans-serif, sans-serif",
-        }}
-        aria-label="Quick booking bar"
-      >
-        <div>
-          <span style={{ display: "block", fontSize: 9, fontWeight: 800, color: "#7a8494", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-            Starting from
-          </span>
-          <span style={{ display: "block", fontSize: 20, fontWeight: 900, color: "#171923", letterSpacing: "-0.035em" }}>
-            {tour.details.pricing.starting_price || tour.price || "Contact us"}
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="WhatsApp inquiry"
-            style={{
-              display: "grid",
-              width: 46,
-              height: 46,
-              placeItems: "center",
-              border: "1px solid #e2e7f0",
-              borderRadius: 14,
-              color: "#25d366",
-              background: "#fff",
-              fontSize: 18,
-              textDecoration: "none",
-            }}
-          >
-            <i className="fa-brands fa-whatsapp" aria-hidden="true" />
-          </a>
-          <a
-            href={`/booking?tour=${tour.id}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "0 20px",
-              height: 46,
-              borderRadius: 14,
-              color: "#171923",
-              background: "#d0e562",
-              fontWeight: 900,
-              fontSize: 13,
-              textDecoration: "none",
-              boxShadow: "0 6px 18px rgba(170,200,0,.22)",
-            }}
-          >
-            <i className="fa-solid fa-bolt" aria-hidden="true" />
-            Book Seat
-          </a>
-        </div>
-      </div>
+      <TourMobileBooking tour={tour} whatsappUrl={whatsappUrl} />
 
       {/* Scroll progress script */}
       <script
