@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { TourDetail, TourAvailabilityBatch } from "@/lib/wp";
+import { formatTourDate, formatTourDateWithOrdinal } from "@/lib/tour-date";
 
 interface TourInformationProps {
   tour: TourDetail;
@@ -19,12 +20,7 @@ function getBadgeClass(status: string): string {
 }
 
 function getMonthLabel(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleString("en-IN", { month: "short", year: "numeric" });
-  } catch {
-    return "All";
-  }
+  return formatTourDate(dateStr, { month: "short", year: "numeric" }) || "All";
 }
 
 export default function TourInformation({ tour, availabilityBatches, whatsappUrl }: TourInformationProps) {
@@ -196,10 +192,10 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
                       <span className="tp-info-date__promotion">{dep.badge}</span>
                     )}
                     <div className="tp-date-main">
-                      {dep.check_in_formatted || "Upcoming Batch"}
+                      {dep.check_in_formatted ? formatTourDateWithOrdinal(dep.check_in_formatted) : "Upcoming Batch"}
                     </div>
                     {dep.check_out_formatted && (
-                      <div className="tp-date-sub">Return: {dep.check_out_formatted}</div>
+                      <div className="tp-date-sub">Return: {formatTourDate(dep.check_out_formatted, { day: "numeric", month: "long", year: "numeric" })}</div>
                     )}
                     {isPromoted && dep.benefit && (
                       <span className="tp-info-date__benefit">{dep.benefit}</span>

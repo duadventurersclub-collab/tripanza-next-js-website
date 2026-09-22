@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
+import { formatTourDate } from "@/lib/tour-date";
 
 interface TourOverviewProps {
   tour: TourDetail;
@@ -19,6 +20,9 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
   const hasTransport = /\bac\b.*(?:travel|transport|bus)|(?:travel|transport|bus).*\bac\b/i.test(includedText);
   const hasCaptain = /captain|coordinator/i.test(includedText);
   const nextDeparture = details.departures[0]?.date;
+  const nextDepartureLabel = nextDeparture
+    ? formatTourDate(nextDeparture, { day: "numeric", month: "long" })
+    : "";
   const cashbackLabel = details.cashback && /off|cashback/i.test(details.cashback)
     ? details.cashback
     : details.cashback ? `Flat ${details.cashback} OFF via cashback` : "";
@@ -100,7 +104,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             {(nextDeparture || details.seats_left) && (
               <div className="tp-live-proof">
                 <span className="tp-live-proof__pulse" />
-                <strong>{nextDeparture ? `Next departure ${nextDeparture}` : details.seats_left}</strong>
+                <strong>{nextDepartureLabel ? `Next departure ${nextDepartureLabel}` : details.seats_left}</strong>
               </div>
             )}
           </div>
