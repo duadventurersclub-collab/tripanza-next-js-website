@@ -17,6 +17,7 @@ export type BookingQuote = {
   tour: { id: number; slug: string; title: string; image: string };
   departure: {
     date: string;
+    display_date?: string;
     check_in: string;
     check_out: string;
     check_in_timestamp: number;
