@@ -9,6 +9,9 @@ import TourOverview from "@/components/tour/TourOverview";
 import TourReels from "@/components/tour/TourReels";
 import TourInformation from "@/components/tour/TourInformation";
 import TourItinerary from "@/components/tour/TourItinerary";
+import TourAboutDiscounts from "@/components/tour/TourAboutDiscounts";
+import TourBookingPanel from "@/components/tour/TourBookingPanel";
+import TourReviews from "@/components/tour/TourReviews";
 
 // Scoped design CSS from PHP templates
 import "./tour-design.css";
@@ -71,23 +74,17 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
         {/* Full-bleed Gallery with Trust Tags */}
         <TourGallery tour={tour} />
 
-        {/* Content container */}
-        <div style={{ padding: "0 clamp(14px, 4vw, 48px)", maxWidth: 960, margin: "0 auto" }}>
-          {/* Overview: title, value card, route, AI, reels, organizer */}
-          <TourOverview tour={tour} whatsappUrl={whatsappUrl} />
-
-          {/* Trip Reels */}
-          <TourReels tour={tour} />
-
-          {/* Information: stats, prices, availability dates, download CTA */}
-          <TourInformation
-            tour={tour}
-            availabilityBatches={[]}
-            whatsappUrl={whatsappUrl}
-          />
-
-          {/* Itinerary: days, highlights, stays, inc/exc, FAQs */}
-          <TourItinerary tour={tour} />
+        {/* Main details and desktop booking column */}
+        <div className="tp-tour-layout">
+          <div className="tp-tour-main">
+            <TourOverview tour={tour} whatsappUrl={whatsappUrl} />
+            <TourReels tour={tour} />
+            <TourInformation tour={tour} availabilityBatches={[]} whatsappUrl={whatsappUrl} />
+            <TourAboutDiscounts tour={tour} />
+            <TourItinerary tour={tour} />
+            <TourReviews reviews={tour.details.reviews} />
+          </div>
+          <TourBookingPanel tour={tour} />
         </div>
 
         {/* Spacer for mobile sticky bottom bar */}
@@ -96,6 +93,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
 
       {/* Mobile Sticky Bottom Bar */}
       <div
+        className="tp-mobile-booking-bar"
         style={{
           position: "fixed",
           bottom: 0,

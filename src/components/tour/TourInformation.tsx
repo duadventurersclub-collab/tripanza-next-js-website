@@ -83,24 +83,32 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
             <strong>Up to {details.capacity} people</strong>
           </span>
         </div>}
-        {details.destination && <div className="tp-info-stat">
+        <div className="tp-info-stat">
           <div className="tp-info-stat__icon">
-            <i className="fa-solid fa-location-dot" aria-hidden="true" />
+            <i className="fa-solid fa-user-shield" aria-hidden="true" />
           </div>
           <span>
-            <small>Destination</small>
-            <strong>{details.destination}</strong>
+            <small>Trip captains</small>
+            <strong>Verified team</strong>
           </span>
-        </div>}
-        {details.rating.value > 0 && <div className="tp-info-stat">
+        </div>
+        <div className="tp-info-stat">
           <div className="tp-info-stat__icon">
-            <i className="fa-solid fa-star" aria-hidden="true" />
+            <i className="fa-solid fa-credit-card" aria-hidden="true" />
           </div>
           <span>
-            <small>Rating</small>
-            <strong>{details.rating.value.toFixed(1)} / 5 ({details.rating.count})</strong>
+            <small>Payment</small>
+            <strong>Advance &amp; EMI</strong>
           </span>
-        </div>}
+        </div>
+      </div>
+
+      <div className="tp-info-promise">
+        <span className="tp-info-promise__icon"><i className="fa-solid fa-shield-heart" aria-hidden="true" /></span>
+        <span>
+          <strong>Tripanza promise</strong>
+          <small>Get what was promised, or let our support team make it right.</small>
+        </span>
       </div>
 
       {/* Price Grid */}
@@ -134,15 +142,20 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
         )}
       </div>}
 
+      <aside className="tp-responsible-note" aria-label="Responsible travel reminder">
+        <i className="fa-solid fa-seedling" aria-hidden="true" />
+        <p><strong>Travel responsibly</strong>Respect local communities, keep destinations clean and maintain civic sense.</p>
+      </aside>
+
       {/* Availability / Departure Dates */}
-      <div className="tp-info-availability">
+      <div className="tp-info-availability" id="tp-info-availability">
         <div className="tp-info-section-head">
           <div className="tp-info-section-head__icon">
             <i className="fa-solid fa-calendar-check" aria-hidden="true" />
           </div>
           <span>
-            <small>Live Departures</small>
-            <h2>Choose Your Travel Dates</h2>
+            <small>Available departures</small>
+            <h2>Upcoming batches</h2>
           </span>
         </div>
 

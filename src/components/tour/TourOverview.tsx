@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
 
@@ -13,6 +12,16 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
   const details = tour.details;
   const partner = details.partner;
   const pricing = details.pricing;
+  const includedText = details.included.join(" ");
+  const hotelNights = Number(includedText.match(/(\d+)\s*night/i)?.[1] || 0);
+  const mealCount = Array.from(includedText.matchAll(/(\d+)\s*(?:breakfast|dinner|lunch|meal)/gi))
+    .reduce((total, match) => total + Number(match[1] || 0), 0);
+  const hasTransport = /\bac\b.*(?:travel|transport|bus)|(?:travel|transport|bus).*\bac\b/i.test(includedText);
+  const hasCaptain = /captain|coordinator/i.test(includedText);
+  const nextDeparture = details.departures[0]?.date;
+  const cashbackLabel = details.cashback && /off|cashback/i.test(details.cashback)
+    ? details.cashback
+    : details.cashback ? `Flat ${details.cashback} OFF via cashback` : "";
 
   return (
     <div className="tp-tour-overview">
@@ -32,7 +41,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
           {/* Value Summary Card */}
           <div className="tp-value-card">
             <div className="tp-value-card__copy">
-              <small>Trip overview</small>
+              <small>Your trip at a glance</small>
               <div className="tp-value-summary">
                 {details.duration.days && (
                   <span>
@@ -40,29 +49,35 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
                     {details.duration.days}D / {details.duration.nights}N
                   </span>
                 )}
-                {details.destination && (
+                {hotelNights > 0 && (
                   <span>
-                    <i className="fa-solid fa-location-dot" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
-                    {details.destination}
+                    <i className="fa-solid fa-hotel" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
+                    {hotelNights} hotel {hotelNights === 1 ? "night" : "nights"}
                   </span>
                 )}
-                {details.capacity > 0 && (
+                {mealCount > 0 && (
                   <span>
-                    <i className="fa-solid fa-users" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
-                    Up to {details.capacity} people
+                    <i className="fa-solid fa-utensils" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
+                    {mealCount} meals
                   </span>
                 )}
-                {details.rating.value > 0 && (
+                {hasTransport && (
                   <span>
-                    <i className="fa-solid fa-star" aria-hidden="true" style={{ marginRight: 4, color: "#e5a309", fontSize: 9 }} />
-                    {details.rating.value.toFixed(1)} ({details.rating.count} reviews)
+                    <i className="fa-solid fa-bus" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
+                    AC transport
+                  </span>
+                )}
+                {hasCaptain && (
+                  <span>
+                    <i className="fa-solid fa-user-shield" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
+                    Trip captain
                   </span>
                 )}
               </div>
             </div>
 
             <div className="tp-value-price">
-              <small>Starting at</small>
+              <small>Starting from</small>
               <div className="tp-value-price__amount">
                 <span className="price-value">{pricing.starting_price || tour.price || "Contact us"}</span>
               </div>
@@ -70,25 +85,24 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             </div>
           </div>
 
-          {/* Live Proof & CTA */}
+          {/* Primary overview links */}
           <div className="tp-overview-conversion">
-            {details.seats_left && (
-              <div className="tp-live-proof">
-                <span className="tp-live-proof__pulse" />
-                <strong>{details.seats_left}</strong>
-                <span className="is-urgent">Hurry up!</span>
-              </div>
-            )}
             <div className="tp-overview-actions">
-              <Link href={`/booking?tour=${tour.id}`} className="tp-overview-cta tp-overview-cta--primary">
-                <i className="fa-solid fa-bolt" aria-hidden="true" />
-                Book My Seat
-              </Link>
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="tp-overview-cta tp-overview-cta--secondary">
-                <i className="fa-brands fa-whatsapp" aria-hidden="true" style={{ color: "#25d366" }} />
-                WhatsApp
+              <a href="#tp-info-availability" className="tp-overview-cta tp-overview-cta--primary">
+                <i className="fa-solid fa-calendar-check" aria-hidden="true" />
+                Check available dates
+              </a>
+              <a href="#tp-trip-cover" className="tp-overview-cta tp-overview-cta--secondary">
+                <i className="fa-solid fa-list-check" aria-hidden="true" />
+                See what&apos;s included
               </a>
             </div>
+            {(nextDeparture || details.seats_left) && (
+              <div className="tp-live-proof">
+                <span className="tp-live-proof__pulse" />
+                <strong>{nextDeparture ? `Next departure ${nextDeparture}` : details.seats_left}</strong>
+              </div>
+            )}
           </div>
 
           {/* Cashback Offer */}
@@ -98,32 +112,13 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
                 <i className="fa-solid fa-tag" aria-hidden="true" />
               </div>
               <div className="tp-tour-offer__content">
-                <strong>{details.cashback} on this booking</strong>
-                <small>Applied automatically at checkout — no coupon needed</small>
+                <strong>{cashbackLabel}</strong>
+                <small>Available on eligible bookings</small>
               </div>
             </div>
           )}
         </div>
       </header>
-
-      {(tour.content || tour.excerpt) && (
-        <section
-          aria-label="About this tour"
-          style={{
-            margin: "18px 0",
-            padding: "20px",
-            border: "1px solid #e2e7f0",
-            borderRadius: 18,
-            background: "#fff",
-            color: "#4b5565",
-            fontSize: 14,
-            lineHeight: 1.75,
-            whiteSpace: "pre-line",
-          }}
-        >
-          {tour.content || tour.excerpt}
-        </section>
-      )}
 
       {/* Route / Direction Box */}
       {(details.origin || details.destination) && <div className="tp-route-box">
@@ -171,7 +166,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             padding: "10px 2px",
           }}
         >
-          Ask me anything about {tour.title}…
+          Ask Kanika about this trip
         </a>
         <a
           href={whatsappUrl}
@@ -236,7 +231,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             </span>
           )}
           <div className="organizer-info">
-            <small>Organised by</small>
+            <small>Experience organized by</small>
             <div className="tp-organizer-card__name">
               <strong>{partner.name}</strong>
               {partner.verified && (
@@ -261,7 +256,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
         <div className="tp-organizer-card__aside">
           <span className="trusted-partner-badge">
             <i className="fa-solid fa-shield-check" aria-hidden="true" />
-            Trusted Partner
+            Trusted partner
           </span>
           {partner.instagram_url && (
             <a
@@ -281,8 +276,8 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             <i className="fa-solid fa-shield-heart" />
           </span>
           <p>
-            <strong>Tripanza Verified —</strong>
-            All partners are background-checked with verified safety records and 24/7 emergency support.
+            <strong>Book with Tripanza protection</strong>
+            Pay only through Tripanza to keep your booking and payment support protected.
           </p>
         </div>
       </div>

@@ -54,6 +54,25 @@ export type TourItineraryDay = {
 
 export type TourFAQ = { question: string; answer: string };
 
+export type TourInsight = { title: string; description: string };
+
+export type TourBulkDiscount = {
+  audience: "quad" | "triple";
+  title: string;
+  from: number;
+  to: number;
+  value: number;
+  type: "amount" | "percent";
+};
+
+export type TourReview = {
+  author_name: string;
+  rating: number;
+  text: string;
+  date: string;
+  profile_photo_url: string;
+};
+
 export type TourPartner = {
   name: string;
   logo_url: string;
@@ -105,11 +124,19 @@ export type TourDetail = {
       benefit: string | null;
     }>;
     itinerary: TourItineraryDay[];
+    journey_insights: TourInsight[];
     stays: TourAccommodation[];
     highlights: string[];
     included: string[];
     excluded: string[];
     faqs: TourFAQ[];
+    bulk_discounts: TourBulkDiscount[];
+    reviews: TourReview[];
+    booking: {
+      discount_rate: number;
+      discount_type: "amount" | "percent";
+      deposit_percentage: number;
+    };
     partner: TourPartner;
     seats_left?: string;
     cashback?: string;
@@ -371,6 +398,52 @@ function faqsFrom(value: unknown): TourFAQ[] {
   });
 }
 
+function insightsFrom(value: unknown): TourInsight[] {
+  const entries = Array.isArray(value) ? value : value ? [value] : [];
+  return entries.flatMap((entry) => {
+    const item = record(entry);
+    const title = plainText(firstDefined(item.title, item.name));
+    const description = plainText(firstDefined(item.description, item.desc, item.content));
+    return title || description ? [{ title: title || "Why this experience works", description }] : [];
+  });
+}
+
+function bulkDiscountsFrom(value: unknown): TourBulkDiscount[] {
+  const entries = Array.isArray(value) ? value : [];
+  return entries.flatMap((entry) => {
+    const item = record(entry);
+    const from = numberFrom(firstDefined(item.from, item.key));
+    const valueAmount = numberFrom(item.value);
+    if (!from || !valueAmount) return [];
+    const audience = plainText(item.audience) === "triple" ? "triple" : "quad";
+    return [{
+      audience,
+      title: plainText(item.title) || "Group saving",
+      from,
+      to: numberFrom(firstDefined(item.to, item.key_to)) || from,
+      value: valueAmount,
+      type: plainText(item.type) === "percent" ? "percent" : "amount",
+    }];
+  });
+}
+
+function reviewsFrom(value: unknown): TourReview[] {
+  const entries = Array.isArray(value) ? value : [];
+  return entries.slice(0, 10).flatMap((entry) => {
+    const item = record(entry);
+    const author = plainText(firstDefined(item.author_name, item.author, item.name));
+    const text = plainText(firstDefined(item.text, item.review, item.content));
+    if (!author || !text) return [];
+    return [{
+      author_name: author,
+      rating: Math.max(0, Math.min(5, numberFrom(item.rating) || 5)),
+      text,
+      date: plainText(firstDefined(item.date, item.review_date)),
+      profile_photo_url: urlFrom(firstDefined(item.profile_photo_url, item.photo, item.avatar)),
+    }];
+  });
+}
+
 function departuresFrom(value: unknown) {
   const entries = Array.isArray(value) ? value : value ? [value] : [];
   return entries.flatMap((entry) => {
@@ -477,11 +550,19 @@ export function transformStTour(sourceValue: unknown): TourDetail {
       },
       departures,
       itinerary,
+      journey_insights: insightsFrom(firstDefined(fields.journey_insights, fields.itinerary_insights, fields.supplemental_programs)),
       stays,
       highlights: stringList(firstDefined(fields.highlights, fields.tours_highlight)),
       included: stringList(firstDefined(fields.included, fields.tours_include, fields._tour_inclusions)),
       excluded: stringList(firstDefined(fields.excluded, fields.tours_exclude, fields._tour_exclusions)),
       faqs: faqsFrom(firstDefined(fields.faqs, fields.tours_faq, fields._st_tours_faq_repeater)),
+      bulk_discounts: bulkDiscountsFrom(firstDefined(fields.bulk_discounts, fields.group_discounts)),
+      reviews: reviewsFrom(firstDefined(fields.reviews, fields.google_reviews)),
+      booking: {
+        discount_rate: numberFrom(firstDefined(record(fields.booking).discount_rate, fields.discount_rate)),
+        discount_type: plainText(firstDefined(record(fields.booking).discount_type, fields.discount_type)) === "percent" ? "percent" : "amount",
+        deposit_percentage: Math.max(1, Math.min(100, numberFrom(firstDefined(record(fields.booking).deposit_percentage, fields.deposit_payment_amount)) || 100)),
+      },
       partner: {
         name: plainText(firstDefined(record(fields.partner).name, fields.travel_company, fields.host_name)),
         logo_url: urlFrom(firstDefined(record(fields.partner).logo_url, fields.company_logo, fields.host_logo)),

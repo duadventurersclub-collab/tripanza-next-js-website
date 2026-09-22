@@ -165,6 +165,27 @@ function FAQPanel({ question, answer, index }: { question: string; answer: strin
   );
 }
 
+function StayAmenities({ amenities }: { amenities: string[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? amenities : amenities.slice(0, 6);
+
+  return (
+    <div className="tp-stay-card__amenities" aria-label="Stay amenities">
+      {visible.map((amenity, index) => (
+        <span key={`${amenity}-${index}`}>
+          <i className="fa-solid fa-check" aria-hidden="true" />
+          {amenity}
+        </span>
+      ))}
+      {amenities.length > 6 ? (
+        <button className="tp-stay-card__amenities-more" type="button" onClick={() => setShowAll((current) => !current)} aria-expanded={showAll}>
+          {showAll ? "Show less" : `+${amenities.length - 6} more`}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function TourItinerary({ tour }: TourItineraryProps) {
   const details = tour.details;
   const [viewMode, setViewMode] = useState<"short" | "detailed">("short");
@@ -287,6 +308,22 @@ export default function TourItinerary({ tour }: TourItineraryProps) {
               />
             ))}
           </div>
+
+          {details.journey_insights.length > 0 ? (
+            <div className="tp-journey-insights">
+              <span className="tp-journey-insights__icon" aria-hidden="true"><i className="fa-solid fa-lightbulb" /></span>
+              <div>
+                <span className="tp-itinerary-kicker">Tripanza insight</span>
+                {details.journey_insights.map((insight, index) => (
+                  <div key={`${insight.title}-${index}`}>
+                    <h4>{insight.title}</h4>
+                    {insight.description ? <p>{insight.description}</p> : null}
+                  </div>
+                ))}
+              </div>
+              <i className="fa-solid fa-arrow-trend-up" aria-hidden="true" />
+            </div>
+          ) : null}
         </section>
       )}
 
@@ -362,21 +399,7 @@ export default function TourItinerary({ tour }: TourItineraryProps) {
                       <p>{stay.description}</p>
                     </div>
                   )}
-                  {stay.amenities.length > 0 && (
-                    <div className="tp-stay-card__amenities" aria-label="Stay amenities">
-                      {stay.amenities.slice(0, 6).map((a, ai) => (
-                        <span key={ai}>
-                          <i className="fa-solid fa-check" aria-hidden="true" />
-                          {a}
-                        </span>
-                      ))}
-                      {stay.amenities.length > 6 && (
-                        <span style={{ color: "#3157d5", background: "#edf2ff", border: "none", cursor: "default" }}>
-                          +{stay.amenities.length - 6} more
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  {stay.amenities.length > 0 ? <StayAmenities amenities={stay.amenities} /> : null}
                 </div>
               </article>
             ))}

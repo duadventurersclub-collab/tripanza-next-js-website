@@ -14,8 +14,11 @@ export type {
   TourDetail,
   TourFAQ,
   TourItineraryDay,
+  TourBulkDiscount,
+  TourInsight,
   TourPartner,
   TourPricingMatrix,
+  TourReview,
   TourSummary,
 } from "./st-tours";
 
