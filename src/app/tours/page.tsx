@@ -1,7 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getAppTours } from "@/lib/wp";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 interface ToursPageProps {
   searchParams: Promise<{ search?: string; destination?: string }>;
@@ -144,9 +145,11 @@ export default async function ToursPage({ searchParams }: ToursPageProps) {
                   {/* Tour Image Container */}
                   <div className="relative h-60 w-full overflow-hidden bg-slate-100">
                     {tour.featured_image ? (
-                      <img
+                      <Image
                         src={tour.featured_image}
                         alt={tour.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (

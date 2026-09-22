@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
 import PaymentRedirectLoader from "./PaymentRedirectLoader";
 
@@ -206,7 +207,14 @@ export default function BookingEngine({ tour, dateStr }: BookingEngineProps) {
             <div className="mb-6 flex gap-4 border-b border-slate-100 pb-6">
               {tour.featured_image && (
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl">
-                  <img src={tour.featured_image} alt={tour.title} className="h-full w-full object-cover" />
+                  <Image
+                    src={tour.featured_image}
+                    alt={tour.title}
+                    width={64}
+                    height={64}
+                    sizes="64px"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
               )}
               <div>

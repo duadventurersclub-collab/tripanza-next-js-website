@@ -245,6 +245,14 @@ function price(value: unknown, currency: string): TourPrice | null {
 
 function durationFrom(value: unknown): { days: string; nights: string } {
   const item = record(value);
+  const structuredDuration = `${plainText(item.days)} ${plainText(item.nights)}`.trim();
+  const structuredDays = structuredDuration.match(/(\d+)\s*(?:d|day)/i)?.[1];
+  const structuredNights = structuredDuration.match(/(\d+)\s*(?:n|night)/i)?.[1];
+  if (structuredDays || structuredNights) {
+    const dayCount = Number(structuredDays || Number(structuredNights) + 1 || 0);
+    const nightCount = Number(structuredNights || Math.max(0, dayCount - 1));
+    return { days: String(dayCount), nights: String(nightCount) };
+  }
   const suppliedDays = numberFrom(item.days);
   const suppliedNights = numberFrom(item.nights);
   if (suppliedDays || suppliedNights) {
@@ -493,18 +501,18 @@ export function transformStTour(sourceValue: unknown): TourDetail {
   };
 }
 
-async function request(path: string, revalidate = 60): Promise<Response> {
+async function request(path: string, revalidate = 300, tags: string[] = []): Promise<Response> {
   const url = `${WORDPRESS_URL}/${path.replace(/^\//, "")}`;
   const response = await fetch(url, {
     headers: { Accept: "application/json" },
-    next: { revalidate },
+    next: { revalidate, tags },
   });
   if (!response.ok) throw new Error(`WordPress ${response.status} for ${url}`);
   return response;
 }
 
-async function json(path: string, revalidate = 60): Promise<unknown> {
-  return (await request(path, revalidate)).json();
+async function json(path: string, revalidate = 300, tags: string[] = []): Promise<unknown> {
+  return (await request(path, revalidate, tags)).json();
 }
 
 function galleryMediaIds(value: unknown): number[] {
@@ -563,25 +571,28 @@ export async function getAppTours(params?: {
   if (params?.search) query.set("search", params.search);
   if (params?.taxonomy && params.term) query.set(params.taxonomy, String(params.term));
 
+  // The custom endpoint is deliberately compact and is the preferred source
+  // for listing cards. Native wp/v2 responses can include several MB of meta.
   try {
-    const response = await request(`wp-json/wp/v2/st_tours?${query}`, 60);
-    const payload: unknown = await response.json();
-    const values = Array.isArray(payload) ? payload : [];
-    if (values.length) {
-      const hydratedValues = await resolveGalleryMedia(values);
-      return {
-        items: hydratedValues.map(transformStTour),
-        total: numberFrom(response.headers.get("x-wp-total")) || values.length,
-      };
+    query.delete("_embed");
+    const result = listFrom(await json(`wp-json/tripanza-headless/v1/tours?${query}`, 300, ["tours"]));
+    if (result.values.length) {
+      return { items: result.values.map(transformStTour), total: result.total };
     }
   } catch {
-    // Some installations expose st_tours only through the headless namespace.
+    // Fall through to native WordPress for installations without the plugin.
   }
 
   try {
-    query.delete("_embed");
-    const result = listFrom(await json(`wp-json/tripanza-headless/v1/tours?${query}`, 60));
-    return { items: result.values.map(transformStTour), total: result.total };
+    query.set("_embed", "1");
+    const response = await request(`wp-json/wp/v2/st_tours?${query}`, 300, ["tours"]);
+    const payload: unknown = await response.json();
+    const values = Array.isArray(payload) ? payload : [];
+    const hydratedValues = await resolveGalleryMedia(values);
+    return {
+      items: hydratedValues.map(transformStTour),
+      total: numberFrom(response.headers.get("x-wp-total")) || values.length,
+    };
   } catch {
     return { items: [], total: 0 };
   }
@@ -592,14 +603,26 @@ export const getTourBySlug = cache(async (slug: string): Promise<TourDetail | nu
   if (!cleanSlug) return null;
   const encoded = encodeURIComponent(cleanSlug);
   const loaders = [
+    async () => unwrapTour(await json(
+      `wp-json/tripanza-headless/v1/tours/${encoded}`,
+      300,
+      ["tours", `tour:${cleanSlug}`],
+    )),
     async () => {
-      const payload = await json(`wp-json/wp/v2/st_tours?slug=${encoded}&_embed=1`, 60);
+      const payload = await json(
+        `wp-json/wp/v2/st_tours?slug=${encoded}&_embed=1`,
+        300,
+        ["tours", `tour:${cleanSlug}`],
+      );
       if (!Array.isArray(payload) || !payload[0]) return null;
       return (await resolveGalleryMedia([payload[0]]))[0];
     },
-    async () => unwrapTour(await json(`wp-json/tripanza-headless/v1/tours/${encoded}`, 60)),
     async () => {
-      const result = listFrom(await json(`wp-json/tripanza-headless/v1/tours?search=${encoded}&per_page=100`, 60));
+      const result = listFrom(await json(
+        `wp-json/tripanza-headless/v1/tours?search=${encoded}&per_page=100`,
+        300,
+        ["tours", `tour:${cleanSlug}`],
+      ));
       return result.values.find((value) => plainText(record(value).slug) === cleanSlug) || null;
     },
   ];
@@ -617,12 +640,15 @@ export const getTourBySlug = cache(async (slug: string): Promise<TourDetail | nu
 
 export const getTourById = cache(async (id: number): Promise<TourDetail | null> => {
   if (!Number.isFinite(id) || id <= 0) return null;
+  const result = await getAppTours({ per_page: 100 });
+  const summary = result.items.find((tour) => tour.id === id);
+  if (summary) return getTourBySlug(summary.slug);
+
   try {
-    const source = await json(`wp-json/wp/v2/st_tours/${id}?_embed=1`, 60);
+    const source = await json(`wp-json/wp/v2/st_tours/${id}?_embed=1`, 300, ["tours"]);
     return transformStTour((await resolveGalleryMedia([source]))[0]);
   } catch {
-    const result = await getAppTours({ per_page: 100 });
-    return result.items.find((tour) => tour.id === id) || null;
+    return null;
   }
 });
 

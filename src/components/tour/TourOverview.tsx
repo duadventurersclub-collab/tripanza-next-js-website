@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
 
 interface TourOverviewProps {
@@ -264,12 +265,20 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
       {/* Organizer Card */}
       <div className="tp-organizer-card">
         <div className="tp-organizer-card__profile">
-          <img
-            className="organizer-avatar"
-            src={partner.logo_url || "/placeholder-host.jpg"}
-            alt={partner.name}
-            loading="lazy"
-          />
+          {partner.logo_url ? (
+            <Image
+              className="organizer-avatar"
+              src={partner.logo_url}
+              alt={partner.name}
+              width={56}
+              height={56}
+              sizes="56px"
+            />
+          ) : (
+            <span className="organizer-avatar grid place-items-center bg-slate-100 text-slate-500" aria-hidden="true">
+              <i className="fa-solid fa-building" />
+            </span>
+          )}
           <div className="organizer-info">
             <small>Organised by</small>
             <div className="tp-organizer-card__name">

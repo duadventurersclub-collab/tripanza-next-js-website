@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
 
 interface TourGalleryProps {
@@ -108,14 +109,14 @@ export default function TourGallery({ tour }: TourGalleryProps) {
                 className="tp-tour-gallery__slide"
                 aria-label={`Photo ${i + 1} of ${galleryCount}`}
               >
-                <img
+                <Image
                   src={img.url}
                   alt={img.alt || `${tour.title} – photo ${i + 1} of ${galleryCount}`}
+                  fill
+                  sizes="100vw"
                   className="tp-tour-gallery__image"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  decoding="async"
+                  priority={i === 0}
                   draggable={false}
-                  {...(i === 0 ? { fetchPriority: "high" } : {})}
                 />
               </figure>
             ))}

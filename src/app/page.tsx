@@ -1,7 +1,7 @@
 import { getFeaturedTours, getSiteConfig, type SiteConfig } from "@/lib/wp";
 import HomeClient from "./HomeClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const fallbackSite: SiteConfig = {
   name: "Tripanza",

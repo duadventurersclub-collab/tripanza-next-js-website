@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
 
 interface TourItineraryProps {
@@ -24,8 +25,8 @@ function StayGallery({ images, title }: { images: string[]; title: string }) {
     <div className="tp-stay-gallery" data-tp-gallery>
       <div className="tp-stay-gallery__track" ref={trackRef}>
         {images.map((img, i) => (
-          <figure key={i} className="tp-stay-gallery__slide" style={{ margin: 0 }}>
-            <img src={img} alt={`${title} photo ${i + 1}`} loading="lazy" decoding="async" />
+          <figure key={i} className="tp-stay-gallery__slide" style={{ margin: 0, position: "relative" }}>
+            <Image src={img} alt={`${title} photo ${i + 1}`} fill sizes="(max-width: 768px) 100vw, 45vw" />
           </figure>
         ))}
       </div>
@@ -108,7 +109,7 @@ function DayCard({ day, index, title, description, imageUrl }: {
           <div style={{ display: imageUrl ? "grid" : "block", gridTemplateColumns: imageUrl ? "minmax(180px,34%) minmax(0,1fr)" : undefined }}>
             {imageUrl && (
               <div className="tp-itinerary-day__media">
-                <img src={imageUrl} alt={displayTitle} loading="lazy" decoding="async" />
+                <Image src={imageUrl} alt={displayTitle} fill sizes="(max-width: 768px) 100vw, 34vw" />
                 <div className="tp-itinerary-day__media-number" aria-hidden="true">
                   {dayLabel}
                 </div>

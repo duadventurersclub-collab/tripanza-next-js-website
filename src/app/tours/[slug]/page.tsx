@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getTourBySlug, getAppTourAvailability, type TourAvailabilityBatch } from "@/lib/wp";
+import { getTourBySlug } from "@/lib/wp";
 import type { Metadata } from "next";
 
 // Components
@@ -13,7 +13,12 @@ import TourItinerary from "@/components/tour/TourItinerary";
 // Scoped design CSS from PHP templates
 import "./tour-design.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+// New slugs are generated on first request and then retained by ISR.
+export function generateStaticParams() {
+  return [];
+}
 
 interface TourDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -44,14 +49,6 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
 
   if (!tour) {
     notFound();
-  }
-
-  // Retrieve live departure batches if available
-  let availabilityBatches: TourAvailabilityBatch[] = [];
-  try {
-    availabilityBatches = await getAppTourAvailability(tour.id);
-  } catch {
-    availabilityBatches = [];
   }
 
   const whatsappMsg = encodeURIComponent(
@@ -85,7 +82,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
           {/* Information: stats, prices, availability dates, download CTA */}
           <TourInformation
             tour={tour}
-            availabilityBatches={availabilityBatches}
+            availabilityBatches={[]}
             whatsappUrl={whatsappUrl}
           />
 
@@ -114,7 +111,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
           background: "rgba(255,255,255,0.96)",
           backdropFilter: "blur(16px)",
           boxShadow: "0 -16px 40px rgba(27,35,64,.12)",
-          fontFamily: "Inter, ui-sans-serif, sans-serif",
+          fontFamily: "var(--font-inter), ui-sans-serif, sans-serif",
         }}
         aria-label="Quick booking bar"
       >
