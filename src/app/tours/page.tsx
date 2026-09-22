@@ -211,9 +211,6 @@ export default async function ToursPage({ searchParams }: ToursPageProps) {
                     <div className="mt-5 rounded-2xl bg-slate-50 p-3 text-xs">
                       <div className="flex items-center justify-between text-slate-500 mb-1.5">
                         <span className="font-medium">Sharing Rates:</span>
-                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-md">
-                          Token: ₹2,000 only
-                        </span>
                       </div>
                       <div className="grid grid-cols-3 gap-1 text-center font-bold text-slate-800">
                         <div className="rounded-lg bg-white p-1.5 shadow-2xs border border-slate-100">

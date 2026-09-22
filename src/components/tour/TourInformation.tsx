@@ -32,6 +32,7 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
   const details = tour.details;
   const pricing = details.pricing;
   const [activeMonth, setActiveMonth] = useState("All");
+  const hasPricing = Boolean(pricing.quad || pricing.triple || pricing.twin);
 
   // Build month filter list from batches
   const months = ["All"];
@@ -64,7 +65,7 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
     <div className="tp-tour-information">
       {/* Stats Row */}
       <div className="tp-info-stats">
-        <div className="tp-info-stat">
+        {details.duration.days && <div className="tp-info-stat">
           <div className="tp-info-stat__icon">
             <i className="fa-solid fa-clock" aria-hidden="true" />
           </div>
@@ -72,17 +73,17 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
             <small>Duration</small>
             <strong>{details.duration.days}D / {details.duration.nights}N</strong>
           </span>
-        </div>
-        <div className="tp-info-stat">
+        </div>}
+        {details.capacity > 0 && <div className="tp-info-stat">
           <div className="tp-info-stat__icon">
             <i className="fa-solid fa-users" aria-hidden="true" />
           </div>
           <span>
             <small>Group Size</small>
-            <strong>Upto {details.capacity} people</strong>
+            <strong>Up to {details.capacity} people</strong>
           </span>
-        </div>
-        <div className="tp-info-stat">
+        </div>}
+        {details.destination && <div className="tp-info-stat">
           <div className="tp-info-stat__icon">
             <i className="fa-solid fa-location-dot" aria-hidden="true" />
           </div>
@@ -90,8 +91,8 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
             <small>Destination</small>
             <strong>{details.destination}</strong>
           </span>
-        </div>
-        <div className="tp-info-stat">
+        </div>}
+        {details.rating.value > 0 && <div className="tp-info-stat">
           <div className="tp-info-stat__icon">
             <i className="fa-solid fa-star" aria-hidden="true" />
           </div>
@@ -99,22 +100,11 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
             <small>Rating</small>
             <strong>{details.rating.value.toFixed(1)} / 5 ({details.rating.count})</strong>
           </span>
-        </div>
-      </div>
-
-      {/* Cancellation Promise */}
-      <div className="tp-info-promise">
-        <div className="tp-info-promise__icon">
-          <i className="fa-solid fa-shield-check" aria-hidden="true" />
-        </div>
-        <span>
-          <strong>Free Cancellation — No risk booking</strong>
-          <small>Cancel before 7 days of departure for a full refund. No questions asked.</small>
-        </span>
+        </div>}
       </div>
 
       {/* Price Grid */}
-      <div className="tp-info-prices">
+      {hasPricing && <div className="tp-info-prices">
         {pricing.quad && (
           <div>
             <div className="tp-info-price__label">Quad</div>
@@ -142,18 +132,7 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
             </div>
           </div>
         )}
-      </div>
-
-      {/* Token deposit CTA */}
-      <div className="tp-info-civic">
-        <span>
-          <i className="fa-solid fa-bolt" aria-hidden="true" />
-        </span>
-        <p>
-          <strong>Secure your seat with just ₹2,000</strong>
-          <small>Pay the token now, balance amount due before departure day.</small>
-        </p>
-      </div>
+      </div>}
 
       {/* Availability / Departure Dates */}
       <div className="tp-info-availability">
@@ -205,8 +184,8 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
                     {dep.check_out_formatted && (
                       <div className="tp-date-sub">Return: {dep.check_out_formatted}</div>
                     )}
-                    {isPromoted && (dep as any).benefit && (
-                      <span className="tp-info-date__benefit">{(dep as any).benefit}</span>
+                    {isPromoted && dep.benefit && (
+                      <span className="tp-info-date__benefit">{dep.benefit}</span>
                     )}
                   </div>
                   <div className="tp-date-right">

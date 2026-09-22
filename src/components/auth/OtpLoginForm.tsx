@@ -32,8 +32,8 @@ export default function OtpLoginForm() {
       }
 
       setStep("otp");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send OTP");
     } finally {
       setIsLoading(false);
     }
@@ -62,8 +62,8 @@ export default function OtpLoginForm() {
       // Successful verification! Redirect to dashboard.
       router.push("/dashboard");
       router.refresh(); // Force refresh to re-evaluate server components (like the layout checking cookies)
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid OTP");
     } finally {
       setIsLoading(false);
     }

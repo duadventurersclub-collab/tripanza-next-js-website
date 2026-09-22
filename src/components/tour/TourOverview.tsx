@@ -34,18 +34,24 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             <div className="tp-value-card__copy">
               <small>Trip overview</small>
               <div className="tp-value-summary">
-                <span>
-                  <i className="fa-solid fa-calendar-days" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
-                  {details.duration.days}D / {details.duration.nights}N
-                </span>
-                <span>
-                  <i className="fa-solid fa-location-dot" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
-                  {details.destination}
-                </span>
-                <span>
-                  <i className="fa-solid fa-users" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
-                  Upto {details.capacity} People
-                </span>
+                {details.duration.days && (
+                  <span>
+                    <i className="fa-solid fa-calendar-days" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
+                    {details.duration.days}D / {details.duration.nights}N
+                  </span>
+                )}
+                {details.destination && (
+                  <span>
+                    <i className="fa-solid fa-location-dot" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
+                    {details.destination}
+                  </span>
+                )}
+                {details.capacity > 0 && (
+                  <span>
+                    <i className="fa-solid fa-users" aria-hidden="true" style={{ marginRight: 5, color: "#3157d5", fontSize: 9 }} />
+                    Up to {details.capacity} people
+                  </span>
+                )}
                 {details.rating.value > 0 && (
                   <span>
                     <i className="fa-solid fa-star" aria-hidden="true" style={{ marginRight: 4, color: "#e5a309", fontSize: 9 }} />
@@ -58,9 +64,9 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             <div className="tp-value-price">
               <small>Starting at</small>
               <div className="tp-value-price__amount">
-                <span className="price-value">{pricing.starting_price || tour.price}</span>
+                <span className="price-value">{pricing.starting_price || tour.price || "Contact us"}</span>
               </div>
-              <span>per person + 5% GST</span>
+              <span>per person</span>
             </div>
           </div>
 
@@ -100,8 +106,27 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
         </div>
       </header>
 
+      {(tour.content || tour.excerpt) && (
+        <section
+          aria-label="About this tour"
+          style={{
+            margin: "18px 0",
+            padding: "20px",
+            border: "1px solid #e2e7f0",
+            borderRadius: 18,
+            background: "#fff",
+            color: "#4b5565",
+            fontSize: 14,
+            lineHeight: 1.75,
+            whiteSpace: "pre-line",
+          }}
+        >
+          {tour.content || tour.excerpt}
+        </section>
+      )}
+
       {/* Route / Direction Box */}
-      <div className="tp-route-box">
+      {(details.origin || details.destination) && <div className="tp-route-box">
         <div className="tp-route-city">
           <div className="tp-route-city__icon">
             <i className="fa-solid fa-bus-simple" aria-hidden="true" />
@@ -123,7 +148,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             <strong>{details.destination}</strong>
           </span>
         </div>
-      </div>
+      </div>}
 
       {/* AI Assistant — opens WhatsApp on click */}
       <div className="tp-tour-assistant">

@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tripanza Next.js frontend
 
-## Getting Started
+Next.js 16 frontend for Tripanza. Tour listings and detail pages are rendered from the WordPress `st_tours` post type.
 
-First, run the development server:
+## Configuration
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Copy `.env.example` to `.env.local` and set:
+
+```env
+WORDPRESS_URL=https://your-wordpress-site.example
+NEXT_PUBLIC_SITE_NAME=Tripanza
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`NEXT_PUBLIC_WORDPRESS_URL` remains supported for older deployments, but `WORDPRESS_URL` is preferred because WordPress requests are made on the server.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supported WordPress routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The tour data layer tries the native REST routes first:
 
-## Learn More
+- `GET /wp-json/wp/v2/st_tours?_embed=1`
+- `GET /wp-json/wp/v2/st_tours?slug={slug}&_embed=1`
+- `GET /wp-json/wp/v2/st_tours/{id}?_embed=1`
 
-To learn more about Next.js, take a look at the following resources:
+If the custom post type is not publicly exposed, it falls back to:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `GET /wp-json/tripanza-headless/v1/tours`
+- `GET /wp-json/tripanza-headless/v1/tours/{slug}`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Native WordPress pagination totals are read from `X-WP-Total`. The custom endpoint may return either an array or an object containing `items`, `tours`, or `data` and `total`.
 
-## Deploy on Vercel
+The adapter reads fields from the REST root, `meta`, `acf`, and `details`. It supports featured media, gallery URLs or attachment IDs, pricing, duration, locations, itinerary, stays, highlights, inclusions, exclusions, FAQs, departures, ratings, reels, partner details, and badges.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+For native `st_tours`, custom fields must be registered with `show_in_rest => true`, or exposed through an ACF REST integration. Gallery attachment IDs are resolved through `wp/v2/media` automatically.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+Routes:
+
+- `/` – featured tours
+- `/tours` – searchable tour listing
+- `/tours/[slug]` – complete tour detail
+- `/booking?tour={id}` – booking flow
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+```

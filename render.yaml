@@ -10,3 +10,7 @@ services:
         value: production
       - key: NEXT_PUBLIC_WORDPRESS_URL
         sync: false
+      - key: WORDPRESS_URL
+        sync: false
+      - key: NEXT_PUBLIC_WHATSAPP_NUMBER
+        sync: false

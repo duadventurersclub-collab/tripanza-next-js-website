@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { TourDetail } from "@/lib/wp";
 
 interface TourAppbarProps {
@@ -11,6 +12,7 @@ interface TourAppbarProps {
 export default function TourAppbar({ tour }: TourAppbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [sharePageUrl, setSharePageUrl] = useState("");
   const [copyStatus, setCopyStatus] = useState("Ready to paste");
   const overlayRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLElement>(null);
@@ -32,9 +34,13 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({ title: document.title, text: "Explore this Tripanza experience", url: window.location.href }).catch((err) => {
-        if (!err || err.name !== "AbortError") setShareOpen(true);
+        if (!err || err.name !== "AbortError") {
+          setSharePageUrl(window.location.href);
+          setShareOpen(true);
+        }
       });
     } else {
+      setSharePageUrl(window.location.href);
       setShareOpen(true);
     }
   };
@@ -62,28 +68,24 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
   };
 
   const rating = tour.details.rating;
-  // Share URLs are computed client-side only to avoid SSR "window is not defined"
-  const [shareUrls, setShareUrls] = useState({ whatsapp: "#", telegram: "#" });
-  useEffect(() => {
-    const pageUrl = window.location.href;
-    const text = encodeURIComponent(`Have a look at this Tripanza experience: ${tour.title}`);
-    setShareUrls({
-      whatsapp: `https://wa.me/?text=${text}%0A${encodeURIComponent(pageUrl)}`,
-      telegram: `https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(tour.title)}`,
-    });
-  }, [tour.title]);
+  const shareText = encodeURIComponent(`Have a look at this Tripanza experience: ${tour.title}`);
+  const encodedPageUrl = encodeURIComponent(sharePageUrl);
+  const shareUrls = {
+    whatsapp: `https://wa.me/?text=${shareText}%0A${encodedPageUrl}`,
+    telegram: `https://t.me/share/url?url=${encodedPageUrl}&text=${encodeURIComponent(tour.title)}`,
+  };
 
   return (
     <>
       <nav className={`tp-tour-appbar${isScrolled ? " is-scrolled" : ""}`} aria-label="Tour navigation">
-        <a
+        <Link
           className="tp-tour-appbar__action"
           href="/tours"
           onClick={handleBack}
           aria-label="Go back"
         >
           <i className="fa-solid fa-arrow-left" aria-hidden="true" />
-        </a>
+        </Link>
 
         <div className="tp-tour-appbar__title" aria-hidden="true">{tour.title}</div>
 

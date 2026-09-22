@@ -57,7 +57,8 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
   const whatsappMsg = encodeURIComponent(
     `Hey Tripanza Team! I am interested in the ${tour.title} (${tour.details.duration.days}D/${tour.details.duration.nights}N). Could you please share the next departure batch dates and availability?`
   );
-  const whatsappUrl = `https://wa.me/919999999999?text=${whatsappMsg}`;
+  const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, "");
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMsg}`;
 
   return (
     <div className="tripanza-single-tour-app">
@@ -122,7 +123,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
             Starting from
           </span>
           <span style={{ display: "block", fontSize: 20, fontWeight: 900, color: "#171923", letterSpacing: "-0.035em" }}>
-            {tour.details.pricing.starting_price || tour.price}
+            {tour.details.pricing.starting_price || tour.price || "Contact us"}
           </span>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
