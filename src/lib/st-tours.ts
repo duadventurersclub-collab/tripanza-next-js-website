@@ -345,6 +345,11 @@ function dateLabel(value: unknown): string {
   });
 }
 
+function bookingDate(value: unknown): string {
+  const raw = plainText(value);
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : dateLabel(value);
+}
+
 function embeddedFeaturedImage(source: UnknownRecord): string {
   const embedded = record(source._embedded);
   const media = Array.isArray(embedded["wp:featuredmedia"]) ? embedded["wp:featuredmedia"] : [];
@@ -471,11 +476,11 @@ function departuresFrom(value: unknown) {
   return entries.flatMap((entry) => {
     const item = record(entry);
     const date = firstDefined(item.date, item.check_in, item.start_date, entry);
-    const label = dateLabel(date);
-    if (!label) return [];
+    const bookingDateValue = bookingDate(date);
+    if (!bookingDateValue) return [];
     return [{
-      date: label,
-      check_out: dateLabel(firstDefined(item.check_out, item.end_date)),
+      date: bookingDateValue,
+      check_out: bookingDate(firstDefined(item.check_out, item.end_date)),
       status: plainText(item.status) || "Available",
       promoted: booleanFrom(item.promoted),
       badge: plainText(item.badge) || null,
