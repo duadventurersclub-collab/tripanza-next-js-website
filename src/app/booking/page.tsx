@@ -6,7 +6,7 @@ import BookingEngine from "@/components/booking/BookingEngine";
 export const dynamic = "force-dynamic";
 
 interface BookingPageProps {
-  searchParams: Promise<{ tour?: string; date?: string }>;
+  searchParams: Promise<{ tour?: string; date?: string; sharing?: string; travellers?: string }>;
 }
 
 export async function generateMetadata({ searchParams }: BookingPageProps): Promise<Metadata> {
@@ -25,7 +25,7 @@ export async function generateMetadata({ searchParams }: BookingPageProps): Prom
 }
 
 export default async function BookingPage({ searchParams }: BookingPageProps) {
-  const { tour: tourIdStr, date: dateStr } = await searchParams;
+  const { tour: tourIdStr, date: dateStr, sharing, travellers } = await searchParams;
 
   if (!tourIdStr) {
     return (
@@ -54,7 +54,12 @@ export default async function BookingPage({ searchParams }: BookingPageProps) {
       </div>
 
       <div className="mx-auto mt-8 max-w-7xl px-6">
-        <BookingEngine tour={tour} dateStr={dateStr || null} />
+        <BookingEngine
+          tour={tour}
+          dateStr={dateStr || null}
+          initialSharing={sharing === "triple" || sharing === "twin" ? sharing : "quad"}
+          initialTravellers={Math.max(1, Math.min(tour.details.capacity || 30, Number(travellers) || 1))}
+        />
       </div>
     </main>
   );

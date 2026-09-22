@@ -73,6 +73,12 @@ export type TourReview = {
   profile_photo_url: string;
 };
 
+export type TourBookingExtra = {
+  name: string;
+  price: number;
+  required: boolean;
+};
+
 export type TourPartner = {
   name: string;
   logo_url: string;
@@ -136,6 +142,8 @@ export type TourDetail = {
       discount_rate: number;
       discount_type: "amount" | "percent";
       deposit_percentage: number;
+      require_guest_names: boolean;
+      extras: TourBookingExtra[];
     };
     partner: TourPartner;
     seats_left?: string;
@@ -248,6 +256,20 @@ function numberFrom(value: unknown): number {
 
 function booleanFrom(value: unknown): boolean {
   return value === true || value === 1 || ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
+}
+
+function bookingExtrasFrom(value: unknown): TourBookingExtra[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    const item = record(entry);
+    const name = plainText(firstDefined(item.name, item.extra_name, item.title));
+    if (!name) return [];
+    return [{
+      name,
+      price: Math.max(0, numberFrom(firstDefined(item.price, item.extra_price))),
+      required: booleanFrom(firstDefined(item.required, item.extra_required)),
+    }];
+  });
 }
 
 function currencyDisplay(amount: number, currency: string): string {
@@ -562,6 +584,8 @@ export function transformStTour(sourceValue: unknown): TourDetail {
         discount_rate: numberFrom(firstDefined(record(fields.booking).discount_rate, fields.discount_rate)),
         discount_type: plainText(firstDefined(record(fields.booking).discount_type, fields.discount_type)) === "percent" ? "percent" : "amount",
         deposit_percentage: Math.max(1, Math.min(100, numberFrom(firstDefined(record(fields.booking).deposit_percentage, fields.deposit_payment_amount)) || 100)),
+        require_guest_names: booleanFrom(firstDefined(record(fields.booking).require_guest_names, fields.require_guest_names)),
+        extras: bookingExtrasFrom(firstDefined(record(fields.booking).extras, fields.extras, fields.extra_price)),
       },
       partner: {
         name: plainText(firstDefined(record(fields.partner).name, fields.travel_company, fields.host_name)),

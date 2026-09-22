@@ -15,6 +15,7 @@ export type {
   TourFAQ,
   TourItineraryDay,
   TourBulkDiscount,
+  TourBookingExtra,
   TourInsight,
   TourPartner,
   TourPricingMatrix,
