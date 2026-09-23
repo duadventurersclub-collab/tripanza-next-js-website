@@ -4,11 +4,15 @@ import { setSessionCookie } from "@/lib/session";
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const channel = body.channel === "whatsapp" ? "whatsapp" : "email";
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const normalized = channel === "email" ? email.toLowerCase() : email;
     const otp = typeof body.otp === "string" ? body.otp.trim() : "";
+    const phoneDigits = normalized.replace(/\D/g, "");
+    const validIdentity = channel === "email" ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) : phoneDigits.length >= 10 && phoneDigits.length <= 15;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !/^\d{4}$/.test(otp)) {
-      return NextResponse.json({ error: "A valid email and 4-digit OTP are required." }, { status: 400 });
+    if (!validIdentity || !/^\d{4}$/.test(otp)) {
+      return NextResponse.json({ error: `A valid ${channel === "whatsapp" ? "WhatsApp number" : "email"} and 4-digit OTP are required.` }, { status: 400 });
     }
 
     const wpEndpoint = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com"}/wp-json/tripanza-app/v1/otp/verify`;
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify({ email, otp }),
+      body: JSON.stringify({ email: normalized, channel, otp }),
     });
 
     const data = await response.json().catch(() => ({}));

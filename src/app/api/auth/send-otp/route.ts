@@ -3,10 +3,14 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const channel = body.channel === "whatsapp" ? "whatsapp" : "email";
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const normalized = channel === "email" ? email.toLowerCase() : email;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+    const phoneDigits = normalized.replace(/\D/g, "");
+    const valid = channel === "email" ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) : phoneDigits.length >= 10 && phoneDigits.length <= 15;
+    if (!valid) {
+      return NextResponse.json({ error: channel === "whatsapp" ? "Enter a valid WhatsApp number with country code." : "Enter a valid email address." }, { status: 400 });
     }
 
     const wpEndpoint = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com"}/wp-json/tripanza-app/v1/otp/send`;
@@ -17,7 +21,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email: normalized, channel }),
     });
 
     const data = await response.json().catch(() => ({}));
