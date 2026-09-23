@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import ProfileOtpLogin, { type AuthenticatedUser } from "@/components/auth/ProfileOtpLogin";
 
 type AccountPayload = {
   authenticated: boolean;
@@ -77,6 +78,7 @@ export default function TripanzaBottomMenu() {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [savedView, setSavedView] = useState(false);
@@ -94,7 +96,10 @@ export default function TripanzaBottomMenu() {
     const frame = window.requestAnimationFrame(() => {
       const search = new URLSearchParams(window.location.search);
       setSavedView(search.get("tripanza_filter") === "saved");
-      if (search.get("profile") === "1") setModalOpen(true);
+      if (search.get("profile") === "1") {
+        setModalOpen(true);
+        if (search.get("auth") === "1") setAuthMode(search.get("mode") === "register" ? "register" : "login");
+      }
       refreshSaved();
     });
     window.addEventListener("storage", refreshSaved);
@@ -128,6 +133,7 @@ export default function TripanzaBottomMenu() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (walletOpen) setWalletOpen(false);
+        else if (authMode) setAuthMode(null);
         else setModalOpen(false);
       }
     };
@@ -136,22 +142,45 @@ export default function TripanzaBottomMenu() {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [modalOpen, walletOpen]);
+  }, [authMode, modalOpen, walletOpen]);
 
   function openProfile() {
     setWalletOpen(false);
+    setAuthMode(null);
     setModalOpen(true);
   }
 
   function closeProfile() {
     setWalletOpen(false);
+    setAuthMode(null);
     setModalOpen(false);
     window.setTimeout(() => profileButtonRef.current?.focus(), 30);
   }
 
-  function requireLogin() {
-    closeProfile();
-    router.push(`/login?returnTo=${encodeURIComponent(pathname)}`);
+  function requireLogin(mode: "login" | "register" = "login") {
+    setWalletOpen(false);
+    setAuthMode(mode);
+    setModalOpen(true);
+  }
+
+  function completeLogin(user?: AuthenticatedUser) {
+    setAccount((current) => ({
+      ...current,
+      authenticated: true,
+      profile: {
+        id: Number(user?.id) || 0,
+        name: user?.display_name || user?.email?.split("@")[0] || "Tripanza traveller",
+        email: user?.email || "",
+        avatar: "",
+      },
+    }));
+    setAccountLoading(false);
+    router.refresh();
+    window.setTimeout(() => setAuthMode(null), 700);
+    void fetch("/api/account", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() as Promise<AccountPayload> : null)
+      .then((payload) => { if (payload?.authenticated) setAccount(payload); })
+      .catch(() => undefined);
   }
 
   function showBookings() {
@@ -204,17 +233,17 @@ export default function TripanzaBottomMenu() {
     </nav>
 
     <section id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
-      {walletOpen ? <div className="tp-profile-wallet-view">
+      {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onSuccess={completeLogin} /> : walletOpen ? <div className="tp-profile-wallet-view">
         <header><button type="button" onClick={() => setWalletOpen(false)} aria-label="Back to profile"><Icon name="back" /></button><strong>Tripanza Wallet</strong></header>
         <div className="tp-profile-wallet-card"><span>Available balance</span><strong>{amount(account.wallet.balance, account.wallet.currency)}</strong><p>Cashback and eligible rewards from your Tripanza bookings appear here.</p></div>
         <Link href="/dashboard" onClick={closeProfile}>View booking activity</Link>
       </div> : <>
         <div className="tp-profile-shell">
-          {account.authenticated ? <div className="tp-profile-cover"><Image src={DEFAULT_COVER} alt="" fill sizes="640px" /><div className="tp-profile-cover__controls"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => setWalletOpen(true)} aria-label="Open wallet"><Icon name="wallet" /> {amount(account.wallet.balance, account.wallet.currency)}</button></div></div> : <header className="tp-profile-guest-head"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={requireLogin}><Icon name="wallet" /> ₹0</button></header>}
+          {account.authenticated ? <div className="tp-profile-cover"><Image src={DEFAULT_COVER} alt="" fill sizes="640px" /><div className="tp-profile-cover__controls"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => setWalletOpen(true)} aria-label="Open wallet"><Icon name="wallet" /> {amount(account.wallet.balance, account.wallet.currency)}</button></div></div> : <header className="tp-profile-guest-head"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => requireLogin("login")}><Icon name="wallet" /> ₹0</button></header>}
 
           <div className={`tp-profile-identity${account.authenticated ? " is-authenticated" : ""}`}>
             {account.authenticated ? <span className="tp-profile-avatar">{account.profile?.avatar ? <Image src={account.profile.avatar} alt={`${displayName} avatar`} width={60} height={60} unoptimized /> : displayName.slice(0, 1).toUpperCase()}</span> : null}
-            {accountLoading ? <><span className="tp-profile-eyebrow">Loading your Tripanza</span><h2>Just a moment…</h2></> : account.authenticated ? <><span className="tp-profile-eyebrow">Your Tripanza</span><h2>{displayName}</h2><p>{account.profile?.email}</p><div className="tp-profile-actions"><Link href="/dashboard" onClick={closeProfile}>Your Bookings</Link><button type="button" onClick={logout} disabled={loggingOut}>{loggingOut ? "Logging out…" : "Logout"}</button></div></> : <><h2>Good trips.<em>All in one place.</em></h2><p>Log in for your bookings, wallet and next escape.</p><div className="tp-profile-actions"><button type="button" onClick={requireLogin}>Login</button><button type="button" onClick={requireLogin}>Register</button></div></>}
+            {accountLoading ? <><span className="tp-profile-eyebrow">Loading your Tripanza</span><h2>Just a moment…</h2></> : account.authenticated ? <><span className="tp-profile-eyebrow">Your Tripanza</span><h2>{displayName}</h2><p>{account.profile?.email}</p><div className="tp-profile-actions"><Link href="/dashboard" onClick={closeProfile}>Your Bookings</Link><button type="button" onClick={logout} disabled={loggingOut}>{loggingOut ? "Logging out…" : "Logout"}</button></div></> : <><h2>Good trips.<em>All in one place.</em></h2><p>Log in for your bookings, wallet and next escape.</p><div className="tp-profile-actions"><button type="button" onClick={() => requireLogin("login")}>Login</button><button type="button" onClick={() => requireLogin("register")}>Register</button></div></>}
           </div>
 
           {account.authenticated && latestBooking ? <section className="tp-profile-next-trip" aria-label="Your latest booking"><span><Icon name="ticket" /></span><div><small>Your latest booking</small><h3>{latestBooking.title}</h3><p>{bookingDate(latestBooking.created_at)} <b>{latestBooking.status}</b></p></div><Link href="/dashboard" onClick={closeProfile}>View</Link></section> : null}
@@ -223,7 +252,7 @@ export default function TripanzaBottomMenu() {
           <div className="tp-profile-menu" role="list">
             <button type="button" role="listitem" onClick={showBookings}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></button>
             <Link role="listitem" href="/tours" onClick={closeProfile}><span><Icon name="compass" /><strong>Explore Trips</strong><small>Find your next escape.</small></span><b>›</b></Link>
-            <button type="button" role="listitem" onClick={() => account.authenticated ? setWalletOpen(true) : requireLogin()}><span><Icon name="wallet" /><strong>Wallet</strong><small>Cashback &amp; rewards.</small></span><b>›</b></button>
+            <button type="button" role="listitem" onClick={() => account.authenticated ? setWalletOpen(true) : requireLogin("login")}><span><Icon name="wallet" /><strong>Wallet</strong><small>Cashback &amp; rewards.</small></span><b>›</b></button>
             <Link role="listitem" href="/?tripanza_filter=saved#trips" onClick={() => { showSavedTrips(); closeProfile(); }}><span><Icon name="heart" /><strong>Favourites</strong><small>{savedCount} saved trips.</small></span><b>›</b></Link>
           </div>
 

@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     }
 
     const wpEndpoint = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com"}/wp-json/tripanza-app/v1/otp/send`;
@@ -19,13 +20,13 @@ export async function POST(req: Request) {
       body: JSON.stringify({ email }),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      return NextResponse.json({ error: data.message || "Failed to send OTP" }, { status: response.status });
+      return NextResponse.json({ error: data.message || data.error || "Failed to send OTP." }, { status: response.status });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Error sending OTP:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
