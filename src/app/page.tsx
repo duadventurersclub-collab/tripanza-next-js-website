@@ -1,4 +1,4 @@
-import { getAppTours, getSiteConfig, type SiteConfig } from "@/lib/wp";
+import { getAppTours, getSiteConfig, getTourBySlug, type SiteConfig, type TourDetail } from "@/lib/wp";
 import HomeClient from "./HomeClient";
 import "./home.css";
 
@@ -13,10 +13,16 @@ const fallbackSite: SiteConfig = {
   timezone: "Asia/Kolkata",
 };
 
-export default async function Home() {
-  const [siteResult, toursResult] = await Promise.allSettled([getSiteConfig(), getAppTours({ per_page: 24 })]);
-  const site = siteResult.status === "fulfilled" ? siteResult.value : fallbackSite;
-  const tours = toursResult.status === "fulfilled" ? toursResult.value : { items: [], total: 0 };
+async function getHomepageTours(): Promise<TourDetail[]> {
+  const listing = await getAppTours({ per_page: 24 });
+  const detailed = await Promise.allSettled(listing.items.map((tour) => getTourBySlug(tour.slug)));
+  return detailed.map((result, index) => result.status === "fulfilled" && result.value ? result.value : listing.items[index]);
+}
 
-  return <HomeClient siteName={site.name} tours={tours.items} />;
+export default async function Home() {
+  const [siteResult, toursResult] = await Promise.allSettled([getSiteConfig(), getHomepageTours()]);
+  const site = siteResult.status === "fulfilled" ? siteResult.value : fallbackSite;
+  const tours = toursResult.status === "fulfilled" ? toursResult.value : [];
+
+  return <HomeClient siteName={site.name} tours={tours} />;
 }
