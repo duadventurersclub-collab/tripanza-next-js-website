@@ -77,10 +77,30 @@ export interface UserAccount {
 
 export interface UserBooking {
   id: number;
+  order_id: number;
+  tour_id: number;
+  tour_slug: string;
   title: string;
+  location: string;
+  image: string;
+  check_in: string;
+  check_out: string;
+  check_in_timestamp: number;
+  duration: string;
+  booking_number: string;
   status: string;
+  status_key: string;
+  status_tone: "paid" | "partial" | "cancelled" | "refunded" | "pending";
+  payment_status: string;
+  timing: "upcoming" | "past";
+  currency: string;
+  total: number;
+  paid: number;
+  remaining: number;
   amount: string;
   created_at: string;
+  invoice_url: string;
+  details_url: string;
 }
 
 const WORDPRESS_URL = (
@@ -165,8 +185,37 @@ export async function getUserBookings(sessionToken: string): Promise<UserBooking
       const rawItems = Array.isArray(payload) ? payload : Array.isArray(payload.orders) ? payload.orders : payload.items;
       if (Array.isArray(rawItems)) {
         return rawItems.map((item) => {
-          const raw = item as UserBooking & { total?: string };
-          return { ...raw, amount: String(raw.amount ?? raw.total ?? "0") };
+          const raw = item as Partial<UserBooking> & { total?: number | string };
+          const statusTone = ["paid", "partial", "cancelled", "refunded", "pending"].includes(raw.status_tone || "")
+            ? raw.status_tone as UserBooking["status_tone"]
+            : "pending";
+          return {
+            id: Number(raw.id) || 0,
+            order_id: Number(raw.order_id ?? raw.id) || 0,
+            tour_id: Number(raw.tour_id) || 0,
+            tour_slug: raw.tour_slug || "",
+            title: raw.title || "Your Tripanza trip",
+            location: raw.location || "",
+            image: raw.image || "https://tripanza.com/wp-content/uploads/2025/03/bgdefault_bg.avif",
+            check_in: raw.check_in || "Date to be announced",
+            check_out: raw.check_out || "",
+            check_in_timestamp: Number(raw.check_in_timestamp) || 0,
+            duration: raw.duration || "Duration pending",
+            booking_number: String(raw.booking_number || raw.id || ""),
+            status: raw.status || "Pending",
+            status_key: raw.status_key || "pending",
+            status_tone: statusTone,
+            payment_status: raw.payment_status || "",
+            timing: raw.timing === "past" ? "past" : "upcoming",
+            currency: raw.currency || "INR",
+            total: Number(raw.total) || 0,
+            paid: Number(raw.paid ?? raw.amount) || 0,
+            remaining: Number(raw.remaining) || 0,
+            amount: String(raw.amount ?? raw.paid ?? raw.total ?? "0"),
+            created_at: raw.created_at || "",
+            invoice_url: raw.invoice_url || "",
+            details_url: raw.details_url || "",
+          };
         });
       }
     } catch {

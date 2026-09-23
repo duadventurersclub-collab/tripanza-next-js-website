@@ -3,6 +3,7 @@ import { getSessionToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/wp";
 import Link from "next/link";
 import LogoutButton from "@/components/auth/LogoutButton";
+import "@/components/booking/booking-history.css";
 
 export default async function DashboardLayout({
   children,
@@ -23,28 +24,16 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Dashboard Navigation */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-8">
-            <h1 className="text-xl font-black text-slate-900">My Account</h1>
-            <nav className="hidden sm:flex gap-6">
-              <Link href="/dashboard" className="text-sm font-bold text-emerald-600">
-                Dashboard
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:inline text-sm font-medium text-slate-500">
-              {profile.email}
-            </span>
-            <LogoutButton />
-          </div>
+    <div className="min-h-screen bg-[#fbfaf6]">
+      <header className="border-b border-slate-200 bg-white/95">
+        <div className="mx-auto flex h-16 max-w-[820px] items-center justify-between px-5">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-black text-[#3157d5]"><span aria-hidden="true">←</span> Tripanza</Link>
+          <strong className="text-sm font-black text-[#151925]">Your bookings</strong>
+          <LogoutButton />
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-[820px] px-5 py-7 sm:py-10">
         {children}
       </main>
     </div>
