@@ -19,7 +19,7 @@
 .tp-booking-card { position:relative; overflow:hidden; border:1px solid var(--tb-line); border-radius:24px; background:#fff; box-shadow:0 12px 36px rgba(32,61,166,.075); }
 .tp-booking-media { position:relative; height:190px; overflow:hidden; background:#dfe5f2; }
 .tp-booking-media:after { position:absolute; z-index:1; inset:auto 0 0; height:46%; background:linear-gradient(transparent,rgba(10,14,24,.58)); content:""; pointer-events:none; }
-.tp-booking-media img { object-fit:cover; transition:transform .45s cubic-bezier(.2,.8,.2,1); }
+.tp-booking-media img { display:block; width:100%; height:100%; object-fit:cover; transition:transform .45s cubic-bezier(.2,.8,.2,1); }
 .tp-booking-card:hover .tp-booking-media img { transform:scale(1.025); }
 .tp-booking-status { position:absolute; z-index:2; top:12px; left:12px; padding:6px 9px; border:1px solid rgba(255,255,255,.5); border-radius:99px; background:rgba(21,25,37,.82); color:#fff; font-size:8px; font-weight:950; letter-spacing:.65px; text-transform:uppercase; backdrop-filter:blur(9px); }
 .tp-booking-status.is-paid { background:rgba(67,91,0,.88); color:#efffaf; }

@@ -1,12 +1,28 @@
 "use client";
 
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { useState } from "react";
 import type { UserBooking } from "@/lib/wp";
 
 function money(value: number, currency: string) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: currency || "INR", maximumFractionDigits: 0 }).format(value || 0);
+  const normalized = /^[A-Z]{3}$/.test(String(currency || "").toUpperCase()) ? String(currency).toUpperCase() : "INR";
+  try {
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency: normalized, maximumFractionDigits: 0 }).format(Number.isFinite(value) ? value : 0);
+  } catch {
+    return `₹${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number.isFinite(value) ? value : 0)}`;
+  }
+}
+
+const FALLBACK_IMAGE = "https://tripanza.com/wp-content/uploads/2025/03/bgdefault_bg.avif";
+
+function safeImage(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : FALLBACK_IMAGE;
+  } catch {
+    return FALLBACK_IMAGE;
+  }
 }
 
 function LocationIcon() {
@@ -39,7 +55,7 @@ export default function BookingHistory({ bookings }: { bookings: UserBooking[] }
 
       {visible.length ? <div className="tp-bookings-list">{visible.map((booking) => <article className="tp-booking-card" key={booking.id}>
         <div className="tp-booking-media">
-          <Image src={booking.image} alt={booking.title} fill sizes="(min-width: 680px) 245px, 100vw" unoptimized />
+          <img src={safeImage(booking.image)} alt={booking.title} loading="lazy" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = FALLBACK_IMAGE; }} />
           <span className={`tp-booking-status is-${booking.status_tone}`}>{booking.status}</span>
           <span className="tp-booking-date"><small>{booking.timing === "upcoming" ? "NEXT UP" : "TRIP DATE"}</small>{booking.check_in}</span>
         </div>
