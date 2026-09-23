@@ -139,11 +139,21 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
       onScroll();
       const stored = tours.filter((tour) => window.localStorage.getItem(`tripanza_saved_tour_${tour.id}`) === "1").map((tour) => tour.id);
       setSaved(stored);
+      if (new URLSearchParams(window.location.search).get("tripanza_filter") === "saved") setActiveFilter("saved");
       setNow(Date.now());
     });
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => { window.removeEventListener("scroll", onScroll); window.cancelAnimationFrame(frame); window.clearInterval(timer); };
   }, [tours]);
+
+  useEffect(() => {
+    const showSavedTrips = () => {
+      setActiveFilter("saved");
+      window.setTimeout(() => document.getElementById("trips")?.scrollIntoView({ behavior: "smooth" }), 0);
+    };
+    window.addEventListener("tripanza:show-saved", showSavedTrips);
+    return () => window.removeEventListener("tripanza:show-saved", showSavedTrips);
+  }, []);
 
   const filters = useMemo(() => {
     const names = Array.from(new Set(tours.flatMap(tourTerms))).filter(Boolean).slice(0, 6);
@@ -202,6 +212,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
     setSaved((current) => {
       const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
       window.localStorage.setItem(`tripanza_saved_tour_${id}`, next.includes(id) ? "1" : "0");
+      window.dispatchEvent(new CustomEvent("tripanza:saved-changed", { detail: { count: next.length } }));
       return next;
     });
   }
@@ -338,13 +349,6 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
 
       <section className="tph-final"><div className="tph-shell"><div className="tph-final__card"><h2>Stop reacting to reels. <span>Go make one.</span></h2><div><a href="#trips">Find my next trip</a><Link href="/tours">Watch trip drops</Link></div></div><footer><strong>India&apos;s coolest travel app <span>♥</span></strong><small>© {new Date().getFullYear()} Tripanza<br />Community trips for young India.</small></footer></div></section>
 
-      <nav className="tph-mobile-dock" aria-label="Mobile navigation">
-        <Link className="is-active" href="/"><NavIcon kind="home" /><span>Home</span></Link>
-        <a href="#why-tripanza"><NavIcon kind="people" /><span>Icebreaker</span></a>
-        <a className="is-primary" href="#trips"><span className="tph-mobile-dock__create"><NavIcon kind="explore" /></span><span>Explore</span></a>
-        <a href="#trips" onClick={() => setActiveFilter("saved")}><NavIcon kind="heart" /><span>Saved</span></a>
-        <Link href="/account"><NavIcon kind="user" /><span>Me</span></Link>
-      </nav>
     </main>
   );
 }
@@ -374,16 +378,11 @@ function MatchQuestion({ label, name, values, answers, setAnswers }: { label: st
   return <div className="tph2-question"><span>{label}</span><div>{values.map(([value, text]) => <button type="button" key={value} className={answers[name] === value ? "is-active" : ""} onClick={() => setAnswers((current) => ({ ...current, [name]: value }))}>{text}</button>)}</div></div>;
 }
 
-function NavIcon({ kind }: { kind: "search" | "compass" | "calendar" | "home" | "people" | "explore" | "heart" | "user" }) {
+function NavIcon({ kind }: { kind: "search" | "compass" | "calendar" }) {
   const paths = {
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
     compass: <><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9Z" /></>,
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></>,
-    home: <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" />,
-    people: <><path d="M15 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 3 18.5V20" /><circle cx="9" cy="8" r="3.5" /><path d="M17 8v6M14 11h6" /></>,
-    explore: <><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 2v5M16 2v5M4 10h16M9 14l2 2 4-4" /></>,
-    heart: <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.9-8.6a5.5 5.5 0 0 0-.1-7.8Z" />,
-    user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
   };
   return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[kind]}</svg>;
 }

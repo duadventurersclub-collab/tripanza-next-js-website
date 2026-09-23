@@ -33,6 +33,16 @@ const nextConfig: NextConfig = {
         hostname: "i.scdn.co",
         pathname: "/image/**",
       },
+      {
+        protocol: "https",
+        hostname: "secure.gravatar.com",
+        pathname: "/avatar/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.gravatar.com",
+        pathname: "/avatar/**",
+      },
     ],
   },
 };
