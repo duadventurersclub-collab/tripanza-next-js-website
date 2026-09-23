@@ -14,6 +14,44 @@ const FALLBACKS = [
 const FOUNDER_AKSHAY = "https://tripanza.com/wp-content/uploads/2025/11/WhatsApp-Image-2025-11-12-at-12.50.05-AM.jpeg";
 const FOUNDER_YASHIKA = "https://tripanza.com/wp-content/uploads/2026/08/1746074803319.jpg";
 const WHATSAPP = "https://wa.me/918130117254";
+const PLAYLISTS = [
+  {
+    title: "Rasta — The Best Hindi Travel Playlist",
+    description: "Primary · Hindi road-trip energy",
+    href: "https://open.spotify.com/playlist/0SsEPM8tO7hXzNpMw5ptDV",
+    cover: "https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da8422a0218bfe2136bcfb502037",
+  },
+  {
+    title: "2026 Travel Jukebox",
+    description: "Secondary · Hindi drive songs",
+    href: "https://open.spotify.com/playlist/4p20iuxiOfWN4ViRQFkSvH",
+    cover: "https://image-cdn-fa.spotifycdn.com/image/ab67706c0000da84bbe00e51c92613f758d23ab4",
+  },
+  {
+    title: "Hindi road-trip songs",
+    description: "Bollywood and safar favourites",
+    href: "https://open.spotify.com/playlist/1qk7sHSUKBuKeDaMeTQqMY",
+    cover: "https://image-cdn-fa.spotifycdn.com/image/ab67706c0000da84d7315322b14694ff0e20e5f8",
+  },
+  {
+    title: "Hindi travel vibes",
+    description: "Feel-good songs for the crew",
+    href: "https://open.spotify.com/playlist/3S3O5JTK6prLIw43qrWtrJ",
+    cover: "https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da84cd21295f3226bc0d04f83db7",
+  },
+  {
+    title: "Classic road-trip songs",
+    description: "English classics for long drives",
+    href: "https://open.spotify.com/playlist/37i9dQZF1DX9wC1KY45plY",
+    cover: "https://i.scdn.co/image/ab67706f0000000250c7781777a3b0662fce5426",
+  },
+  {
+    title: "Roadtrip songs everyone knows",
+    description: "English sing-along energy",
+    href: "https://open.spotify.com/playlist/3thUQNBZz9ZEqhaiN2UzBG",
+    cover: "https://image-cdn-fa.spotifycdn.com/image/ab67706c0000da84edff707983d9e22da4a8606f",
+  },
+] as const;
 
 type Filter = "all" | "saved" | string;
 type MatchAnswers = { budget?: string; duration?: string; vibe?: string };
@@ -260,7 +298,37 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
 
       <section className="tph2-section tph2-international" id="international-trips"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Next stamp incoming</div><h2 className="tph2-title">Passport ready. Group chat pending.</h2></div><span>Visa era loading · Boarding soon ✈</span></div><div className="tph2-int-waitlist"><div><small>Your passport era starts here</small><h3>International trips are almost boarding.</h3><p>Bali, Vietnam, Thailand and more are on our radar. Join the drop list—no spam, just launch updates and real departures.</p><div><span>Bali</span><span>Vietnam</span><span>Thailand</span><span>More loading…</span></div><a href={WHATSAPP}>Get on the first-drop list</a></div><div className="tph2-int-visual"><span>📷</span><span>🧳</span><span>🌴</span><div><small>TRIPANZA</small><b>✦</b><strong>PASSPORT</strong><em>WORLD TRIP ERA</em></div><p>DEL ✈ WORLD</p></div></div></div></section>
 
-      <section className="tph2-playlist" id="travel-playlists"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Tripanza on AUX</div><h2 className="tph2-title">Put this on before the aux war starts.</h2></div><span>♫ Opens in Spotify</span></div><div className="tph2-playlist__rail">{["Rasta — The Best Hindi Travel Playlist", "2026 Travel Jukebox", "Hindi road-trip songs", "Hindi travel vibes", "Classic road-trip songs", "Roadtrip songs everyone knows"].map((title, index) => <a className="tph2-track" href="https://open.spotify.com/search/travel%20playlist" target="_blank" rel="noreferrer" key={title}><span className={`tph2-track__cover tone-${index % 4}`}>♫</span><small>Playlist {String(index + 1).padStart(2, "0")}</small><strong>{title}</strong><p>{index < 2 ? "Hindi drive songs" : "Road-trip energy for the crew"}</p><i /><span>◀　▶　▶❘</span></a>)}</div></div></section>
+      <section className="tph2-playlist" id="travel-playlists" aria-labelledby="travel-playlists-title">
+        <div className="tph-shell">
+          <div className="tph2-head">
+            <div>
+              <div className="tph2-kicker">Tripanza on AUX</div>
+              <h2 className="tph2-title" id="travel-playlists-title">Put this on before the aux war starts.</h2>
+            </div>
+            <span className="tph2-playlist__spotify"><i aria-hidden="true">♫</i> Opens in Spotify</span>
+          </div>
+          <div className="tph2-playlist__rail">
+            {PLAYLISTS.map((playlist, index) => <article className="tph2-track" key={playlist.href}>
+              <a className="tph2-track__cover" href={playlist.href} target="_blank" rel="noreferrer" aria-label={`Open ${playlist.title} on Spotify`}>
+                <Image src={playlist.cover} alt="" fill sizes="142px" />
+                <span>Spotify travel playlist</span>
+              </a>
+              <div className="tph2-track__body">
+                <small>Playlist {String(index + 1).padStart(2, "0")}</small>
+                <h3>{playlist.title}</h3>
+                <p>{playlist.description}</p>
+                <span className="tph2-track__progress" aria-hidden="true" />
+                <span className="tph2-track__time" aria-hidden="true"><span>0:42</span><span>3:21</span></span>
+                <nav className="tph2-track__controls" aria-label={`${playlist.title} Spotify controls`}>
+                  <a href={playlist.href} target="_blank" rel="noreferrer" aria-label="Open playlist on Spotify">◀</a>
+                  <a href={playlist.href} target="_blank" rel="noreferrer" aria-label="Open and play on Spotify">▶</a>
+                  <a href={playlist.href} target="_blank" rel="noreferrer" aria-label="Open playlist on Spotify">▶❘</a>
+                </nav>
+              </div>
+            </article>)}
+          </div>
+        </div>
+      </section>
 
       <section className="tph2-postcards" id="trip-postcards"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Collect your next place</div><h2 className="tph2-title">States now. Countries next.</h2></div><span>Tripanza postcard club</span></div><div className="tph2-postcards__tabs"><button className={postcardKind === "state" ? "is-active" : ""} onClick={() => setPostcardKind("state")}>India state drops <b>4</b></button><button className={postcardKind === "country" ? "is-active" : ""} onClick={() => setPostcardKind("country")}>Country drops incoming <b>4</b></button></div><div className="tph2-postcards__desk">{(postcardKind === "state" ? [["Himachal", "Mountain mornings & chai"], ["Uttarakhand", "Trails, temples & tiny roads"], ["Rajasthan", "Forts, sunsets & stories"], ["Goa", "Salt air, scenes & sunsets"]] : [["Thailand", "Night markets loading"], ["Vietnam", "Lantern streets loading"], ["Indonesia", "Bali era incoming"], ["Georgia", "Snow, streets & wine"]]).map(([place, copy], index) => { const tour = tours[(index + (postcardKind === "country" ? 4 : 0)) % Math.max(1, tours.length)]; return <Link className="tph2-postcard" href={tour ? `/tours/${tour.slug}` : "/tours"} key={place}><span className="tph2-postcard__art"><HomeImage src={tour?.featured_image} alt={place} /><em>Greetings from</em><b>{place}</b><u>{postcardKind === "state" ? "India state series" : "Passport series"}</u></span><span className="tph2-postcard__copy"><span><small>Tripanza postcard</small><strong>{tour?.title || place}</strong><em>{copy}</em></span><i className="tph2-postcard__stamp">✈<small>TPZ</small></i></span></Link>; })}</div><div className="tph2-postcards__foot"><span>Start with a state. Graduate to a passport stamp.</span><Link href="/tours">Pick a place →</Link></div></div></section>
 

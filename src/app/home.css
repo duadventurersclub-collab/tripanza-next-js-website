@@ -1140,18 +1140,39 @@
 /* Playlist, FAQ, WhatsApp help and closing CTA. */
 .tph2-playlist { overflow: hidden; padding: 72px 0; color: #151925; background: #d0e562; }
 .tph2-playlist .tph2-kicker { color: #3157d5; }
-.tph2-playlist .tph2-title { color: #151925; }
-.tph2-playlist .tph2-head > span { display: inline-flex; padding: 9px 12px; border-radius: 999px; color: #fff; background: #151925; font-size: 8px; font-weight: 950; text-transform: uppercase; }
-.tph2-playlist__rail { margin-right: calc(clamp(24px,3vw,56px)*-1); margin-left: calc(clamp(24px,3vw,56px)*-1); padding: 5px clamp(24px,3vw,56px) 24px; gap: 13px; }
-.tph2-track { position: relative; display: grid; width: 330px; min-height: 190px; padding: 13px; flex: 0 0 330px; grid-template-columns: 142px minmax(0,1fr); grid-template-rows: auto auto auto 1fr auto; gap: 6px 16px; border-radius: 27px; color: #fff; background: #151925; }
+.tph2-playlist .tph2-head { align-items: center; }
+.tph2-playlist .tph2-title { max-width: 780px; color: #151925; }
+.tph2-playlist__spotify { display: inline-flex; padding: 9px 12px; align-items: center; gap: 8px; border-radius: 999px; color: #fff; background: #151925; font-size: 8px; font-weight: 950; letter-spacing: .4px; text-transform: uppercase; }
+.tph2-playlist__spotify i { display: grid; width: 21px; height: 21px; place-items: center; border-radius: 50%; color: #151925; background: #1ed760; font-size: 11px; font-style: normal; }
+.tph2-playlist__rail { display: flex; margin-right: calc(clamp(24px,3vw,56px)*-1); margin-left: calc(clamp(24px,3vw,56px)*-1); padding: 5px clamp(24px,3vw,56px) 24px; gap: 13px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: clamp(24px,3vw,56px); scrollbar-width: none; }
+.tph2-playlist__rail::-webkit-scrollbar { display: none; }
+.tph2-track { position: relative; display: grid; width: 330px; min-height: 190px; padding: 13px; flex: 0 0 330px; overflow: hidden; grid-template-columns: 142px minmax(0,1fr); gap: 16px; border-radius: 27px; color: #fff; background: #151925; scroll-snap-align: start; }
 .tph2-track:nth-child(4n+2) { color: #172008; background: #fff8ed; }
 .tph2-track:nth-child(4n+3) { background: #3157d5; }
 .tph2-track:nth-child(4n) { color: #172008; background: #ff9f8f; }
-.tph2-track__cover { display: grid; height: 164px; grid-row: 1/-1; place-items: center; border-radius: 20px; font-size: 58px; }
-.tph2-track > small { font-size: 7px; font-weight: 950; opacity: .62; }
-.tph2-track > strong { min-height: 0; font-size: 19px; font-weight: 950; letter-spacing: -.6px; line-height: 1.05; }
-.tph2-track > p { min-height: 0; font-size: 8px; opacity: .65; }
-.tph2-track > i { height: 4px; margin: auto 0 0; border-radius: 999px; }
+.tph2-track__cover { position: relative; display: block; height: 164px; overflow: hidden; border-radius: 20px; color: #fff; text-decoration: none; }
+.tph2-track__cover img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
+.tph2-track__cover:after { position: absolute; inset: 0; background: linear-gradient(180deg,transparent 45%,rgba(7,10,17,.65)); content: ""; }
+.tph2-track:hover .tph2-track__cover img { transform: scale(1.04); }
+.tph2-track__cover span { position: absolute; z-index: 2; right: 10px; bottom: 9px; left: 10px; font-size: 7px; font-weight: 950; letter-spacing: .6px; text-transform: uppercase; }
+.tph2-track__body { display: flex; min-width: 0; padding: 5px 3px 3px 0; flex-direction: column; }
+.tph2-track__body small { font-size: 7px; font-weight: 950; letter-spacing: .7px; text-transform: uppercase; opacity: .62; }
+.tph2-track__body h3 { display: -webkit-box; margin: 9px 0 0; overflow: hidden; font-size: 19px; font-weight: 950; letter-spacing: -.6px; line-height: 1.05; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.tph2-track__body p { margin: 7px 0 0; font-size: 8px; font-weight: 750; line-height: 1.45; opacity: .65; }
+.tph2-track__progress { position: relative; height: 4px; margin-top: auto; border-radius: 999px; background: rgba(255,255,255,.18); }
+.tph2-track:nth-child(4n+2) .tph2-track__progress,
+.tph2-track:nth-child(4n) .tph2-track__progress { background: rgba(21,25,37,.12); }
+.tph2-track__progress:before { display: block; width: 42%; height: 100%; border-radius: inherit; background: #d0e562; content: ""; }
+.tph2-track:nth-child(4n+2) .tph2-track__progress:before,
+.tph2-track:nth-child(4n) .tph2-track__progress:before { background: #3157d5; }
+.tph2-track__time { display: flex; margin-top: 5px; justify-content: space-between; font-size: 6px; font-weight: 800; opacity: .55; }
+.tph2-track__controls { display: flex; margin-top: 11px; align-items: center; justify-content: center; gap: 8px; }
+.tph2-track__controls a { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; color: inherit; background: rgba(255,255,255,.08); font-size: 10px; font-weight: 950; text-decoration: none; }
+.tph2-track:nth-child(4n+2) .tph2-track__controls a,
+.tph2-track:nth-child(4n) .tph2-track__controls a { border-color: rgba(21,25,37,.1); background: rgba(21,25,37,.05); }
+.tph2-track__controls a:nth-child(2) { width: 39px; height: 39px; border: 0; color: #151925; background: #d0e562; font-size: 14px; }
+.tph2-track:nth-child(4n+2) .tph2-track__controls a:nth-child(2),
+.tph2-track:nth-child(4n) .tph2-track__controls a:nth-child(2) { color: #fff; background: #3157d5; }
 .tph2-faq { padding: 72px 0; background: #fff8ef; }
 .tph2-faq__layout { grid-template-columns: minmax(300px,.72fr) minmax(0,1.28fr); gap: 16px; align-items: stretch; }
 .tph2-faq__intro { position: relative; top: auto; min-height: 500px; padding: 38px; overflow: hidden; border-radius: 30px; color: #fff; background: radial-gradient(circle at 105% 0,rgba(208,229,98,.2),transparent 17rem),#3157d5; }
@@ -1201,8 +1222,9 @@
   .tph2-int-waitlist h3 { font-size: 42px; letter-spacing: -2px; }
   .tph2-int-visual { min-height: 295px; margin-top: 23px; }
   .tph2-playlist { padding: 52px 0; }
-  .tph2-playlist .tph2-head > span { margin-top: 17px; }
-  .tph2-playlist__rail { margin-inline: -16px; padding: 4px 16px 20px; gap: 10px; }
+  .tph2-playlist .tph2-head { display: block; }
+  .tph2-playlist__spotify { margin-top: 17px; }
+  .tph2-playlist__rail { margin-inline: -16px; padding: 4px 16px 20px; gap: 10px; scroll-padding-inline: 16px; }
   .tph2-track { width: min(86vw,330px); flex-basis: min(86vw,330px); }
   .tph2-faq { padding: 52px 0; }
   .tph2-faq__layout { display: block; }
