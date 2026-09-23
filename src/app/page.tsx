@@ -1,5 +1,6 @@
-import { getFeaturedTours, getSiteConfig, type SiteConfig } from "@/lib/wp";
+import { getAppTours, getSiteConfig, type SiteConfig } from "@/lib/wp";
 import HomeClient from "./HomeClient";
+import "./home.css";
 
 export const revalidate = 300;
 
@@ -13,7 +14,7 @@ const fallbackSite: SiteConfig = {
 };
 
 export default async function Home() {
-  const [siteResult, toursResult] = await Promise.allSettled([getSiteConfig(), getFeaturedTours(9)]);
+  const [siteResult, toursResult] = await Promise.allSettled([getSiteConfig(), getAppTours({ per_page: 24 })]);
   const site = siteResult.status === "fulfilled" ? siteResult.value : fallbackSite;
   const tours = toursResult.status === "fulfilled" ? toursResult.value : { items: [], total: 0 };
 

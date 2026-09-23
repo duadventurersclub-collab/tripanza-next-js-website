@@ -1,93 +1,300 @@
-import Link from "next/link";
-import Image from "next/image";
-import type { TourSummary } from "@/lib/wp";
-import HomeTourExplorer from "./HomeTourExplorer";
+"use client";
 
-const logoUrl = "https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png";
-const gallery = [
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { TourDetail } from "@/lib/wp";
+
+const LOGO = "https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png";
+const FALLBACKS = [
   "https://tripanza.com/wp-content/uploads/2022/09/WhatsApp-Image-2022-09-16-at-2.04.56-AM.jpeg",
   "https://tripanza.com/wp-content/uploads/2021/06/WhatsApp-Image-2021-07-12-at-2.28.22-AM-15-e1662666832961.jpeg",
 ];
+const FOUNDER_AKSHAY = "https://tripanza.com/wp-content/uploads/2025/11/WhatsApp-Image-2025-11-12-at-12.50.05-AM.jpeg";
+const FOUNDER_YASHIKA = "https://tripanza.com/wp-content/uploads/2026/08/1746074803319.jpg";
+const WHATSAPP = "https://wa.me/918130117254";
 
-export default function HomeClient({ tours, siteName }: { tours: TourSummary[]; siteName: string }) {
+type Filter = "all" | "saved" | string;
+type MatchAnswers = { budget?: string; duration?: string; vibe?: string };
+
+function money(value: number, currency = "INR") {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
+}
+
+function duration(tour: TourDetail) {
+  const { days, nights } = tour.details.duration;
+  return days ? `${nights || Math.max(0, Number(days) - 1)}N/${days}D` : "";
+}
+
+function startingAmount(tour: TourDetail) {
+  const values = [tour.details.pricing.quad, tour.details.pricing.triple, tour.details.pricing.twin]
+    .map((price) => price?.amount || 0)
+    .filter((value) => value > 0);
+  return values.length ? Math.min(...values) : 0;
+}
+
+function saleAmount(tour: TourDetail) {
+  const price = startingAmount(tour);
+  const rate = tour.details.booking.discount_rate;
+  if (!price || !rate) return price;
+  return tour.details.booking.discount_type === "amount"
+    ? Math.max(0, price - rate)
+    : Math.max(0, price * (1 - Math.min(100, rate) / 100));
+}
+
+function dateLabel(value: string, long = false) {
+  if (!value) return "";
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-IN", long
+    ? { weekday: "short", day: "numeric", month: "short" }
+    : { day: "numeric", month: "short" });
+}
+
+function monthKey(value: string) {
+  return value.slice(0, 7);
+}
+
+function monthLabel(value: string) {
+  const date = new Date(`${value}-01T00:00:00`);
+  return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+}
+
+function tourTerms(tour: TourDetail) {
+  return Object.values(tour.terms || {}).flat().map((term) => term.name);
+}
+
+function numeric(value?: string) {
+  const parsed = Number((value || "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+}
+
+function daysForTour(tour: TourDetail) {
+  return Number(tour.details.duration.days) || 0;
+}
+
+function HomeImage({ src, alt, className = "" }: { src?: string | null; alt: string; className?: string }) {
+  return <Image src={src || FALLBACKS[0]} alt={alt} fill sizes="(max-width: 760px) 100vw, 520px" className={className} />;
+}
+
+export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; siteName: string }) {
+  const router = useRouter();
+  const heroVideo = tours.flatMap((tour) => tour.details.reels).find(Boolean) || "";
+  const heroImage = tours.flatMap((tour) => tour.details.gallery.map((image) => image.url)).find(Boolean) || tours[0]?.featured_image || FALLBACKS[0];
+  const heroTour = tours[0];
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState<Filter>("all");
+  const [saved, setSaved] = useState<number[]>([]);
+  const [departureMonth, setDepartureMonth] = useState("all");
+  const [destinationFilter, setDestinationFilter] = useState("all");
+  const [answers, setAnswers] = useState<MatchAnswers>({});
+  const [postcardKind, setPostcardKind] = useState<"state" | "country">("state");
+  const [now, setNow] = useState(0);
+  const [videoPaused, setVideoPaused] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 18);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const frame = window.requestAnimationFrame(() => {
+      onScroll();
+      const stored = tours.filter((tour) => window.localStorage.getItem(`tripanza_saved_tour_${tour.id}`) === "1").map((tour) => tour.id);
+      setSaved(stored);
+      setNow(Date.now());
+    });
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => { window.removeEventListener("scroll", onScroll); window.cancelAnimationFrame(frame); window.clearInterval(timer); };
+  }, [tours]);
+
+  const filters = useMemo(() => {
+    const names = Array.from(new Set(tours.flatMap(tourTerms))).filter(Boolean).slice(0, 6);
+    return ["all", "saved", ...names];
+  }, [tours]);
+
+  const searchMatches = search.trim().length >= 2
+    ? tours.filter((tour) => `${tour.title} ${tour.details.destination}`.toLowerCase().includes(search.toLowerCase())).slice(0, 6)
+    : [];
+
+  const visibleTours = tours.filter((tour) => {
+    if (activeFilter === "saved") return saved.includes(tour.id);
+    if (activeFilter === "all") return true;
+    return tourTerms(tour).includes(activeFilter);
+  }).slice(0, 6);
+
+  const departures = useMemo(() => tours.flatMap((tour) => tour.details.departures.slice(0, 3).map((departure) => ({ tour, departure })))
+    .sort((a, b) => a.departure.date.localeCompare(b.departure.date)).slice(0, 12), [tours]);
+  const departureMonths = Array.from(new Set(departures.map(({ departure }) => monthKey(departure.date)))).slice(0, 7);
+
+  const deals = tours.filter((tour) => tour.details.cashback || tour.details.booking.discount_rate > 0 || tour.details.bulk_discounts.length || tour.details.offer.ends_at).slice(0, 6);
+  const reviews = tours.flatMap((tour) => tour.details.reviews.map((review) => ({ ...review, tour }))).filter((review, index, all) => all.findIndex((item) => item.author_name === review.author_name && item.text === review.text) === index).slice(0, 8);
+  const gallery = tours.flatMap((tour) => tour.details.gallery.slice(0, 2).map((image) => ({ ...image, tour }))).slice(0, 24);
+  const stays = tours.flatMap((tour) => tour.details.stays.map((stay) => ({ ...stay, tour }))).filter((stay) => stay.images.length).slice(0, 5);
+  const reels = tours.filter((tour) => tour.details.reels.length).slice(0, 8);
+  const underTen = tours.filter((tour) => saleAmount(tour) > 0 && saleAmount(tour) <= 10000).sort((a, b) => saleAmount(a) - saleAmount(b)).slice(0, 3);
+  const quickTrips = tours.filter((tour) => daysForTour(tour) > 0 && daysForTour(tour) <= 5 && !underTen.some((item) => item.id === tour.id)).slice(0, 3);
+  const minAdvance = Math.min(...tours.map((tour) => tour.details.booking.deposit_percentage).filter((rate) => rate > 0 && rate < 100), 100);
+
+  const destinationCards = tours.slice(0, 8).map((tour) => {
+    const haystack = `${tour.title} ${tour.details.destination} ${tourTerms(tour).join(" ")}`.toLowerCase();
+    const international = /(bali|vietnam|thailand|dubai|bhutan|japan|georgia|malaysia|singapore|international)/.test(haystack);
+    const weekend = daysForTour(tour) > 0 && daysForTour(tour) <= 3;
+    const girls = /(girl|women)/.test(haystack);
+    return { tour, kinds: [international ? "international" : "domestic", weekend ? "weekend" : "", girls ? "girls" : ""].filter(Boolean) };
+  });
+  const visibleDestinations = destinationCards.filter((item) => destinationFilter === "all" || item.kinds.includes(destinationFilter));
+
+  const match = useMemo(() => {
+    if (!answers.budget || !answers.duration || !answers.vibe || !tours.length) return null;
+    return [...tours].sort((left, right) => scoreTour(right, answers) - scoreTour(left, answers))[0];
+  }, [answers, tours]);
+
+  function scoreTour(tour: TourDetail, values: MatchAnswers) {
+    let score = 0;
+    const price = saleAmount(tour);
+    const length = daysForTour(tour);
+    const text = `${tour.title} ${tour.details.destination} ${tourTerms(tour).join(" ")}`.toLowerCase();
+    if (values.budget === "any" || !price) score += 1; else score += price <= Number(values.budget) ? 4 : -5;
+    if (values.duration === "any") score += 1; else if (values.duration === "short" && length <= 4) score += 3; else if (values.duration === "long" && length >= 5) score += 3;
+    if (values.vibe === "any") score += 1; else if (values.vibe === "beach" && /(goa|beach|coast)/.test(text)) score += 5; else if (values.vibe === "mountain" && /(manali|spiti|jibhi|tirthan|kasol|kedarnath|chopta|mcleod|triund|mountain|trek)/.test(text)) score += 5;
+    return score;
+  }
+
+  function toggleSaved(id: number) {
+    setSaved((current) => {
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+      window.localStorage.setItem(`tripanza_saved_tour_${id}`, next.includes(id) ? "1" : "0");
+      return next;
+    });
+  }
+
+  function submitSearch(event: React.FormEvent) {
+    event.preventDefault();
+    const match = searchMatches[0];
+    if (match) router.push(`/tours/${match.slug}`); else router.push(`/tours?search=${encodeURIComponent(search)}`);
+  }
+
+  function toggleVideo() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) { void video.play(); setVideoPaused(false); } else { video.pause(); setVideoPaused(true); }
+  }
+
   return (
-    <main className="overflow-hidden bg-[#fbf8f3] text-[#151925]">
-      <nav className="sticky top-0 z-30 border-b border-[#1f2b460f] bg-white/90 px-4 py-3 shadow-[0_8px_28px_rgba(27,40,72,0.05)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-12 max-w-[1240px] items-center gap-5">
-          <Link href="/" className="flex items-center gap-2 text-[19px] font-black tracking-[-0.6px]">
-            <Image src={logoUrl} alt="Tripanza" width={40} height={40} sizes="40px" className="h-10 w-10 rounded-xl object-contain" />
-            <span>{siteName || "Tripanza"}</span>
-          </Link>
-          <div className="ml-auto hidden items-center gap-7 text-[11px] font-extrabold text-[#586275] lg:flex">
-            <a href="#trips" className="transition hover:text-[#3157d5]">Explore trips</a>
-            <a href="#deal-drops" className="transition hover:text-[#3157d5]">Trip drops</a>
-            <a href="#why-tripanza" className="transition hover:text-[#3157d5]">Why Tripanza</a>
-            <a href="#trip-faq" className="transition hover:text-[#3157d5]">Find my trip</a>
-          </div>
-          <Link href="/login" className="rounded-[13px] bg-[#d0e562] px-4 py-3 text-[10px] font-black text-[#263407] transition hover:-translate-y-0.5 hover:shadow-lg">Log in</Link>
+    <main className="tph">
+      <nav className={`tph-nav${navScrolled ? " is-scrolled" : ""}`} aria-label="Primary navigation">
+        <div className="tph-shell tph-nav__inner">
+          <Link href="/" className="tph-logo"><Image src={LOGO} alt="" width={42} height={42} /><span>{siteName || "Tripanza"}</span></Link>
+          <div className="tph-menu"><a href="#trips">Explore trips</a><a href="#trip-drops">Trip drops</a><a href="#why-tripanza">Why Tripanza</a></div>
+          <a className="tph-nav__cta" href="#trips">Find my trip</a>
         </div>
       </nav>
 
-      <header className="px-4 pb-14 pt-5 sm:pt-7">
-        <div className="relative mx-auto min-h-[600px] max-w-[1240px] overflow-hidden rounded-[32px] bg-[#111624] shadow-[0_32px_75px_rgba(17,25,49,0.18)] md:min-h-[660px]">
-          <Image src={tours[0]?.featured_image || gallery[0]} alt="Tripanza community trip" fill priority sizes="(max-width: 1240px) 100vw, 1240px" className="object-cover opacity-80" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,15,28,.88)_0%,rgba(11,15,28,.55)_45%,rgba(11,15,28,.08)_100%)]" />
-          <div className="relative flex min-h-[600px] max-w-[780px] flex-col justify-end p-6 text-white sm:p-10 md:min-h-[660px] md:p-14">
-            <span className="mb-auto inline-flex w-fit rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#d0e562] backdrop-blur">Live from the trip</span>
-            <p className="mb-4 text-[10px] font-black uppercase tracking-[0.14em] text-[#d0e562]">India&apos;s coolest travel community</p>
-            <h1 className="max-w-[700px] text-[clamp(3.7rem,8.5vw,7.1rem)] font-black leading-[.88] tracking-[-0.075em]">Your next story won&apos;t fit in the group chat.</h1>
-            <p className="mt-6 max-w-[590px] text-sm font-semibold leading-6 text-white/80 sm:text-base sm:leading-7">Solo, with your best friend, or with the whole gang — find a trip with people who make getting away feel easy.</p>
-            <form action="/tours" method="GET" className="mt-7 flex max-w-[620px] overflow-hidden rounded-2xl border border-white/30 bg-white p-1.5 shadow-[0_16px_35px_rgba(0,0,0,.25)]">
-              <span className="grid w-11 shrink-0 place-items-center text-base text-[#3157d5]">⌕</span>
-              <input name="search" placeholder="Where do you want to go?" className="min-w-0 flex-1 bg-transparent px-1 text-sm font-semibold text-[#151925] outline-none placeholder:text-[#8a94a4]" />
-              <button type="submit" className="rounded-xl bg-[#3157d5] px-4 py-3 text-[10px] font-black text-white">Explore trips</button>
+      <header className="tph-hero">
+        <div className="tph-shell tph-hero__grid">
+          <div className="tph-hero__copy">
+            <span className="tph-kicker">Community trips for 18–28</span>
+            <h1>Your next story won&apos;t fit in the <em>group chat.</em></h1>
+            <p>Join young travellers, explore somewhere unreal and come back with a camera roll full of people who stopped feeling like strangers.</p>
+            <form className="tph-search" onSubmit={submitSearch}>
+              <span className="tph-search__icon">⌕</span>
+              <input value={search} onChange={(event) => setSearch(event.target.value)} type="search" placeholder="Where do you want to disappear?" aria-label="Search trips" />
+              <button type="submit">Show me trips</button>
             </form>
-            <div className="mt-4 flex flex-wrap gap-2">{["Under ₹10K", "All Girls", "Every Friday", "India trips"].map((chip) => <a key={chip} href="#trips" className="rounded-full border border-white/25 bg-white/10 px-3 py-2 text-[9px] font-black backdrop-blur transition hover:bg-white hover:text-[#151925]">{chip}</a>)}</div>
+            {search.trim().length >= 2 ? <div className="tph-live-search">{searchMatches.length ? searchMatches.map((tour) => <Link key={tour.id} href={`/tours/${tour.slug}`} className="tph-live-search__item"><span className="tph-live-search__thumb"><HomeImage src={tour.featured_image} alt="" /></span><span><strong>{tour.title}</strong><small>{[tour.details.destination, duration(tour)].filter(Boolean).join(" • ")}</small></span><b>From {money(saleAmount(tour), tour.currency)}</b></Link>) : <p>No quick match. Press search to see every trip.</p>}</div> : null}
+            <div className="tph-quick">{["Under ₹10K", "Every Friday", "India trips"].map((label) => <button key={label} type="button" onClick={() => { setSearch(label); document.getElementById("trips")?.scrollIntoView({ behavior: "smooth" }); }}>{label}</button>)}</div>
           </div>
-          <div className="absolute bottom-7 right-7 hidden max-w-[180px] rounded-[18px] bg-[#d0e562] p-4 text-[#263407] shadow-xl md:block"><b className="block text-[10px] uppercase tracking-wide">50K+ travellers</b><p className="mt-2 text-xs font-bold leading-5">Strangers on day one. Inside jokes by day two.</p></div>
+
+          <div className="tph-visual">
+            <div className="tph-live-stage">
+              {heroVideo ? <video ref={videoRef} src={heroVideo} poster={heroImage} muted loop playsInline autoPlay preload="metadata" /> : <HomeImage src={heroImage} alt="Travellers on a Tripanza group trip" />}
+              <span className="tph-live-stage__shade" />
+              <div className="tph-live-stage__top"><span><i />Live from the trip</span>{heroVideo ? <button type="button" onClick={toggleVideo} aria-label={videoPaused ? "Play hero video" : "Pause hero video"}>{videoPaused ? "▶" : "Ⅱ"}</button> : null}</div>
+              <div className="tph-live-stage__copy"><small>The group chat left home</small><strong>This is what “we should plan a trip” looks like.</strong></div>
+              <span className="tph-live-stage__chat tph-live-stage__chat--one">Who packed the speaker? ♫</span>
+              <span className="tph-live-stage__chat tph-live-stage__chat--two">Main-character weekend ✨</span>
+              <span className="tph-live-stage__ticker">REAL PEOPLE <i /> REAL TRIPS <i /> REAL STORIES</span>
+            </div>
+            {heroTour ? <div className="tph-visual__tour"><small>One trip away</small><strong>{heroTour.title}</strong></div> : null}
+          </div>
         </div>
       </header>
 
-      <section className="border-y border-[#e1e6ef] bg-white">
-        <div className="mx-auto grid max-w-[1180px] divide-y divide-[#e1e6ef] px-4 md:grid-cols-3 md:divide-x md:divide-y-0">
-          {[['2016', 'Exploring since', 'Building youth travel, one group at a time.'], ['50K+', 'Happy travellers', 'People who turned plans into stories.'], ['1000+', 'Trips created', 'Designed around people, not only destinations.']].map(([metric, title, copy]) => (
-            <div key={metric} className="flex items-center gap-3 px-0 py-4 md:px-6 md:py-6 first:pl-0 last:pr-0">
-              <strong className="grid h-11 min-w-[66px] place-items-center rounded-[14px] bg-[#3157d5] px-2 text-[15px] text-white">{metric}</strong>
-              <span><b className="block text-xs font-black">{title}</b><small className="mt-1 block text-[10px] font-semibold text-[#747e90]">{copy}</small></span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <div className="tph-profile">
+        <div className="tph-profile__avatar"><Image src={LOGO} alt="Tripanza" width={152} height={152} /></div>
+        <div className="tph-profile__name"><h2>Tripanza</h2><span>✓</span></div>
+        <p>India&apos;s coolest travel startup</p>
+        <div className="tph-profile__confidence"><span>Community trips</span><i /><span>18–28 only</span><i /><span>Women-friendly</span></div>
+        <div className="tph-profile__switch"><a className="is-active" href="#trips">⌁ Explore trips</a><a href="#people-planning">▣ Live dates</a></div>
+      </div>
 
-      <HomeTourExplorer tours={tours} />
+      <section className="tph-proof"><div className="tph-shell tph-proof__inner">{[["2016", "Exploring since", "Building youth travel, one group at a time."], ["50K+", "Happy travellers", "People who turned plans into stories."], ["1000+", "Trips created", "Designed around people, not only destinations."]].map(([metric, title, copy]) => <div className="tph-proof__item" key={metric}><span>{metric}</span><div><strong>{title}</strong><small>{copy}</small></div></div>)}</div></section>
 
-      <section id="people-planning" className="bg-[#f6f8fc] px-4 py-16">
-        <div className="mx-auto max-w-[1180px]"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#3157d5]">Dates people are planning around</p><h2 className="mt-2 max-w-2xl text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">Pick a date. We&apos;ll bring the people.</h2><div className="mt-7 flex gap-3 overflow-x-auto pb-3">{tours.slice(0, 6).map((tour, index) => <Link key={tour.id} href={`/tours/${tour.slug}`} className="grid min-w-[280px] grid-cols-[72px_1fr] overflow-hidden rounded-[22px] border border-[#dce2ed] bg-white shadow-sm"><span className={`grid place-items-center px-2 text-center text-white ${index % 3 === 1 ? "bg-[#d0e562] text-[#27340b]" : "bg-[#3157d5]"}`}><b className="text-2xl font-black">{String(index + 12).padStart(2, "0")}</b><small className="text-[9px] font-black uppercase">Jun</small></span><span className="flex min-w-0 flex-col justify-center p-4"><b className="truncate text-sm font-black">{tour.title}</b><span className="mt-2 text-[9px] font-bold text-[#697386]">{tour.excerpt || "Seats available"}</span><strong className="mt-3 text-sm font-black text-[#173fb9]">{tour.price || "See price"}</strong></span></Link>)}</div></div>
-      </section>
+      {departures.length ? <section className="tph2-social" id="people-planning"><div className="tph-shell"><div className="tph2-social__top"><div className="tph2-kicker">⚡ Leaving soon</div><h2>Pick a date. <span>Meet your crew.</span></h2></div><div className="tph2-tabs">{["all", ...departureMonths].map((month) => <button key={month} className={departureMonth === month ? "is-active" : ""} onClick={() => setDepartureMonth(month)}>{month === "all" ? "All dates" : monthLabel(month)}</button>)}</div><div className="tph2-social__rail">{departures.filter(({ departure }) => departureMonth === "all" || monthKey(departure.date) === departureMonth).map(({ tour, departure }, index) => <Link className={`tph2-social-card${index === 1 ? " is-active" : ""}${departure.promoted ? " is-promoted" : ""}`} href={`/tours/${tour.slug}`} key={`${tour.id}-${departure.date}`}><span className="tph2-social-card__media"><HomeImage src={tour.featured_image} alt={tour.title} />{departure.promoted ? <b>{departure.badge || "Recommended"}</b> : null}</span><span className="tph2-social-card__copy"><strong>{tour.title}</strong><small>{dateLabel(departure.date, true)}{tour.details.origin ? ` / From ${tour.details.origin}` : ""}</small><span><b>{money(saleAmount(tour), tour.currency)}</b><em>View trip →</em></span></span></Link>)}</div></div></section> : null}
 
-      <section id="deal-drops" className="bg-[#111624] px-4 py-16 text-white">
-        <div className="mx-auto max-w-[1180px]"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#d0e562]">No boring offers</p><h2 className="mt-2 max-w-2xl text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">Good trips. Better reasons to book now.</h2><div className="mt-7 flex gap-4 overflow-x-auto pb-3">{tours.slice(0, 6).map((tour, index) => <Link key={tour.id} href={`/tours/${tour.slug}`} className={`relative min-h-[330px] min-w-[300px] overflow-hidden rounded-[30px] p-5 ${["bg-[#d0e562] text-[#172008]", "bg-[#3157d5]", "bg-[#ff6554]", "bg-[#cdb8ff] text-[#251740]"][index % 4]}`}><Image src={tour.featured_image || gallery[index % gallery.length]} alt="" width={128} height={160} sizes="128px" className="absolute right-4 top-5 h-40 w-32 rotate-3 rounded-[55px_18px_55px_55px] border-4 border-white/70 object-cover shadow-xl" /><span className="relative inline-flex rounded-lg bg-white/75 px-2 py-2 text-[9px] font-black">{index % 2 ? "LIMITED DROP" : "TRIP DEAL"}</span><h3 className="relative mt-20 max-w-[170px] text-2xl font-black leading-tight">{tour.title}</h3><p className="absolute bottom-5 left-5 text-xs font-black">From {tour.price || "your next story"}</p></Link>)}</div></div>
-      </section>
+      {deals.length ? <section className="tph2-deals" id="deal-drops"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Deal drop</div><h2 className="tph2-title">Your budget just <span>caught a break.</span></h2></div></div><div className="tph2-deals__grid">{deals.map((tour, index) => { const base = startingAmount(tour); const sale = saleAmount(tour); const cashback = numeric(tour.details.cashback); const bulk = [...tour.details.bulk_discounts].sort((a, b) => a.from - b.from)[0]; const end = Date.parse(tour.details.offer.ends_at); const remaining = end - now; return <Link href={`/tours/${tour.slug}`} className={`tph2-deal tone-${index % 4}`} key={tour.id}><span className="tph2-deal__flash">{cashback ? "₹" : tour.details.booking.discount_type === "percent" ? "%" : "⚡"}</span><span className="tph2-deal__image"><HomeImage src={tour.featured_image} alt={tour.title} /></span><span className="tph2-deal__copy"><small>{tour.details.destination || "Tripanza trip"}</small><strong>{tour.title}</strong><span className="tph2-deal__tags">{cashback ? <i>{money(cashback, tour.currency)} cashback / person</i> : null}{tour.details.booking.discount_rate ? <i>{tour.details.booking.discount_type === "percent" ? `${tour.details.booking.discount_rate}% off` : `Save ${money(tour.details.booking.discount_rate, tour.currency)}`}</i> : null}{bulk ? <i>{bulk.type === "percent" ? `${bulk.value}%` : money(bulk.value, tour.currency)} off from {bulk.from} travellers</i> : null}</span>{remaining > 0 ? <span className="tph2-deal__timer">Ends in {countdown(remaining)}</span> : null}<span className="tph2-deal__price"><small>Trip from</small>{base > sale ? <del>{money(base, tour.currency)}</del> : null}<b>{money(sale, tour.currency)}</b></span></span></Link>; })}</div></div></section> : null}
 
-      <section id="destinations" className="bg-white px-4 py-16"><div className="mx-auto max-w-[1180px]"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#3157d5]">Destination storefront</p><h2 className="mt-2 max-w-2xl text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">Somewhere unreal is closer than you think.</h2><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{tours.slice(0, 5).map((tour, index) => <Link key={tour.id} href={`/tours/${tour.slug}`} className={`relative h-[260px] overflow-hidden rounded-[22px] ${index === 0 ? "lg:row-span-2 lg:h-[533px]" : ""}`}><Image src={tour.featured_image || gallery[index % gallery.length]} alt={tour.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-cover transition duration-500 hover:scale-105" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 pb-4 pt-20 text-white"><b className="block text-lg font-black">{tour.title}</b><small className="mt-1 block text-[9px] font-bold text-[#d0e562]">{tour.price || "Explore this trip"}</small></span></Link>)}</div></div></section>
+      <section id="trips" className="tph-section"><div className="tph-shell"><div className="tph-head"><div><div className="tph-eyebrow">Currently passing the vibe check</div><h2>Trips worth sending to the group chat.</h2></div></div><div className="tph-filters">{filters.map((filter) => <button key={filter} onClick={() => setActiveFilter(filter)} className={activeFilter === filter ? "is-active" : ""}>{filter === "all" ? "All trips" : filter === "saved" ? "Saved ♥" : filter}</button>)}</div><div className="tph-grid">{visibleTours.map((tour) => <article className="tph-card" key={tour.id}><Link className="tph-card__media" href={`/tours/${tour.slug}`}><HomeImage src={tour.featured_image} alt={tour.title} />{tour.details.is_premium ? <span className="tph-card__badge">Premium</span> : null}<span className="tph-card__route">{[tour.details.origin, tour.details.destination].filter(Boolean).join(" to ")}</span></Link><button type="button" className={`tph-save${saved.includes(tour.id) ? " is-saved" : ""}`} onClick={() => toggleSaved(tour.id)} aria-label="Save trip">{saved.includes(tour.id) ? "♥" : "♡"}</button><div className="tph-card__body"><Link className="tph-card__title" href={`/tours/${tour.slug}`}>{tour.title}</Link><div className="tph-card__meta">{duration(tour) ? <span>{duration(tour)}</span> : null}{tour.details.rating.value > 0 ? <span>★ {tour.details.rating.value.toFixed(1)} ({tour.details.rating.count})</span> : null}<span>{tour.details.partner.name || "Tripanza"}</span></div><div className="tph-card__bottom"><span><small>Starts from</small><strong>{money(saleAmount(tour), tour.currency)}</strong></span>{tour.details.departures[0] ? <span><b>Next: {dateLabel(tour.details.departures[0].date)}</b><small>{tour.details.departures[0].status}</small></span> : null}</div></div></article>)}</div>{!visibleTours.length ? <p className="tph-empty">{activeFilter === "saved" ? "No saved trips yet. Tap the heart on a trip you like." : "No trip matches that yet."}</p> : null}<div className="tph-all"><Link href="/tours">Explore every trip →</Link></div></div></section>
 
-      <section id="tripanza-camera-roll" className="overflow-hidden bg-[#fffaf4] px-4 py-16"><div className="mx-auto max-w-[1180px]"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#3157d5]">The camera roll</p><h2 className="mt-2 text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">Proof that plans can become stories.</h2><div className="mt-7 flex gap-3 overflow-x-auto pb-3">{[...tours, ...tours].slice(0, 12).map((tour, index) => <Link key={`${tour.id}-${index}`} href={`/tours/${tour.slug}`} className={`relative h-[190px] shrink-0 overflow-hidden rounded-[21px] ${index % 4 === 1 ? "w-[300px]" : index % 4 === 2 ? "w-[235px]" : "w-[190px]"}`}><Image src={tour.featured_image || gallery[index % gallery.length]} alt={tour.title} fill sizes="300px" className="object-cover" /><span className="absolute inset-x-3 bottom-3 truncate text-[9px] font-black text-white drop-shadow-lg">{tour.title}</span></Link>)}</div></div></section>
+      <section className="tph2-confidence"><div className="tph-shell"><div className="tph2-confidence__card"><div className="tph2-confidence__head"><div><div className="tph2-kicker">No shady booking energy</div><h2>Know the plan. Know the price.</h2></div><p>No surprise charges. No disappearing humans.</p></div><div className="tph2-confidence__grid">{minAdvance < 100 ? <InfoTile icon="₹" title="Start small" copy={`Reserve eligible trips from ${minAdvance}% and pay the rest later.`} /> : null}<InfoTile icon="✓" title="See every rupee" copy="The complete payable amount appears before you pay." /><InfoTile icon="@" title="Proof in your inbox" copy="Your confirmed booking details stay easy to find." /><InfoTile icon="☺" title="Humans stay around" copy="Talk to Tripanza before and after you book." /></div><small>Advance changes by trip. Checkout shows exactly what you pay now and what comes later.</small></div></div></section>
 
-      <section id="quick-picks" className="bg-[#fffaf4] px-4 py-16"><div className="mx-auto max-w-[1180px]"><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#3157d5]">Youth-first shortcuts</p><h2 className="mt-2 max-w-2xl text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">A weekend away or a proper escape.</h2><div className="mt-7 grid gap-4 md:grid-cols-2">{["Under ₹10,000", "Quick escapes"].map((label, lane) => <div key={label} className={`rounded-[28px] p-5 ${lane === 0 ? "bg-[#d0e562]" : "bg-[#3157d5] text-white"}`}><div className="flex items-end justify-between gap-3"><div><small className="rounded-full bg-white/75 px-2 py-1 text-[8px] font-black">{label}</small><h3 className="mt-4 text-2xl font-black">{lane === 0 ? "Big memories, small maths." : "Leave before the group chat cools off."}</h3></div><Link href="/tours" className="rounded-full bg-white px-3 py-2 text-[9px] font-black text-[#151925]">See all</Link></div><div className="mt-5 grid gap-2">{tours.slice(lane, lane + 3).map((tour) => <Link key={tour.id} href={`/tours/${tour.slug}`} className="flex items-center gap-3 rounded-2xl bg-white/90 p-2 text-[#151925]"><Image src={tour.featured_image || gallery[0]} alt="" width={56} height={56} sizes="56px" className="h-14 w-14 rounded-xl object-cover" /><span className="min-w-0 flex-1"><b className="block truncate text-[11px] font-black">{tour.title}</b><small className="mt-1 block text-[8px] font-bold text-[#707b8e]">{tour.excerpt || "Group trip"}</small></span><strong className="text-[11px] font-black text-[#173fb9]">{tour.price || "Quote"}</strong></Link>)}</div></div>)}</div></div></section>
+      {reviews.length ? <section className="tph2-section tph2-reviews" id="traveller-reviews"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Receipts from the road</div><h2 className="tph2-title">Proof the group chat made it out.</h2></div><div className="tph2-review-score"><strong>{(reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)}</strong><span>Rated on Google</span></div></div><div className="tph2-scroll">{reviews.map((review, index) => <article className="tph2-review" key={`${review.author_name}-${index}`}><div className="tph2-review__person">{review.profile_photo_url ? <Image src={review.profile_photo_url} alt="" width={44} height={44} unoptimized /> : <span>{review.author_name.charAt(0)}</span>}<div><strong>{review.author_name}</strong><small>{review.date}</small></div><b>G</b></div><div className="tph2-stars">{"★".repeat(Math.round(review.rating))}{"☆".repeat(5 - Math.round(review.rating))}</div><blockquote>{review.text}</blockquote><span className="tph2-review__quote">“</span></article>)}</div></div></section> : null}
 
-      <section id="international-trips" className="bg-[#111a34] px-4 py-16 text-white"><div className="mx-auto grid max-w-[1180px] items-center gap-8 rounded-[30px] bg-[#fff8ed] p-7 text-[#151925] md:grid-cols-[1fr_0.65fr] md:p-11"><div><span className="rounded-full bg-[#3157d5] px-3 py-2 text-[8px] font-black uppercase text-white">Passport energy</span><h2 className="mt-5 text-4xl font-black leading-none tracking-[-0.05em] md:text-6xl">The group chat is ready for an international plot twist.</h2><p className="mt-5 max-w-xl text-xs font-semibold leading-6 text-[#626c7e]">Bali, Vietnam, Thailand and more. Join the waitlist for the next crew leaving the country.</p><Link href="/contact" className="mt-6 inline-flex rounded-[14px] bg-[#d0e562] px-5 py-4 text-xs font-black text-[#263407]">Join the waitlist</Link></div><div className="relative h-[280px]"><div className="absolute left-5 top-7 h-56 w-44 rotate-6 rounded-2xl bg-[#3157d5] p-5 text-white shadow-xl"><small className="text-[8px] font-black">TRIPANZA</small><div className="mt-16 text-5xl">✈</div><b className="mt-8 block text-sm">PASSPORT TO FUN</b></div><div className="absolute right-2 top-16 h-40 w-56 -rotate-3 rounded-2xl border border-[#dce2ed] bg-white p-5 shadow-xl"><small className="text-[8px] font-black text-[#3157d5]">BOARDING PASS</small><b className="mt-8 block text-lg">Next stop: anywhere.</b><span className="mt-6 block border-t border-dashed pt-3 text-[9px] font-bold">TRIPANZA CREW</span></div></div></div></section>
+      {gallery.length ? <section className="tph2-camera" id="tripanza-camera-roll"><div className="tph-shell"><div className="tph2-kicker">Straight from the group chat</div><h2 className="tph2-title">Proof the group chat actually left the chat.</h2></div><div className="tph2-camera__viewport">{[0, 1].map((row) => <div className={`tph2-camera__track${row ? " is-reverse" : ""}`} key={row}>{[...gallery.slice(row * 8, row * 8 + 8), ...gallery.slice(row * 8, row * 8 + 8)].map((photo, index) => <Link href={`/tours/${photo.tour.slug}`} className="tph2-camera__photo" key={`${row}-${photo.tour.id}-${index}`}><HomeImage src={photo.url} alt={photo.alt || photo.tour.title} /><span>{["Crew cam", "Trip frame", "Road drop"][index % 3]}<strong>{photo.tour.title}</strong></span></Link>)}</div>)}</div><div className="tph-shell tph2-camera__foot"><span>{gallery.length} memories in this roll</span><Link href="/tours">Find your frame →</Link></div></section> : null}
 
-      <section id="why-tripanza" className="bg-[#151a25] text-white">
-        <div className="mx-auto grid max-w-[1180px] items-center gap-10 px-4 py-16 md:grid-cols-2">
-          <div><p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#d0e562]">Your kind of crowd</p><h2 className="mt-2 text-4xl font-black leading-none tracking-[-0.05em] md:text-5xl">People you&apos;ll actually click with.</h2><p className="mt-5 max-w-lg text-sm font-semibold leading-7 text-[#aeb7c7]">Join solo or with a friend. These trips are designed for an 18-28 community, with clear group plans, verified teams and captains who help strangers feel included.</p><div className="mt-6 flex flex-wrap gap-2">{["Solo-friendly", "18-28 community", "Women-friendly", "Captain-supported"].map((item) => <span key={item} className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-[9px] font-extrabold">{item}</span>)}</div></div>
-          <div className="relative grid grid-cols-2 gap-3"><Image src={gallery[0]} alt="Tripanza travellers" width={320} height={256} sizes="25vw" className="h-64 w-full rounded-[28px] object-cover shadow-2xl" /><Image src={gallery[1]} alt="Tripanza group moment" width={320} height={256} sizes="25vw" className="mt-12 h-64 w-full rounded-[28px] object-cover shadow-2xl" /><p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-xl bg-[#d0e562] px-4 py-3 text-center text-[10px] font-black text-[#263407] shadow-xl">Strangers on day one.<br />Inside jokes by day two.</p></div>
-        </div>
-      </section>
+      {stays.length ? <section className="tph2-section tph2-stays" id="trip-stays"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Sleep scene</div><h2 className="tph2-title">Where you&apos;ll wake up matters.</h2></div><div className="tph2-stay-trust">✓ <span><strong>No room roulette</strong><small>Real stays. Actually checked.</small></span></div></div><div className="tph2-stay-guide">✦ Swipe through the rooms. Screenshot your favourite.</div><div className="tph2-stay-grid">{stays.map((stay) => <Link href={`/tours/${stay.tour.slug}`} className="tph2-stay" key={`${stay.tour.id}-${stay.title}`}><HomeImage src={stay.images[0]} alt={stay.title} /><span className="tph2-stay__checked">✓ Checked stay</span><span className="tph2-stay__copy"><small>{stay.tour.title}</small><strong>{stay.title}</strong><span>{[stay.location, stay.type].filter(Boolean).join(" · ")}</span><em>{stay.amenities.slice(0, 3).join(" · ")}</em></span></Link>)}</div><p className="tph2-stay-note">Property is subject to availability; a similar or upgraded stay may be arranged when required.</p></div></section> : null}
 
-      <section id="trip-faq" className="bg-[#fff8ef] px-4 py-16"><div className="mx-auto grid max-w-[1180px] gap-5 md:grid-cols-[0.7fr_1.3fr]"><div className="rounded-[30px] bg-[#3157d5] p-7 text-white"><span className="rounded-full bg-[#d0e562] px-3 py-2 text-[8px] font-black text-[#263407]">Group chat help desk</span><h2 className="mt-5 text-4xl font-black leading-none tracking-[-0.05em]">Questions before you disappear?</h2><p className="mt-5 text-xs font-semibold leading-6 text-[#dce4ff]">We&apos;re human. Ask us anything about dates, people, packing or the perfect first trip.</p><Link href="/contact" className="mt-8 inline-flex rounded-[14px] bg-white px-4 py-3 text-[10px] font-black text-[#151925]">Talk to Tripanza -&gt;</Link></div><div className="grid gap-2 rounded-[30px] bg-[#eef2ff] p-3">{[['Can I join solo?', 'Absolutely. Most people do, and our trip captains make the first hello easy.'], ['Who are these trips for?', 'Tripanza is built for young travellers looking for a friendly, structured group experience.'], ['How do I choose a trip?', 'Start with the dates or browse by destination, budget and trip length.']].map(([question, answer]) => <details key={question} className="rounded-[18px] bg-white p-4"><summary className="cursor-pointer pr-6 text-sm font-black">{question}</summary><p className="mt-3 max-w-xl text-xs font-semibold leading-6 text-[#687386]">{answer}</p></details>)}</div></div></section>
+      <section className="tph2-section tph2-destinations" id="destinations"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Pick a pin. Find your people.</div><h2 className="tph2-title">Where are we disappearing to?</h2></div></div><div className="tph2-tabs">{[["all", "All"], ["domestic", "India"], ["international", "International"], ["weekend", "Weekend"], ["girls", "All Girls"]].map(([value, label]) => <button key={value} onClick={() => setDestinationFilter(value)} className={destinationFilter === value ? "is-active" : ""}>{label}</button>)}</div>{visibleDestinations.length ? <div className="tph2-destination-grid">{visibleDestinations.slice(0, 7).map(({ tour }, index) => <Link href={`/tours/${tour.slug}`} className={`tph2-destination${index === 0 ? " is-featured" : ""}`} key={tour.id}><HomeImage src={tour.featured_image} alt={tour.title} /><span><small>{tour.details.destination || "India"}</small><strong>{tour.title}</strong><em>{duration(tour)} · From {tour.details.origin || "Delhi"}</em><b>From {money(saleAmount(tour), tour.currency)}</b></span></Link>)}</div> : <div className="tph2-destination-empty"><strong>Passport era loading.</strong><p>Our international community trips are getting ready. Join the drop list and hear before everyone else.</p><a href={WHATSAPP}>Notify me on WhatsApp</a></div>}</div></section>
 
-      <section className="bg-[#d0e562] px-4 py-16"><div className="mx-auto max-w-[1180px] text-center"><h2 className="text-4xl font-black leading-none tracking-[-0.05em] md:text-6xl">Stop reacting to reels. <span className="text-[#3157d5]">Go make one.</span></h2><div className="mt-7 flex flex-wrap justify-center gap-3"><Link href="#trips" className="rounded-[14px] bg-[#151925] px-5 py-4 text-xs font-black text-white">Find my next trip</Link><Link href="/tours" className="rounded-[14px] bg-white px-5 py-4 text-xs font-black text-[#151925]">Browse all trips</Link></div></div></section>
-      <footer className="bg-[#d0e562] px-4 pb-10 text-center text-[10px] font-bold text-[#34430e]">India&apos;s coolest travel app <span className="px-2">♥</span> &copy; {new Date().getFullYear()} Tripanza</footer>
+      {reels.length ? <section className="tph-section tph-reels-section" id="trip-drops"><div className="tph-shell tph-head"><div><div className="tph-eyebrow">No brochure energy</div><h2>Watch the vibe before you commit.</h2></div></div><div className="tph-reels">{reels.map((tour) => <Link className="tph-reel" href={`/tours/${tour.slug}`} key={tour.id}><video src={tour.details.reels[0]} muted loop playsInline preload="metadata" poster={tour.featured_image || undefined} onMouseEnter={(event) => void event.currentTarget.play()} onMouseLeave={(event) => event.currentTarget.pause()} /><span className="tph-reel__play">▶</span><span className="tph-reel__copy"><small>{duration(tour)}</small><strong>{tour.title}</strong></span></Link>)}</div></section> : null}
+
+      <section className="tph-section tph-manifesto" id="why-tripanza"><div className="tph-shell tph-manifesto__grid"><div><div className="tph-eyebrow">Your kind of crowd</div><h2>People you&apos;ll actually click with.</h2><p>Join solo or with a friend. These trips are designed for an 18–28 community, with clear group plans, verified teams and captains who help strangers feel included.</p><div className="tph-manifesto__pills">{["Solo-friendly", "18–28 community", "Women-friendly", "Captain-supported"].map((item) => <span key={item}>{item}</span>)}</div></div><div className="tph-collage"><span><HomeImage src={gallery[0]?.url || FALLBACKS[0]} alt="Tripanza travellers" /></span><span><HomeImage src={gallery[1]?.url || FALLBACKS[1]} alt="Real trip moment" /></span><div>Strangers on day one. Inside jokes by day two.</div></div></div></section>
+
+      <section className="tph2-section tph2-shortcuts" id="quick-picks"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Pick your excuse</div><h2 className="tph2-title">Different plans. Same main-character energy.</h2></div></div><div className="tph2-shortcut-grid"><Shortcut title="Under ₹10K" kicker="Budget understood" tours={underTen.length ? underTen : tours.slice(0, 3)} /><Shortcut title="Quick escapes" kicker="Low leave balance?" tours={quickTrips.length ? quickTrips : tours.slice(3, 6)} /></div></div></section>
+
+      <section className="tph2-section tph2-find" id="find-my-vibe"><div className="tph-shell"><div className="tph2-find__card"><div className="tph2-find__quiz"><div className="tph2-kicker">Three taps. Zero overthinking.</div><h2>Find the trip matching your current mood.</h2><MatchQuestion label="Your budget?" name="budget" values={[["10000", "Under ₹10K"], ["15000", "Under ₹15K"], ["any", "Worth it > cheap"]]} answers={answers} setAnswers={setAnswers} /><MatchQuestion label="How long can you disappear?" name="duration" values={[["short", "Weekend-ish"], ["long", "Proper escape"], ["any", "Flexible"]]} answers={answers} setAnswers={setAnswers} /><MatchQuestion label="Pick the energy." name="vibe" values={[["mountain", "Mountain chaos"], ["beach", "Beach energy"], ["any", "Surprise me"]]} answers={answers} setAnswers={setAnswers} /></div><div className="tph2-match">{match ? <article className="tph2-match__result"><span className="tph2-match__media"><HomeImage src={match.featured_image} alt={match.title} /><b>Found your vibe</b></span><div><small>Your trip match</small><strong>{match.title}</strong><span>{duration(match)} · {match.details.destination}</span><b>{money(saleAmount(match), match.currency)}</b><Link href={`/tours/${match.slug}`}>See this trip</Link></div></article> : <div className="tph2-match__empty"><span>Your trip moodboard</span><div>{tours.slice(0, 3).map((tour) => <span key={tour.id}><HomeImage src={tour.featured_image} alt="" /></span>)}</div><strong>Pick your mood. We will find the scene.</strong><small>Three choices. One trip that actually fits.</small></div>}</div></div></div></section>
+
+      <section className="tph2-paylater" id="travel-now-pay-later"><div className="tph-shell"><div className="tph2-paylater__card"><div className="tph2-paylater__copy"><small>Plot twist for your trip budget</small><h2><del>Pay now. Travel later.</del><span>Travel now. Pay later.</span></h2><p>On eligible bookings, choose an available EMI or Pay Later option at checkout and split the trip cost into manageable payments.</p><Link href="/tours">Find your next trip</Link></div><div className="tph2-paylater__visual"><div className="tph2-paylater__pass"><div><span><small>FROM</small><strong>Someday</strong></span><b>✈</b><span><small>TO</small><strong>Right now</strong></span></div><div>{["Pick trip", "Choose EMI", "Pack bags"].map((step, index) => <span key={step}><small>Step {index + 1}</small><strong>{step}</strong></span>)}</div><p>PayU-supported secure checkout</p></div><span>Trip first<br />EMIs after</span></div><div className="tph2-paylater__banks"><small>EMI options across major eligible banks</small>{["HDFC", "ICICI", "SBI", "AXIS", "KOTAK", "BOB"].map((bank) => <span key={bank}>{bank}</span>)}</div><p className="tph2-paylater__fine">EMI, BNPL, interest, tenure and eligibility depend on the issuing bank, payment method, transaction value and the options returned by PayU at checkout.</p></div></div></section>
+
+      <section className="tph2-section tph2-money" id="where-money-goes"><div className="tph-shell"><div className="tph2-safe"><div><div className="tph2-kicker">Two humans. Zero faceless booking.</div><h2>Your trip money is safe with Akshay &amp; Yashika.</h2><p>No faceless marketplace energy. The founders are right here—and accountable for every Tripanza booking.</p></div><div className="tph2-safe__people"><Founder image={FOUNDER_AKSHAY} label="The builder" name="Akshay Verma" role="Builds the booking tech" /><Founder image={FOUNDER_YASHIKA} label="The people person" name="Yashika Taneja" role="Helps travellers book right" /></div><div className="tph2-safe__bottom"><span>● Booking ka doubt? Ask the humans behind the trip.</span><Link href="/about">Meet your trip people →</Link></div></div></div></section>
+
+      <section className="tph2-section tph2-international" id="international-trips"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Next stamp incoming</div><h2 className="tph2-title">Passport ready. Group chat pending.</h2></div><span>Visa era loading · Boarding soon ✈</span></div><div className="tph2-int-waitlist"><div><small>Your passport era starts here</small><h3>International trips are almost boarding.</h3><p>Bali, Vietnam, Thailand and more are on our radar. Join the drop list—no spam, just launch updates and real departures.</p><div><span>Bali</span><span>Vietnam</span><span>Thailand</span><span>More loading…</span></div><a href={WHATSAPP}>Get on the first-drop list</a></div><div className="tph2-int-visual"><span>📷</span><span>🧳</span><span>🌴</span><div><small>TRIPANZA</small><b>✦</b><strong>PASSPORT</strong><em>WORLD TRIP ERA</em></div><p>DEL ✈ WORLD</p></div></div></div></section>
+
+      <section className="tph2-playlist" id="travel-playlists"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Tripanza on AUX</div><h2 className="tph2-title">Put this on before the aux war starts.</h2></div><span>♫ Opens in Spotify</span></div><div className="tph2-playlist__rail">{["Rasta — The Best Hindi Travel Playlist", "2026 Travel Jukebox", "Hindi road-trip songs", "Hindi travel vibes", "Classic road-trip songs", "Roadtrip songs everyone knows"].map((title, index) => <a className="tph2-track" href="https://open.spotify.com/search/travel%20playlist" target="_blank" rel="noreferrer" key={title}><span className={`tph2-track__cover tone-${index % 4}`}>♫</span><small>Playlist {String(index + 1).padStart(2, "0")}</small><strong>{title}</strong><p>{index < 2 ? "Hindi drive songs" : "Road-trip energy for the crew"}</p><i /><span>◀　▶　▶❘</span></a>)}</div></div></section>
+
+      <section className="tph2-postcards" id="trip-postcards"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Collect your next place</div><h2 className="tph2-title">States now. Countries next.</h2></div><span>Tripanza postcard club</span></div><div className="tph2-postcards__tabs"><button className={postcardKind === "state" ? "is-active" : ""} onClick={() => setPostcardKind("state")}>India state drops <b>4</b></button><button className={postcardKind === "country" ? "is-active" : ""} onClick={() => setPostcardKind("country")}>Country drops incoming <b>4</b></button></div><div className="tph2-postcards__desk">{(postcardKind === "state" ? [["Himachal", "Mountain mornings & chai"], ["Uttarakhand", "Trails, temples & tiny roads"], ["Rajasthan", "Forts, sunsets & stories"], ["Goa", "Salt air, scenes & sunsets"]] : [["Thailand", "Night markets loading"], ["Vietnam", "Lantern streets loading"], ["Indonesia", "Bali era incoming"], ["Georgia", "Snow, streets & wine"]]).map(([place, copy], index) => <article className={`tph2-postcard tone-${index}`} key={place}><small>Greetings from</small><strong>{place}</strong><span>{postcardKind === "state" ? "India state series" : "Passport series"}</span><p>{copy}</p><b>✈ TPZ</b></article>)}</div><div className="tph2-postcards__foot"><span>Start with a state. Graduate to a passport stamp.</span><Link href="/tours">Pick a place →</Link></div></div></section>
+
+      <section className="tph2-section tph2-faq" id="trip-faq"><div className="tph-shell tph2-faq__layout"><div className="tph2-faq__intro"><div className="tph2-kicker">No awkward questions</div><h2 className="tph2-title">Ask before the group chat does.</h2><p>Straight answers for first-time community travellers. No confusing travel jargon.</p><div><span>Solo aa sakte hain?</span><span>Girls ke liye safe?</span><span>Kitna pay now?</span></div><a href={WHATSAPP}>Still confused? Ask a human</a></div><div className="tph2-faq__list">{[["Can I join a Tripanza trip alone?", "Yes. These community trips welcome solo travellers as well as friends, and the trip team helps everyone settle into the group."], ["Who usually joins?", "This youth collection is designed for travellers aged 18–28. Check the individual trip page for its batch and audience details."], ["How does Tripanza support women travellers?", "Stay, transport, captain and batch details are shared where available, with human support before and during the trip."], ["Who leads the group?", "Group departures are supported by the trip captain or team shown on the trip page."], ["How much do I pay now?", "Checkout shows the valid price breakdown, advance payable now and remaining balance before payment."]].map(([question, answer], index) => <details key={question} open={index === 0 ? true : undefined}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
+
+      <section className="tph2-help"><div className="tph-shell"><div className="tph2-help__card"><div><span>💬</span><div><small>Real human. Real reply.</small><h3>Group chat stuck?</h3><p>Dates, budget ya pickup—bas ping karo. We will help you pick.</p></div></div><span>Dates?　Budget?　Pickup?</span><a href={WHATSAPP}>Ask on WhatsApp</a></div></div></section>
+
+      <section className="tph-final"><div className="tph-shell"><div className="tph-final__card"><h2>Stop reacting to reels. <span>Go make one.</span></h2><div><a href="#trips">Find my next trip</a><Link href="/tours">Watch trip drops</Link></div></div><footer><strong>India&apos;s coolest travel app <span>♥</span></strong><small>© {new Date().getFullYear()} Tripanza<br />Community trips for young India.</small></footer></div></section>
     </main>
   );
+}
+
+function countdown(milliseconds: number) {
+  const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const rest = seconds % 60;
+  return `${days ? `${days}d ` : ""}${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
+}
+
+function InfoTile({ icon, title, copy }: { icon: string; title: string; copy: string }) {
+  return <div className="tph2-confidence__item"><i>{icon}</i><strong>{title}</strong><small>{copy}</small></div>;
+}
+
+function Shortcut({ title, kicker, tours }: { title: string; kicker: string; tours: TourDetail[] }) {
+  return <article className="tph2-shortcut"><div className="tph2-shortcut__top"><div><small>{kicker}</small><h3>{title}</h3></div><Link href="/tours">See all →</Link></div><div>{tours.map((tour) => <Link className="tph2-mini" href={`/tours/${tour.slug}`} key={tour.id}><span><HomeImage src={tour.featured_image} alt="" /></span><span><strong>{tour.title}</strong><small>{duration(tour)} · From {tour.details.origin || "Delhi"}</small></span><b>{money(saleAmount(tour), tour.currency)}</b></Link>)}</div></article>;
+}
+
+function Founder({ image, label, name, role }: { image: string; label: string; name: string; role: string }) {
+  return <article><span><HomeImage src={image} alt={name} /></span><div><small>{label}</small><strong>{name}</strong><p>{role}</p><b>✓</b></div></article>;
+}
+
+function MatchQuestion({ label, name, values, answers, setAnswers }: { label: string; name: keyof MatchAnswers; values: string[][]; answers: MatchAnswers; setAnswers: React.Dispatch<React.SetStateAction<MatchAnswers>> }) {
+  return <div className="tph2-question"><span>{label}</span><div>{values.map(([value, text]) => <button type="button" key={value} className={answers[name] === value ? "is-active" : ""} onClick={() => setAnswers((current) => ({ ...current, [name]: value }))}>{text}</button>)}</div></div>;
 }
