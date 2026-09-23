@@ -145,6 +145,10 @@ export type TourDetail = {
       require_guest_names: boolean;
       extras: TourBookingExtra[];
     };
+    offer: {
+      ends_at: string;
+      note: string;
+    };
     partner: TourPartner;
     seats_left?: string;
     cashback?: string;
@@ -587,10 +591,14 @@ export function transformStTour(sourceValue: unknown): TourDetail {
       reviews: reviewsFrom(firstDefined(fields.reviews, fields.google_reviews)),
       booking: {
         discount_rate: numberFrom(firstDefined(record(fields.booking).discount_rate, fields.discount_rate)),
-        discount_type: plainText(firstDefined(record(fields.booking).discount_type, fields.discount_type)) === "percent" ? "percent" : "amount",
+        discount_type: plainText(firstDefined(record(fields.booking).discount_type, fields.discount_type)) === "amount" ? "amount" : "percent",
         deposit_percentage: Math.max(1, Math.min(100, numberFrom(firstDefined(record(fields.booking).deposit_percentage, fields.deposit_payment_amount)) || 100)),
         require_guest_names: booleanFrom(firstDefined(record(fields.booking).require_guest_names, fields.require_guest_names)),
         extras: bookingExtrasFrom(firstDefined(record(fields.booking).extras, fields.extras, fields.extra_price)),
+      },
+      offer: {
+        ends_at: plainText(firstDefined(record(fields.offer).ends_at, fields._st_tour_timer)),
+        note: plainText(firstDefined(record(fields.offer).note, fields._st_tour_timer_note)),
       },
       partner: {
         name: plainText(firstDefined(record(fields.partner).name, fields.travel_company, fields.host_name)),
