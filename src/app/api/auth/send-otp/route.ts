@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: channel === "whatsapp" ? "Enter a valid WhatsApp number with country code." : "Enter a valid email address." }, { status: 400 });
     }
 
-    const wpEndpoint = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com"}/wp-json/tripanza-app/v1/otp/send`;
+    const wpEndpoint = `${process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com"}/wp-json/tripanza-headless/v1/auth/otp/send`;
 
     const response = await fetch(wpEndpoint, {
       method: "POST",

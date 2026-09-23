@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const wordpress = (process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
-    const response = await fetch(`${wordpress}/wp-json/tripanza-app/v1/oauth/exchange`, {
+    const response = await fetch(`${wordpress}/wp-json/tripanza-headless/v1/auth/oauth/exchange`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ ticket }),

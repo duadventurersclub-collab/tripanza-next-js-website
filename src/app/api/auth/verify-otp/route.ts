@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `A valid ${channel === "whatsapp" ? "WhatsApp number" : "email"} and 4-digit OTP are required.` }, { status: 400 });
     }
 
-    const wpEndpoint = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com"}/wp-json/tripanza-app/v1/otp/verify`;
+    const wpEndpoint = `${process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com"}/wp-json/tripanza-headless/v1/auth/otp/verify`;
 
     const response = await fetch(wpEndpoint, {
       method: "POST",
