@@ -1,6 +1,31 @@
 import { NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/session";
 
+type AuthResponse = {
+  session_token?: unknown;
+  token?: unknown;
+  access_token?: unknown;
+  user?: unknown;
+  message?: string;
+  error?: string;
+  data?: AuthResponse;
+  session?: { token?: unknown };
+};
+
+function readSessionToken(payload: AuthResponse) {
+  const candidates = [
+    payload.session_token,
+    payload.token,
+    payload.access_token,
+    payload.session?.token,
+    payload.data?.session_token,
+    payload.data?.token,
+    payload.data?.access_token,
+    payload.data?.session?.token,
+  ];
+  return candidates.find((value): value is string => typeof value === "string" && /^[a-f0-9]{64}$/i.test(value)) || "";
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -26,18 +51,23 @@ export async function POST(req: Request) {
       body: JSON.stringify({ email: normalized, channel, otp }),
     });
 
-    const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({})) as AuthResponse;
 
     if (!response.ok) {
       return NextResponse.json({ error: data.message || data.error || "Failed to verify OTP." }, { status: response.status });
     }
 
-    if (!data.session_token || typeof data.session_token !== "string") {
+    const sessionToken = readSessionToken(data);
+    if (!sessionToken) {
+      console.error("Tripanza OTP verified without a usable session token", {
+        upstreamKeys: Object.keys(data),
+        nestedKeys: data.data ? Object.keys(data.data) : [],
+      });
       return NextResponse.json({ error: "Login succeeded but no secure session was returned. Please try again." }, { status: 502 });
     }
-    await setSessionCookie(data.session_token);
+    await setSessionCookie(sessionToken);
 
-    return NextResponse.json({ user: data.user || null }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ user: data.user || data.data?.user || null }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Error verifying OTP:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
