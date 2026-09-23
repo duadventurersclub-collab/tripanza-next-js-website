@@ -101,7 +101,12 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
     window.setTimeout(() => identityRef.current?.focus(), 80);
   }
 
-  const returnTo = typeof window === "undefined" ? "/" : `${window.location.pathname}${window.location.search}`;
+  const returnTo = typeof window === "undefined" ? "/" : (() => {
+    const params = new URLSearchParams(window.location.search);
+    ["profile", "auth", "mode", "social_error"].forEach((key) => params.delete(key));
+    const query = params.toString();
+    return `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+  })();
   const socialUrl = (provider: string) => `/api/auth/social/start?provider=${provider}&returnTo=${encodeURIComponent(returnTo)}`;
   const title = step === "otp" ? (channel === "whatsapp" ? <>Verify your <em>number.</em></> : <>Verify your <em>email.</em></>) : step === "success" ? <>You&apos;re <em>in.</em></> : <>Your group trip is <em>waiting.</em></>;
 
