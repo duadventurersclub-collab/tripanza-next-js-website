@@ -14,7 +14,7 @@ const fallbackSite: SiteConfig = {
 };
 
 async function getHomepageTours(): Promise<TourDetail[]> {
-  const listing = await getAppTours({ per_page: 24 });
+  const listing = await getAppTours({ per_page: 24, admin_only: true });
   const detailed = await Promise.allSettled(listing.items.map((tour) => getTourBySlug(tour.slug)));
   return detailed.map((result, index) => result.status === "fulfilled" && result.value ? result.value : listing.items[index]);
 }

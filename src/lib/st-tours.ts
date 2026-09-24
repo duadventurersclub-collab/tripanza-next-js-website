@@ -165,6 +165,7 @@ type TourListResponse = {
   data?: unknown[];
   total?: number;
   total_pages?: number;
+  admin_only?: boolean;
 };
 
 const WORDPRESS_URL = (
@@ -669,11 +670,11 @@ async function resolveGalleryMedia(values: unknown[]): Promise<unknown[]> {
   }
 }
 
-function listFrom(payload: unknown): { values: unknown[]; total: number } {
-  if (Array.isArray(payload)) return { values: payload, total: payload.length };
+function listFrom(payload: unknown): { values: unknown[]; total: number; adminOnlyApplied: boolean } {
+  if (Array.isArray(payload)) return { values: payload, total: payload.length, adminOnlyApplied: false };
   const wrapper = record(payload) as TourListResponse;
   const values = wrapper.items || wrapper.tours || wrapper.data || [];
-  return { values, total: numberFrom(wrapper.total) || values.length };
+  return { values, total: numberFrom(wrapper.total) || values.length, adminOnlyApplied: wrapper.admin_only === true };
 }
 
 export async function getAppTours(params?: {
@@ -682,11 +683,13 @@ export async function getAppTours(params?: {
   search?: string;
   taxonomy?: string;
   term?: number;
+  admin_only?: boolean;
 }): Promise<{ items: TourDetail[]; total: number }> {
   const page = Math.max(1, params?.page || 1);
   const perPage = Math.min(100, Math.max(1, params?.per_page || 15));
   const query = new URLSearchParams({ page: String(page), per_page: String(perPage), _embed: "1" });
   if (params?.search) query.set("search", params.search);
+  if (params?.admin_only) query.set("admin_only", "1");
   if (params?.taxonomy && params.term) query.set(params.taxonomy, String(params.term));
 
   // The custom endpoint is deliberately compact and is the preferred source
@@ -694,11 +697,13 @@ export async function getAppTours(params?: {
   try {
     query.delete("_embed");
     const result = listFrom(await json(`wp-json/tripanza-headless/v1/tours?${query}`, 300, ["tours"]));
-    if (result.values.length) {
+    if (params?.admin_only && !result.adminOnlyApplied) return { items: [], total: 0 };
+    if (result.values.length || params?.admin_only) {
       return { items: result.values.map(transformStTour), total: result.total };
     }
   } catch {
     // Fall through to native WordPress for installations without the plugin.
+    if (params?.admin_only) return { items: [], total: 0 };
   }
 
   try {

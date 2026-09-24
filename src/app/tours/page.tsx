@@ -3,8 +3,9 @@ import ToursClient, { type TourCardData } from "./ToursClient";
 
 export const revalidate = 300;
 
-export default async function ToursPage() {
-  const { items: tours, total } = await getAppTours({ per_page: 100 });
+export default async function ToursPage({ searchParams }: { searchParams: Promise<{ admin_only?: string }> }) {
+  const params = await searchParams;
+  const { items: tours, total } = await getAppTours({ per_page: 100, admin_only: params.admin_only === "1" });
   const tourCards: TourCardData[] = tours.map((tour) => ({
     id: tour.id,
     slug: tour.slug,

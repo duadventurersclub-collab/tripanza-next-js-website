@@ -220,7 +220,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     const match = searchMatches[0];
-    if (match) router.push(`/tours/${match.slug}`); else router.push(`/tours?search=${encodeURIComponent(search)}`);
+    if (match) router.push(`/tours/${match.slug}`); else router.push(`/tours?search=${encodeURIComponent(search)}&admin_only=1`);
   }
 
   function toggleVideo() {
