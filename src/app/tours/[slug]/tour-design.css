@@ -935,6 +935,27 @@
 }
 .tp-info-download:hover { background: var(--ti-blue-dark) !important; }
 .tp-info-download.is-preparing { opacity: .78; pointer-events: none; }
+.tp-pdf-download-frame { position: fixed; width: 1px; height: 1px; border: 0; opacity: 0; pointer-events: none; }
+.tp-pdf-status { position: fixed; z-index: 2147482000; inset: 0; display: grid; padding: 18px; place-items: center; }
+.tp-pdf-status__backdrop { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: rgba(10, 14, 24, .62); backdrop-filter: blur(10px); cursor: default; }
+.tp-pdf-status__card { position: relative; display: flex; width: min(100%, 410px); min-height: 390px; padding: 28px 24px 24px; overflow: hidden; align-items: center; flex-direction: column; justify-content: center; border: 1px solid rgba(219, 226, 239, .95); border-radius: 28px; color: #171923; background: radial-gradient(circle at 50% 12%, rgba(208, 229, 98, .22), transparent 38%), #fff; box-shadow: 0 28px 90px rgba(7, 13, 31, .28); text-align: center; animation: tpPdfCardIn .32s cubic-bezier(.2,.85,.25,1.12) both; }
+.tp-pdf-status__close { position: absolute; top: 13px; right: 13px; display: grid; width: 38px; height: 38px; padding: 0; place-items: center; border: 1px solid #e1e6ef; border-radius: 50%; color: #657084; background: rgba(255,255,255,.88); font: 500 23px/1 Arial,sans-serif; cursor: pointer; }
+.tp-pdf-status__visual { position: relative; display: grid; width: 96px; height: 96px; margin-bottom: 22px; place-items: center; border: 1px solid #dce4f5; border-radius: 30px; color: #fff; background: linear-gradient(145deg,#3157d5,#2342ad); box-shadow: 0 18px 38px rgba(49,87,213,.24); }
+.tp-pdf-status__visual > i { z-index: 1; font: 900 35px/1 Arial,sans-serif; animation: tpPdfPlane 1.2s ease-in-out infinite alternate; }
+.tp-pdf-status__visual > em { position: absolute; width: 52px; height: 2px; border-radius: 99px; background: repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 5px,transparent 5px 9px); transform: rotate(-34deg); }
+.tp-pdf-status__visual > b { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 50%; color: #27340b; background: #d0e562; font-size: 25px; box-shadow: 0 0 0 9px rgba(208,229,98,.18); animation: tpPdfSuccess .45s cubic-bezier(.2,.9,.25,1.3) both; }
+.tp-pdf-status__eyebrow { color: #3157d5; font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.tp-pdf-status__card h2 { margin: 7px 0 8px !important; color: #171923 !important; font-size: 27px !important; font-weight: 950 !important; letter-spacing: -.045em !important; line-height: 1.05 !important; text-align: center !important; }
+.tp-pdf-status__card p { max-width: 320px; margin: 0 !important; color: #6b7586 !important; font-size: 12px !important; line-height: 1.6 !important; text-align: center !important; }
+.tp-pdf-status__progress { width: min(240px,75%); height: 6px; margin-top: 24px; overflow: hidden; border-radius: 99px; background: #e8edf7; }
+.tp-pdf-status__progress i { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#3157d5,#d0e562); animation: tpPdfProgress 1.15s ease-in-out infinite; }
+.tp-pdf-status__card > a { margin-top: 19px; color: #3157d5; font-size: 10px; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.tp-pdf-status__done { min-width: 140px; min-height: 44px; margin-top: 22px; border: 0; border-radius: 14px; color: #27340b; background: #d0e562; font-size: 12px; font-weight: 900; cursor: pointer; }
+.tp-pdf-status__card.is-started { background: radial-gradient(circle at 50% 12%,rgba(208,229,98,.3),transparent 42%),#fff; }
+@keyframes tpPdfCardIn { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes tpPdfPlane { from { transform: translate(-7px,7px); } to { transform: translate(7px,-7px); } }
+@keyframes tpPdfSuccess { from { opacity: 0; transform: scale(.45) rotate(-20deg); } to { opacity: 1; transform: none; } }
+@keyframes tpPdfProgress { 0% { transform: translateX(-105%); } 100% { transform: translateX(245%); } }
 
 /* ================================================================
    ITINERARY APP (itenirary.php)

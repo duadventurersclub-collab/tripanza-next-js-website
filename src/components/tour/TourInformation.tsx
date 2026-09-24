@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TourDetail, TourAvailabilityBatch } from "@/lib/wp";
 import { formatTourDate, formatTourDateWithOrdinal } from "@/lib/tour-date";
 
@@ -27,7 +27,9 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
   const details = tour.details;
   const pricing = details.pricing;
   const [activeMonth, setActiveMonth] = useState("All");
-  const [pdfPreparing, setPdfPreparing] = useState(false);
+  const [pdfStatus, setPdfStatus] = useState<"idle" | "preparing" | "started">("idle");
+  const pdfFrameRef = useRef<HTMLIFrameElement>(null);
+  const pdfTimerRef = useRef<number | null>(null);
   const hasPricing = Boolean(pricing.quad || pricing.triple || pricing.twin);
 
   const itineraryPdfUrl = (() => {
@@ -44,6 +46,23 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
   function openBooking() {
     window.dispatchEvent(new Event("tripanza:open-booking"));
     document.getElementById("booking-request")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  useEffect(() => () => {
+    if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
+  }, []);
+
+  function downloadItinerary() {
+    if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
+    setPdfStatus("preparing");
+    if (pdfFrameRef.current) pdfFrameRef.current.src = itineraryPdfUrl;
+    pdfTimerRef.current = window.setTimeout(() => setPdfStatus("started"), 4500);
+  }
+
+  function closePdfStatus() {
+    if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
+    pdfTimerRef.current = null;
+    setPdfStatus("idle");
   }
 
   // Build month filter list from batches
@@ -245,21 +264,36 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
           <h2>Take the itinerary with you</h2>
           <p>Download a detailed day-by-day PDF for offline reference before departure.</p>
         </div>
-        <a
-          href={itineraryPdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`tp-info-download${pdfPreparing ? " is-preparing" : ""}`}
-          aria-busy={pdfPreparing}
-          onClick={() => {
-            setPdfPreparing(true);
-            window.setTimeout(() => setPdfPreparing(false), 3500);
-          }}
+        <button
+          type="button"
+          className={`tp-info-download${pdfStatus === "preparing" ? " is-preparing" : ""}`}
+          aria-busy={pdfStatus === "preparing"}
+          onClick={downloadItinerary}
         >
-          <i className={`fa-solid ${pdfPreparing ? "fa-spinner fa-spin" : "fa-download"}`} aria-hidden="true" />
-          {pdfPreparing ? "Preparing…" : "Download PDF"}
-        </a>
+          <i className={`fa-solid ${pdfStatus === "preparing" ? "fa-spinner fa-spin" : "fa-download"}`} aria-hidden="true" />
+          {pdfStatus === "preparing" ? "Preparing…" : "Download PDF"}
+        </button>
       </div>
+
+      <iframe ref={pdfFrameRef} title="Itinerary PDF download" className="tp-pdf-download-frame" />
+
+      {pdfStatus !== "idle" ? (
+        <div className="tp-pdf-status" role="dialog" aria-modal="true" aria-labelledby="tp-pdf-status-title">
+          <button type="button" className="tp-pdf-status__backdrop" onClick={closePdfStatus} aria-label="Close download status" />
+          <div className={`tp-pdf-status__card${pdfStatus === "started" ? " is-started" : ""}`}>
+            <button type="button" className="tp-pdf-status__close" onClick={closePdfStatus} aria-label="Close">×</button>
+            <span className="tp-pdf-status__visual" aria-hidden="true">
+              {pdfStatus === "started" ? <b>✓</b> : <><i>↗</i><em /></>}
+            </span>
+            <span className="tp-pdf-status__eyebrow">Tripanza · Your trip, sorted</span>
+            <h2 id="tp-pdf-status-title">{pdfStatus === "started" ? "Download started" : "Packing your itinerary"}</h2>
+            <p>{pdfStatus === "started" ? "Check your browser downloads. Your day-by-day trip plan is ready for offline use." : "We’re preparing the latest itinerary, stays and trip details. This usually takes a few seconds."}</p>
+            {pdfStatus === "preparing" ? <span className="tp-pdf-status__progress"><i /></span> : null}
+            {pdfStatus === "started" ? <button type="button" className="tp-pdf-status__done" onClick={closePdfStatus}>Done</button> : null}
+            <a href={itineraryPdfUrl} target="_blank" rel="noopener noreferrer">Download not starting? Open PDF</a>
+          </div>
+        </div>
+      ) : null}
 
       {/* Book Seat CTA Block */}
       <div style={{
