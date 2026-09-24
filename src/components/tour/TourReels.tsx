@@ -50,17 +50,17 @@ export default function TourReels({ tour }: TourReelsProps) {
   return (
     <>
       <section
-        className="mb-8 scroll-mt-24 overflow-hidden rounded-[26px] bg-[#121722] px-4 py-5 text-white shadow-[0_18px_45px_rgba(18,23,34,0.16)] sm:px-6 sm:py-6"
+        className="mb-6 scroll-mt-24 overflow-hidden rounded-[22px] bg-[#121722] px-3 py-4 text-white shadow-[0_18px_45px_rgba(18,23,34,0.16)] sm:mb-8 sm:rounded-[26px] sm:px-6 sm:py-6"
         id="reels"
         aria-labelledby="tour-reels-heading"
       >
         <header className="flex items-end justify-between gap-4">
           <div className="min-w-0">
             <span className="text-[9px] font-black uppercase tracking-[0.13em] text-[#d6eb50]">Trip vibes</span>
-            <h2 id="tour-reels-heading" className="mt-1 text-[22px] font-black leading-tight tracking-[-0.035em] text-white sm:text-[28px]">
+            <h2 id="tour-reels-heading" className="mt-1 text-[19px] font-black leading-tight tracking-[-0.035em] text-white sm:text-[28px]">
               Catch the vibe before you join
             </h2>
-            <p className="mt-2 max-w-xl text-xs font-semibold leading-5 text-white/60 sm:text-sm">
+            <p className="mt-1.5 max-w-xl text-[10px] font-semibold leading-4 text-white/60 sm:mt-2 sm:text-sm sm:leading-5">
               Real moments from this trip. Tap any reel to watch it full screen.
             </p>
           </div>
@@ -69,7 +69,7 @@ export default function TourReels({ tour }: TourReelsProps) {
           </span>
         </header>
 
-        <div className="-mx-4 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-6 sm:gap-4 sm:px-6">
+        <div className="-mx-3 mt-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-6 sm:mt-5 sm:gap-4 sm:px-6 sm:pb-2">
           {reels.map((url, index) => (
             <ReelPreview
               key={`${url}-${index}`}
@@ -110,7 +110,7 @@ function ReelPreview({
       type="button"
       onClick={onOpen}
       aria-label={`Open reel ${index + 1} full screen`}
-      className="group relative aspect-[9/16] w-[72vw] max-w-[270px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-white/15 bg-[#252b37] text-left shadow-xl sm:w-[235px] lg:w-[250px]"
+      className="group relative aspect-[9/16] w-[48vw] max-w-[188px] shrink-0 snap-start overflow-hidden rounded-[17px] border border-white/15 bg-[#252b37] text-left shadow-xl sm:w-[220px] sm:max-w-none sm:rounded-[22px] lg:w-[235px]"
     >
       {!hasError ? (
         <AutoplayReelVideo
@@ -124,16 +124,16 @@ function ReelPreview({
       )}
 
       <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/5 to-black/15" />
-      <span className="pointer-events-none absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-white/20 text-white shadow-xl backdrop-blur-md transition group-hover:scale-105 group-hover:bg-white/30">
-        <ReelIcon name="play" filled className="ml-1 h-5 w-5" />
+      <span className="pointer-events-none absolute left-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-white/20 text-white shadow-xl backdrop-blur-md transition group-hover:scale-105 group-hover:bg-white/30 sm:h-14 sm:w-14">
+        <ReelIcon name="play" filled className="ml-0.5 h-4 w-4 sm:ml-1 sm:h-5 sm:w-5" />
       </span>
-      <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-3.5">
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5 sm:gap-3 sm:p-3.5">
         <span className="min-w-0">
-          <strong className="block truncate text-[11px] font-black text-white">{title}</strong>
-          <small className="mt-1 block text-[9px] font-bold text-white/65">Reel {index + 1} · Tap to watch</small>
+          <strong className="block truncate text-[10px] font-black text-white sm:text-[11px]">{title}</strong>
+          <small className="mt-0.5 block text-[8px] font-bold text-white/65 sm:mt-1 sm:text-[9px]">Reel {index + 1} · Tap to watch</small>
         </span>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur-md">
-          <ReelIcon name="expand" className="h-3.5 w-3.5" />
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur-md sm:h-9 sm:w-9">
+          <ReelIcon name="expand" className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
         </span>
       </span>
     </button>
