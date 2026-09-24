@@ -167,7 +167,7 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
           action: "ask",
           chatToken: getChatToken(),
           tourId: tour.id,
-          tourUrl: tour.link || `https://tripanza.com/tour/${tour.slug}/`,
+          tourSlug: tour.slug,
           question,
           history: historyLoaded ? [] : nextHistory.slice(-12),
           clientBootstrap: !historyLoaded,

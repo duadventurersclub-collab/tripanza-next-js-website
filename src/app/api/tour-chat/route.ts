@@ -18,19 +18,10 @@ function isChatToken(value: unknown): value is string {
   return typeof value === "string" && /^[a-f0-9]{32}$/i.test(value);
 }
 
-function isTripanzaTourUrl(value: unknown): value is string {
-  if (typeof value !== "string") return false;
-
-  try {
-    const url = new URL(value);
-    return (
-      url.protocol === "https:" &&
-      (url.hostname === "tripanza.com" || url.hostname === "www.tripanza.com") &&
-      /^\/tour\/[^/]+\/?$/i.test(url.pathname)
-    );
-  } catch {
-    return false;
-  }
+function cleanTourSlug(value: unknown) {
+  if (typeof value !== "string") return "";
+  const slug = value.trim().toLowerCase();
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ? slug : "";
 }
 
 function cleanHistory(value: unknown) {
@@ -70,6 +61,7 @@ export async function POST(request: Request) {
 
     if (action === "ask") {
       const question = typeof body.question === "string" ? body.question.trim() : "";
+      const tourSlug = cleanTourSlug(body.tourSlug);
       if (!question || question.length > 1000) {
         return NextResponse.json(
           { error: question ? "Please keep your message under 1,000 characters." : "Please type a question first." },
@@ -77,12 +69,14 @@ export async function POST(request: Request) {
         );
       }
 
-      if (!isTripanzaTourUrl(body.tourUrl)) {
+      if (!tourSlug) {
         return NextResponse.json({ error: "This tour could not be identified." }, { status: 400 });
       }
 
       upstreamBody.question = question;
-      upstreamBody.url = body.tourUrl;
+      // The Next.js model deliberately uses /tours/{slug} for internal links,
+      // while the WordPress AI resolves context from its /tour/{slug} permalink.
+      upstreamBody.url = `${WORDPRESS_URL}/tour/${encodeURIComponent(tourSlug)}/`;
       upstreamBody.history = cleanHistory(body.history);
       upstreamBody.client_bootstrap = Boolean(body.clientBootstrap);
       if (typeof body.bookingState === "string" && body.bookingState.length <= 10000) {
