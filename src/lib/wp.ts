@@ -171,7 +171,11 @@ export async function getUserProfile(sessionToken: string): Promise<UserProfile 
   return null;
 }
 
-export async function getUserBookings(sessionToken: string): Promise<UserBooking[]> {
+const USER_BOOKINGS_CACHE_TTL = 15_000;
+const userBookingsCache = new Map<string, { expiresAt: number; bookings: UserBooking[] }>();
+const userBookingsInFlight = new Map<string, Promise<UserBooking[]>>();
+
+async function fetchUserBookings(sessionToken: string): Promise<UserBooking[]> {
   const endpoints = ["wp-json/tripanza-headless/v1/my-bookings"];
 
   for (const endpoint of endpoints) {
@@ -223,6 +227,31 @@ export async function getUserBookings(sessionToken: string): Promise<UserBooking
     }
   }
   return [];
+}
+
+export async function getUserBookings(sessionToken: string): Promise<UserBooking[]> {
+  const now = Date.now();
+  const cached = userBookingsCache.get(sessionToken);
+  if (cached && cached.expiresAt > now) return cached.bookings;
+
+  const pending = userBookingsInFlight.get(sessionToken);
+  if (pending) return pending;
+
+  const request = fetchUserBookings(sessionToken);
+  userBookingsInFlight.set(sessionToken, request);
+
+  try {
+    const bookings = await request;
+    userBookingsCache.set(sessionToken, { expiresAt: Date.now() + USER_BOOKINGS_CACHE_TTL, bookings });
+    if (userBookingsCache.size > 200) {
+      for (const [token, entry] of userBookingsCache) {
+        if (entry.expiresAt <= Date.now()) userBookingsCache.delete(token);
+      }
+    }
+    return bookings;
+  } finally {
+    userBookingsInFlight.delete(sessionToken);
+  }
 }
 
 export async function getUserAccount(sessionToken: string): Promise<UserAccount | null> {
