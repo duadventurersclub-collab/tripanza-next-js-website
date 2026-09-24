@@ -61,6 +61,40 @@ const EMPTY_ACCOUNT: AccountPayload = {
   },
   bookings: [],
 };
+const ACCOUNT_CACHE_KEY = "tripanza_account_cache_v1";
+const ACCOUNT_CACHE_TTL = 55 * 60 * 1000;
+
+function readCachedAccount(): AccountPayload | null {
+  try {
+    const stored = window.sessionStorage.getItem(ACCOUNT_CACHE_KEY);
+    if (!stored) return null;
+    const cached = JSON.parse(stored) as { savedAt?: number; account?: AccountPayload };
+    if (
+      !cached.savedAt ||
+      Date.now() - cached.savedAt > ACCOUNT_CACHE_TTL ||
+      !cached.account?.authenticated ||
+      !cached.account.profile
+    ) {
+      window.sessionStorage.removeItem(ACCOUNT_CACHE_KEY);
+      return null;
+    }
+    return cached.account;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedAccount(account: AccountPayload | null) {
+  try {
+    if (!account?.authenticated || !account.profile) {
+      window.sessionStorage.removeItem(ACCOUNT_CACHE_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(ACCOUNT_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), account }));
+  } catch {
+    // The live account response still works when browser storage is unavailable.
+  }
+}
 
 const DEFAULT_COVER = "https://tripanza.com/wp-content/uploads/2026/09/tripanza-default-profile-cover.png";
 const INDIAN_STATES = [
@@ -227,13 +261,34 @@ export default function TripanzaBottomMenu() {
 
   useEffect(() => {
     let active = true;
+    const cached = readCachedAccount();
+    const cacheFrame = cached ? window.requestAnimationFrame(() => {
+      if (!active) return;
+      setAccount(cached);
+      setAccountLoading(false);
+    }) : 0;
+
     fetch("/api/account", { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() as Promise<AccountPayload> : EMPTY_ACCOUNT)
-      .then((payload) => { if (active) setAccount(payload); })
-      .catch(() => { if (active) setAccount(EMPTY_ACCOUNT); })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Account refresh failed");
+        return response.json() as Promise<AccountPayload>;
+      })
+      .then((payload) => {
+        if (!active) return;
+        if (cacheFrame) window.cancelAnimationFrame(cacheFrame);
+        writeCachedAccount(payload.authenticated ? payload : null);
+        setAccount(payload);
+      })
+      .catch(() => {
+        // Keep the last verified session during temporary WordPress or hosting delays.
+        if (active && !cached) setAccount(EMPTY_ACCOUNT);
+      })
       .finally(() => { if (active) setAccountLoading(false); });
-    return () => { active = false; };
-  }, [pathname]);
+    return () => {
+      active = false;
+      if (cacheFrame) window.cancelAnimationFrame(cacheFrame);
+    };
+  }, []);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -278,27 +333,35 @@ export default function TripanzaBottomMenu() {
   }
 
   function completeLogin(user?: AuthenticatedUser) {
-    setAccount((current) => ({
-      ...current,
-      authenticated: true,
-      profile: {
-        id: Number(user?.id) || 0,
-        name: user?.display_name || user?.email?.split("@")[0] || "Tripanza traveller",
-        email: user?.email || "",
-        avatar: "",
-        phone: "",
-        state: "",
-        dob: "",
-        gender: "",
-        cover: "",
-      },
-    }));
+    setAccount((current) => {
+      const next: AccountPayload = {
+        ...current,
+        authenticated: true,
+        profile: {
+          id: Number(user?.id) || 0,
+          name: user?.display_name || user?.email?.split("@")[0] || "Tripanza traveller",
+          email: user?.email || "",
+          avatar: "",
+          phone: "",
+          state: "",
+          dob: "",
+          gender: "",
+          cover: "",
+        },
+      };
+      writeCachedAccount(next);
+      return next;
+    });
     setAccountLoading(false);
     router.refresh();
     window.setTimeout(() => setAuthMode(null), 700);
     void fetch("/api/account", { cache: "no-store" })
       .then(async (response) => response.ok ? response.json() as Promise<AccountPayload> : null)
-      .then((payload) => { if (payload?.authenticated) setAccount(payload); })
+      .then((payload) => {
+        if (!payload?.authenticated) return;
+        writeCachedAccount(payload);
+        setAccount(payload);
+      })
       .catch(() => undefined);
   }
 
@@ -320,6 +383,7 @@ export default function TripanzaBottomMenu() {
     setLoggingOut(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+      writeCachedAccount(null);
       setAccount(EMPTY_ACCOUNT);
       closeProfile();
       router.push("/");
@@ -352,7 +416,7 @@ export default function TripanzaBottomMenu() {
     </nav>
 
     <section id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
-      {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onSuccess={completeLogin} /> : walletOpen ? <WalletView wallet={account.wallet} onBack={() => setWalletOpen(false)} /> : profileEditOpen && account.profile ? <ProfileEditor profile={account.profile} onBack={() => setProfileEditOpen(false)} onSaved={(profile) => { setAccount((current) => ({ ...current, profile })); window.setTimeout(() => setProfileEditOpen(false), 700); }} /> : <>
+      {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onSuccess={completeLogin} /> : walletOpen ? <WalletView wallet={account.wallet} onBack={() => setWalletOpen(false)} /> : profileEditOpen && account.profile ? <ProfileEditor profile={account.profile} onBack={() => setProfileEditOpen(false)} onSaved={(profile) => { setAccount((current) => { const next = { ...current, profile }; writeCachedAccount(next); return next; }); window.setTimeout(() => setProfileEditOpen(false), 700); }} /> : <>
         <div className="tp-profile-shell">
           {account.authenticated ? <div className="tp-profile-cover"><Image src={account.profile?.cover || DEFAULT_COVER} alt="" fill sizes="640px" unoptimized /><div className="tp-profile-cover__controls"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => setWalletOpen(true)} aria-label="Open wallet"><Icon name="wallet" /> {amount(account.wallet.balance, account.wallet.currency)}</button></div></div> : <header className="tp-profile-guest-head"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => requireLogin("login")}><Icon name="wallet" /> ₹0</button></header>}
 
