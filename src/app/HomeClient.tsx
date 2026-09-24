@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
+import { ReelsViewer } from "@/components/tour/TourReels";
 import type { TourDetail } from "@/lib/wp";
 
 const LOGO = "https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png";
@@ -130,6 +132,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
   const [postcardKind, setPostcardKind] = useState<"state" | "country">("state");
   const [now, setNow] = useState(0);
   const [videoPaused, setVideoPaused] = useState(false);
+  const [reelTour, setReelTour] = useState<TourDetail | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -295,7 +298,14 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
 
       <section className="tph2-section tph2-destinations" id="destinations"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Pick a pin. Find your people.</div><h2 className="tph2-title">Where are we disappearing to?</h2></div></div><div className="tph2-tabs">{[["all", "All"], ["domestic", "India"], ["international", "International"], ["weekend", "Weekend"], ["girls", "All Girls"]].map(([value, label]) => <button key={value} onClick={() => setDestinationFilter(value)} className={destinationFilter === value ? "is-active" : ""}>{label}</button>)}</div>{visibleDestinations.length ? <div className="tph2-destination-grid">{visibleDestinations.slice(0, 7).map(({ tour }, index) => <Link href={`/tours/${tour.slug}`} className={`tph2-destination${index === 0 ? " is-featured" : ""}`} key={tour.id}><HomeImage src={tour.featured_image} alt={tour.title} /><span><small>{tour.details.destination || "India"}</small><strong>{tour.title}</strong><em>{duration(tour)} · From {tour.details.origin || "Delhi"}</em><b>From {money(saleAmount(tour), tour.currency)}</b></span></Link>)}</div> : <div className="tph2-destination-empty"><strong>Passport era loading.</strong><p>Our international community trips are getting ready. Join the drop list and hear before everyone else.</p><a href={WHATSAPP}>Notify me on WhatsApp</a></div>}</div></section>
 
-      {reels.length ? <section className="tph-section tph-reels-section" id="trip-drops"><div className="tph-shell tph-head"><div><div className="tph-eyebrow">No brochure energy</div><h2>Watch the vibe before you commit.</h2></div></div><div className="tph-reels">{reels.map((tour) => <Link className="tph-reel" href={`/tours/${tour.slug}`} key={tour.id}><video src={tour.details.reels[0]} muted loop playsInline preload="metadata" poster={tour.featured_image || undefined} onMouseEnter={(event) => void event.currentTarget.play()} onMouseLeave={(event) => event.currentTarget.pause()} /><span className="tph-reel__play">▶</span><span className="tph-reel__copy"><small>{duration(tour)}</small><strong>{tour.title}</strong></span></Link>)}</div></section> : null}
+      {reels.length ? <section className="tph-section tph-reels-section" id="trip-drops"><div className="tph-shell tph-head"><div><div className="tph-eyebrow">No brochure energy</div><h2>Watch the vibe before you commit.</h2></div></div><div className="tph-reels">{reels.map((tour) => <button type="button" className="tph-reel" onClick={() => setReelTour(tour)} aria-label={`Watch ${tour.title} reel full screen`} key={tour.id}><video src={tour.details.reels[0]} muted loop playsInline preload="metadata" poster={tour.featured_image || undefined} onMouseEnter={(event) => void event.currentTarget.play()} onMouseLeave={(event) => event.currentTarget.pause()} /><span className="tph-reel__play">▶</span><span className="tph-reel__copy"><small>{duration(tour)}</small><strong>{tour.title}</strong></span></button>)}</div></section> : null}
+
+      {reelTour && typeof document !== "undefined"
+        ? createPortal(
+            <ReelsViewer tour={reelTour} initialIndex={0} onClose={() => setReelTour(null)} primaryHref={`/tours/${reelTour.slug}`} />,
+            document.body,
+          )
+        : null}
 
       <section className="tph-section tph-manifesto" id="why-tripanza"><div className="tph-shell tph-manifesto__grid"><div><div className="tph-eyebrow">Your kind of crowd</div><h2>People you&apos;ll actually click with.</h2><p>Join solo or with a friend. These trips are designed for an 18–28 community, with clear group plans, verified teams and captains who help strangers feel included.</p><div className="tph-manifesto__pills">{["Solo-friendly", "18–28 community", "Women-friendly", "Captain-supported"].map((item) => <span key={item}>{item}</span>)}</div></div><div className="tph-collage"><span><HomeImage src={gallery[0]?.url || FALLBACKS[0]} alt="Tripanza travellers" /></span><span><HomeImage src={gallery[1]?.url || FALLBACKS[1]} alt="Real trip moment" /></span><div>Strangers on day one. Inside jokes by day two.</div></div></div></section>
 

@@ -116,14 +116,16 @@ function ReelPreview({
   );
 }
 
-function ReelsViewer({
+export function ReelsViewer({
   tour,
   initialIndex,
   onClose,
+  primaryHref,
 }: {
   tour: TourDetail;
   initialIndex: number;
   onClose: () => void;
+  primaryHref?: string;
 }) {
   const reels = tour.details.reels;
   const poster = tour.featured_image || tour.details.gallery[0]?.url || "";
@@ -239,10 +241,13 @@ function ReelsViewer({
   }
 
   async function shareReel() {
+    const shareUrl = primaryHref
+      ? new URL(`${primaryHref}#reels`, window.location.origin).toString()
+      : `${window.location.href.split("#")[0]}#reels`;
     const shareData = {
       title: tour.title,
       text: `Watch ${tour.title} on Tripanza`,
-      url: `${window.location.href.split("#")[0]}#reels`,
+      url: shareUrl,
     };
     try {
       if (navigator.share) await navigator.share(shareData);
@@ -378,9 +383,15 @@ function ReelsViewer({
                 <strong className="block truncate text-base font-black text-[#d6eb50]">{price}</strong>
               </div>
             ) : null}
-            <button type="button" onClick={() => { onClose(); window.setTimeout(() => { window.dispatchEvent(new Event("tripanza:open-booking")); document.getElementById("booking-request")?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 0); }} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border-0 bg-[#d6eb50] px-4 text-xs font-black text-[#151900] shadow-lg transition hover:bg-[#e2f77b]">
-              <i className="fa-solid fa-bolt" aria-hidden="true" />Book this trip
-            </button>
+            {primaryHref ? (
+              <a href={primaryHref} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border-0 bg-[#d6eb50] px-4 text-xs font-black text-[#151900] no-underline shadow-lg transition hover:bg-[#e2f77b]">
+                <i className="fa-solid fa-arrow-right" aria-hidden="true" />View this trip
+              </a>
+            ) : (
+              <button type="button" onClick={() => { onClose(); window.setTimeout(() => { window.dispatchEvent(new Event("tripanza:open-booking")); document.getElementById("booking-request")?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 0); }} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border-0 bg-[#d6eb50] px-4 text-xs font-black text-[#151900] shadow-lg transition hover:bg-[#e2f77b]">
+                <i className="fa-solid fa-bolt" aria-hidden="true" />Book this trip
+              </button>
+            )}
           </div>
         </div>
 
