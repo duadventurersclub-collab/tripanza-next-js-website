@@ -217,6 +217,10 @@ function WalletView({ wallet, onBack }: { wallet: AccountWallet; onBack: () => v
 export default function TripanzaBottomMenu() {
   const pathname = usePathname();
   const router = useRouter();
+  const pathParts = pathname.split("/").filter(Boolean);
+  const hiddenOnTourDetail = pathParts[0] === "tours" && pathParts.length > 1;
+  const hiddenOnReels = pathParts[0] === "trips";
+  const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels;
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -387,6 +391,8 @@ export default function TripanzaBottomMenu() {
       setLoggingOut(false);
     }
   }
+
+  if (hiddenOnRoute) return null;
 
   const active = modalOpen || pathname.startsWith("/account") || pathname.startsWith("/dashboard")
     ? "profile"
