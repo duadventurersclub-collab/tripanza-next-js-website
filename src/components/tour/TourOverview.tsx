@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate } from "@/lib/tour-date";
+import TourAiChat from "@/components/tour/TourAiChat";
 
 interface TourOverviewProps {
   tour: TourDetail;
@@ -149,49 +150,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
         </div>
       </div>}
 
-      {/* AI Assistant — opens WhatsApp on click */}
-      <div className="tp-tour-assistant">
-        <div className="tp-tour-assistant__mark">
-          <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" />
-        </div>
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            color: "#2c3240",
-            fontFamily: "inherit",
-            fontSize: 12,
-            fontWeight: 650,
-            textDecoration: "none",
-            padding: "10px 2px",
-          }}
-        >
-          Ask Kanika about this trip
-        </a>
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Ask question"
-          style={{
-            display: "grid",
-            width: 42,
-            height: 42,
-            minWidth: 42,
-            placeItems: "center",
-            borderRadius: 14,
-            color: "#fff",
-            background: "#171c29",
-            textDecoration: "none",
-          }}
-        >
-          <i className="fa-solid fa-arrow-up" aria-hidden="true" />
-        </a>
-      </div>
+      <TourAiChat tour={tour} whatsappUrl={whatsappUrl} />
 
       {/* In-page Nav Links */}
       <nav className="tp-overview-itinerary-nav" aria-label="Tour sections">
