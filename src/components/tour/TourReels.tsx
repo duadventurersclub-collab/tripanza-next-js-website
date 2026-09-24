@@ -44,7 +44,6 @@ function ReelIcon({ name, className = "", filled = false }: { name: ReelIconName
 export default function TourReels({ tour }: TourReelsProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const reels = tour.details.reels;
-  const poster = tour.featured_image || tour.details.gallery[0]?.url || "";
 
   if (!reels.length) return null;
 
@@ -77,7 +76,6 @@ export default function TourReels({ tour }: TourReelsProps) {
               url={url}
               index={index}
               title={tour.title}
-              poster={poster}
               onOpen={() => setViewerIndex(index)}
             />
           ))}
@@ -98,13 +96,11 @@ function ReelPreview({
   url,
   index,
   title,
-  poster,
   onOpen,
 }: {
   url: string;
   index: number;
   title: string;
-  poster: string;
   onOpen: () => void;
 }) {
   const [hasError, setHasError] = useState(false);
@@ -119,15 +115,12 @@ function ReelPreview({
       {!hasError ? (
         <AutoplayReelVideo
           src={url}
-          poster={poster || undefined}
           onError={() => setHasError(true)}
           ariaLabel={`${title}, reel ${index + 1} preview`}
           className="pointer-events-none h-full w-full object-cover opacity-95 transition duration-300 group-hover:scale-[1.025] group-hover:opacity-100"
         />
-      ) : poster ? (
-        <div className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url("${poster.replaceAll('"', "%22")}")` }} />
       ) : (
-        <div className="h-full w-full bg-gradient-to-br from-[#31394b] to-[#11151e]" />
+        <div className="grid h-full w-full place-items-center bg-gradient-to-br from-[#31394b] to-[#11151e] px-5 text-center text-[10px] font-black text-white/70">Video preview unavailable</div>
       )}
 
       <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/5 to-black/15" />

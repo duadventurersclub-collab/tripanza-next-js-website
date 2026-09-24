@@ -47,10 +47,11 @@ export default function AutoplayReelVideo({ src, poster, className, ariaLabel, o
       poster={poster}
       className={className}
       aria-label={ariaLabel}
+      autoPlay
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="auto"
       disablePictureInPicture
       onCanPlay={(event) => {
         if (visibleRef.current && !document.hidden) void event.currentTarget.play().catch(() => undefined);
