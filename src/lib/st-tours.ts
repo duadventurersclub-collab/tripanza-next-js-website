@@ -634,6 +634,16 @@ async function json(path: string, revalidate = 300, tags: string[] = []): Promis
   return (await request(path, revalidate, tags)).json();
 }
 
+async function freshJson(path: string): Promise<unknown> {
+  const url = `${WORDPRESS_URL}/${path.replace(/^\//, "")}`;
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`WordPress ${response.status} for ${url}`);
+  return response.json();
+}
+
 function galleryMediaIds(value: unknown): number[] {
   const entries = Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [value];
   return entries.flatMap((entry) => {
@@ -696,7 +706,15 @@ export async function getAppTours(params?: {
   // for listing cards. Native wp/v2 responses can include several MB of meta.
   try {
     query.delete("_embed");
-    const result = listFrom(await json(`wp-json/tripanza-headless/v1/tours?${query}`, 300, ["tours"]));
+    const endpoint = `wp-json/tripanza-headless/v1/tours?${query}`;
+    let result = listFrom(await json(endpoint, 300, ["tours"]));
+
+    // An older cached response can survive a WordPress plugin rollout. Retry
+    // admin listings once without the data cache before rendering an empty UI.
+    if (params?.admin_only && (!result.adminOnlyApplied || !result.values.length)) {
+      result = listFrom(await freshJson(endpoint));
+    }
+
     if (params?.admin_only && !result.adminOnlyApplied) return { items: [], total: 0 };
     if (result.values.length || params?.admin_only) {
       return { items: result.values.map(transformStTour), total: result.total };
