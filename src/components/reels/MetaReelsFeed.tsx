@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MetaReel } from "@/lib/meta-reels";
 
+const DEFAULT_PARTNER_LOGO = "https://tripanza.com/wp-content/uploads/2021/03/cropped-Tripanza-Logo-11.png";
+
 type IconName = "back" | "muted" | "volume" | "heart" | "save" | "share" | "arrow";
 
 function Icon({ name }: { name: IconName }) {
@@ -213,7 +215,7 @@ export default function MetaReelsFeed({ items, initialIndex }: { items: MetaReel
               <button type="button" className="tmr-action" onClick={() => void share(item)}><i><Icon name="share" /></i><span>Share</span></button>
             </div>
             <div className="tmr-copy">
-              <div className="tmr-partner"><img src={item.logo} alt="" width="36" height="36" /><span><strong>{item.company}<b aria-label="Verified">✓</b></strong><small>Community group experience</small></span></div>
+              <div className="tmr-partner"><img src={item.logo || DEFAULT_PARTNER_LOGO} alt={`${item.company} logo`} width="36" height="36" onError={(event) => { const image = event.currentTarget; if (!image.src.endsWith("cropped-Tripanza-Logo-11.png")) image.src = DEFAULT_PARTNER_LOGO; else image.hidden = true; }} /><span><strong>{item.company}<b aria-label="Verified">✓</b></strong><small>Community group experience</small></span></div>
               <h1 className="tmr-title">{item.title}</h1>
               <div className="tmr-meta">{item.rating > 0 ? <span>★ {item.rating.toFixed(1)}{item.reviews ? ` · ${item.reviews}` : ""}</span> : null}{item.duration ? <span>{item.duration}</span> : null}{item.address ? <span>{item.address}</span> : null}<span>18–28 community</span></div>
               <div className="tmr-cta"><div className="tmr-price"><small>{item.price ? "Starts from" : "Your next group trip"}</small><strong>{item.oldPrice > item.price && item.price ? <del>{money(item.oldPrice, item.currency)}</del> : null}{item.price ? money(item.price, item.currency) : "See trip details"}</strong></div><Link href={`/tours/${item.tourSlug}`}>Explore trip <Icon name="arrow" /></Link></div>

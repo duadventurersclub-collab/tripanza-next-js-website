@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import AutoplayReelVideo from "@/components/reels/AutoplayReelVideo";
 import type { TourDetail } from "@/lib/st-tours";
 
+const DEFAULT_PARTNER_LOGO = "https://tripanza.com/wp-content/uploads/2021/03/cropped-Tripanza-Logo-11.png";
+
 interface TourReelsProps {
   tour: TourDetail;
 }
@@ -395,7 +397,7 @@ export function ReelsViewer({
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pr-20">
           <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#d6eb50] text-xs font-black text-[#141900]">{partner.charAt(0).toUpperCase()}</span>
+            <PartnerLogo src={tour.details.partner.logo_url} name={partner} />
             <strong className="truncate text-xs font-black">{partner}</strong>
             {tour.details.partner.verified ? <span aria-label="Verified"><ReelIcon name="check" className="h-3.5 w-3.5 text-[#72a8ff]" /></span> : null}
           </div>
@@ -448,5 +450,30 @@ function ReelAction({
       </span>
       <span className="text-[8px] font-black drop-shadow">{label}</span>
     </button>
+  );
+}
+
+function PartnerLogo({ src, name }: { src: string; name: string }) {
+  const [logoSrc, setLogoSrc] = useState(src || DEFAULT_PARTNER_LOGO);
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <span className="grid h-9 w-9 shrink-0 overflow-hidden place-items-center rounded-full border-2 border-white/80 bg-white text-xs font-black text-[#141900] shadow-lg">
+      {!failed ? (
+        // The company logo may be hosted by WordPress or an external partner CDN.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logoSrc}
+          alt={`${name} logo`}
+          width="36"
+          height="36"
+          className="h-full w-full object-contain"
+          onError={() => {
+            if (logoSrc !== DEFAULT_PARTNER_LOGO) setLogoSrc(DEFAULT_PARTNER_LOGO);
+            else setFailed(true);
+          }}
+        />
+      ) : name.charAt(0).toUpperCase()}
+    </span>
   );
 }
