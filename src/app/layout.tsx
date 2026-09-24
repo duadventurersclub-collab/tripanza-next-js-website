@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import TripanzaBottomMenu from "@/components/navigation/TripanzaBottomMenu";
 import "./globals.css";
@@ -12,6 +12,14 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Tripanza",
   description: "Ultra-fast travel website powered by WordPress backend and Next.js frontend",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
