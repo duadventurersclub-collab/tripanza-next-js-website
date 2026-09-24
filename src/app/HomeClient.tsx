@@ -347,7 +347,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
 
       <section className="tph2-help"><div className="tph-shell"><div className="tph2-help__card"><div><span>💬</span><div><small>Real human. Real reply.</small><h3>Group chat stuck?</h3><p>Dates, budget ya pickup—bas ping karo. We will help you pick.</p></div></div><span>Dates?　Budget?　Pickup?</span><a href={WHATSAPP}>Ask on WhatsApp</a></div></div></section>
 
-      <section className="tph-final"><div className="tph-shell"><div className="tph-final__card"><h2>Stop reacting to reels. <span>Go make one.</span></h2><div><a href="#trips">Find my next trip</a><Link href="/tours">Watch trip drops</Link></div></div><footer><strong>India&apos;s coolest travel app <span>♥</span></strong><small>© {new Date().getFullYear()} Tripanza<br />Community trips for young India.</small></footer></div></section>
+      <section className="tph-final"><div className="tph-shell"><div className="tph-final__card"><h2>Stop reacting to reels. <span>Go make one.</span></h2><div><a href="#trips">Find my next trip</a><Link href="/trips">Watch trip drops</Link></div></div><footer><strong>India&apos;s coolest travel app <span>♥</span></strong><small>© {new Date().getFullYear()} Tripanza<br />Community trips for young India.</small></footer></div></section>
 
     </main>
   );

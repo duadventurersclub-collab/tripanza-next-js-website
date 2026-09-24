@@ -392,7 +392,7 @@ export default function TripanzaBottomMenu() {
     ? "profile"
     : savedView
       ? "saved"
-      : pathname.startsWith("/tours")
+      : pathname.startsWith("/tours") || pathname.startsWith("/trips")
         ? "explore"
         : "home";
   const displayName = account.profile?.name || "Tripanza traveller";
@@ -404,7 +404,7 @@ export default function TripanzaBottomMenu() {
       <ul className="tpybm-nav__list">
         <li className="tpybm-nav__item"><Link className={`tpybm-nav__link${active === "home" ? " is-active" : ""}`} href="/" onClick={() => setSavedView(false)} aria-current={active === "home" ? "page" : undefined}><span className="tpybm-nav__icon"><Icon name="home" /></span><span className="tpybm-nav__label">Home</span></Link></li>
         <li className="tpybm-nav__item"><Link className="tpybm-nav__link" href="/#why-tripanza" onClick={() => setSavedView(false)}><span className="tpybm-nav__icon"><Icon name="people" /></span><span className="tpybm-nav__label">Icebreaker</span></Link></li>
-        <li className="tpybm-nav__item"><Link className={`tpybm-nav__link tpybm-nav__link--primary${active === "explore" ? " is-active" : ""}`} href="/tours" onClick={() => setSavedView(false)} aria-current={active === "explore" ? "page" : undefined}><span className="tpybm-nav__icon"><Icon name="explore" /><span className="tpybm-nav__live" /></span><span className="tpybm-nav__label">Explore</span></Link></li>
+        <li className="tpybm-nav__item"><Link className={`tpybm-nav__link tpybm-nav__link--primary${active === "explore" ? " is-active" : ""}`} href="/trips" onClick={() => setSavedView(false)} aria-current={active === "explore" ? "page" : undefined}><span className="tpybm-nav__icon"><Icon name="explore" /><span className="tpybm-nav__live" /></span><span className="tpybm-nav__label">Explore</span></Link></li>
         <li className="tpybm-nav__item"><Link className={`tpybm-nav__link${active === "saved" ? " is-active" : ""}`} href="/?tripanza_filter=saved#trips" onClick={showSavedTrips} aria-current={active === "saved" ? "page" : undefined}><span className="tpybm-nav__icon"><Icon name="heart" /></span><span className="tpybm-nav__label">Saved</span><span className={`tpybm-nav__count${savedCount ? " has-items" : ""}`} aria-label={`${savedCount} saved trips`}>{savedCount > 99 ? "99+" : savedCount}</span></Link></li>
         <li className="tpybm-nav__item"><button ref={profileButtonRef} className={`tpybm-nav__link${active === "profile" ? " is-active" : ""}`} type="button" onClick={openProfile} aria-haspopup="dialog" aria-controls="tripanzaProfileModal"><span className="tpybm-nav__icon">{account.profile?.avatar ? <Image className="tpybm-nav__avatar" src={account.profile.avatar} alt="" width={27} height={27} unoptimized /> : <Icon name="profile" />}</span><span className="tpybm-nav__label">Me</span></button></li>
       </ul>

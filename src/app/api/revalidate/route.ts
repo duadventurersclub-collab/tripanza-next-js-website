@@ -36,17 +36,21 @@ export async function POST(request: Request) {
   const slug = typeof payload.slug === "string"
     ? payload.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "")
     : "";
+  const source = typeof payload.source === "string" ? payload.source.trim().toLowerCase() : "";
 
   revalidateTag("tours", { expire: 0 });
+  revalidateTag("meta-reels", { expire: 0 });
   if (slug) revalidateTag(`tour:${slug}`, { expire: 0 });
   revalidatePath("/");
   revalidatePath("/tours");
+  revalidatePath("/trips");
   if (slug) revalidatePath(`/tours/${slug}`);
   else revalidatePath("/tours/[slug]", "page");
 
   return NextResponse.json({
     revalidated: true,
     slug: slug || null,
+    source: source || null,
     now: new Date().toISOString(),
   });
 }
