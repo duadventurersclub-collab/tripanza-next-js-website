@@ -8,6 +8,36 @@ interface TourReelsProps {
   tour: TourDetail;
 }
 
+type ReelIconName = "alert" | "arrow-left" | "arrow-right" | "bookmark" | "bolt" | "check" | "chevron-down" | "chevron-up" | "clock" | "expand" | "heart" | "location" | "play" | "share" | "star" | "volume" | "volume-off";
+
+function ReelIcon({ name, className = "", filled = false }: { name: ReelIconName; className?: string; filled?: boolean }) {
+  const paths: Record<ReelIconName, React.ReactNode> = {
+    alert: <><circle cx="12" cy="12" r="9" /><path d="M12 7v6" /><path d="M12 17h.01" /></>,
+    "arrow-left": <><path d="M19 12H5" /><path d="m11 18-6-6 6-6" /></>,
+    "arrow-right": <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
+    bookmark: <path d="M6.5 4.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17L12 18l-5.5 3.5z" />,
+    bolt: <path d="m13 2-8 12h6l-1 8 8-12h-6z" />,
+    check: <><circle cx="12" cy="12" r="9" /><path d="m8 12 2.6 2.6L16.5 9" /></>,
+    "chevron-down": <path d="m7 9 5 5 5-5" />,
+    "chevron-up": <path d="m7 15 5-5 5 5" />,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    expand: <><path d="M8 3H3v5" /><path d="m3 3 6 6" /><path d="M16 3h5v5" /><path d="m21 3-6 6" /><path d="M8 21H3v-5" /><path d="m3 21 6-6" /><path d="M16 21h5v-5" /><path d="m21 21-6-6" /></>,
+    heart: <path d="M20.8 5.8a5.5 5.5 0 0 0-7.8 0L12 6.9l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 22l8.8-8.4a5.5 5.5 0 0 0 0-7.8z" />,
+    location: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
+    play: <path d="m8 5 11 7-11 7z" />,
+    share: <><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.6-4.5" /><path d="m8.2 13.2 7.6 4.5" /></>,
+    star: <path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z" />,
+    volume: <><path d="M5 9v6h4l5 4V5L9 9z" /><path d="M17 9a4 4 0 0 1 0 6" /><path d="M19 6a8 8 0 0 1 0 12" /></>,
+    "volume-off": <><path d="M5 9v6h4l5 4V5L9 9z" /><path d="m18 9 4 4" /><path d="m22 9-4 4" /></>,
+  };
+
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
+}
+
 export default function TourReels({ tour }: TourReelsProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const reels = tour.details.reels;
@@ -101,7 +131,7 @@ function ReelPreview({
 
       <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/5 to-black/15" />
       <span className="pointer-events-none absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-white/20 text-white shadow-xl backdrop-blur-md transition group-hover:scale-105 group-hover:bg-white/30">
-        <i className="fa-solid fa-play ml-1 text-lg" aria-hidden="true" />
+        <ReelIcon name="play" filled className="ml-1 h-5 w-5" />
       </span>
       <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-3.5">
         <span className="min-w-0">
@@ -109,7 +139,7 @@ function ReelPreview({
           <small className="mt-1 block text-[9px] font-bold text-white/65">Reel {index + 1} · Tap to watch</small>
         </span>
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur-md">
-          <i className="fa-solid fa-expand text-[11px]" aria-hidden="true" />
+          <ReelIcon name="expand" className="h-3.5 w-3.5" />
         </span>
       </span>
     </button>
@@ -283,7 +313,7 @@ export function ReelsViewer({
           </div>
           <div className="flex items-center gap-3">
             <button type="button" onClick={onClose} aria-label="Close reels" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition hover:bg-black/65">
-              <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+              <ReelIcon name="arrow-left" className="h-5 w-5" />
             </button>
             <div className="min-w-0 flex-1">
               <span className="block text-[9px] font-black uppercase tracking-[0.14em] text-[#d6eb50]">Tripanza reels</span>
@@ -291,7 +321,7 @@ export function ReelsViewer({
             </div>
             <span className="rounded-full bg-black/35 px-2.5 py-1.5 text-[10px] font-black backdrop-blur-md">{activeIndex + 1} / {reels.length}</span>
             <button type="button" onClick={() => setIsMuted((current) => !current)} aria-label={isMuted ? "Turn sound on" : "Mute reel"} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition hover:bg-black/65">
-              <i className={`fa-solid ${isMuted ? "fa-volume-xmark" : "fa-volume-high"}`} aria-hidden="true" />
+              <ReelIcon name={isMuted ? "volume-off" : "volume"} className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -309,7 +339,7 @@ export function ReelsViewer({
                 {failed.has(index) ? (
                   <div className="grid h-full place-items-center bg-gradient-to-br from-[#252b37] to-[#090b10] px-8 text-center">
                     <div>
-                      <i className="fa-solid fa-circle-exclamation text-3xl text-[#d6eb50]" aria-hidden="true" />
+                      <ReelIcon name="alert" className="mx-auto h-9 w-9 text-[#d6eb50]" />
                       <p className="mt-4 text-base font-black">This reel could not be loaded</p>
                       <a href={url} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex rounded-full bg-[#d6eb50] px-5 py-3 text-xs font-black text-[#151900]">Open original reel</a>
                     </div>
@@ -344,21 +374,21 @@ export function ReelsViewer({
 
         {!isPlaying && !failed.has(activeIndex) ? (
           <button type="button" onClick={togglePlayback} aria-label="Play reel" className="absolute left-1/2 top-1/2 z-40 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-black/40 text-white shadow-2xl backdrop-blur-md">
-            <i className="fa-solid fa-play ml-1 text-xl" aria-hidden="true" />
+            <ReelIcon name="play" filled className="ml-1 h-6 w-6" />
           </button>
         ) : null}
 
         <div className="absolute bottom-[calc(174px+env(safe-area-inset-bottom))] right-3 z-40 flex flex-col gap-3">
-          <ReelAction label={liked.has(activeIndex) ? "Unlike" : "Like"} icon={liked.has(activeIndex) ? "fa-solid fa-heart" : "fa-regular fa-heart"} active={liked.has(activeIndex)} onClick={() => toggleLiked(activeIndex)} />
-          <ReelAction label="Share" icon="fa-solid fa-share" onClick={shareReel} />
-          <ReelAction label={saved.has(activeIndex) ? "Saved" : "Save"} icon={saved.has(activeIndex) ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark"} active={saved.has(activeIndex)} onClick={() => toggleSaved(activeIndex)} />
+          <ReelAction label={liked.has(activeIndex) ? "Unlike" : "Like"} icon="heart" active={liked.has(activeIndex)} onClick={() => toggleLiked(activeIndex)} />
+          <ReelAction label="Share" icon="share" onClick={shareReel} />
+          <ReelAction label={saved.has(activeIndex) ? "Saved" : "Save"} icon="bookmark" active={saved.has(activeIndex)} onClick={() => toggleSaved(activeIndex)} />
           {reels.length > 1 ? (
             <div className="mt-1 flex flex-col overflow-hidden rounded-full border border-white/15 bg-black/35 backdrop-blur-md">
               <button type="button" onClick={() => goTo(activeIndex - 1)} disabled={activeIndex === 0} aria-label="Previous reel" className="grid h-9 w-10 place-items-center border-b border-white/10 text-white disabled:opacity-30">
-                <i className="fa-solid fa-chevron-up text-[10px]" aria-hidden="true" />
+                <ReelIcon name="chevron-up" className="h-4 w-4" />
               </button>
               <button type="button" onClick={() => goTo(activeIndex + 1)} disabled={activeIndex === reels.length - 1} aria-label="Next reel" className="grid h-9 w-10 place-items-center text-white disabled:opacity-30">
-                <i className="fa-solid fa-chevron-down text-[10px]" aria-hidden="true" />
+                <ReelIcon name="chevron-down" className="h-4 w-4" />
               </button>
             </div>
           ) : null}
@@ -368,13 +398,13 @@ export function ReelsViewer({
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#d6eb50] text-xs font-black text-[#141900]">{partner.charAt(0).toUpperCase()}</span>
             <strong className="truncate text-xs font-black">{partner}</strong>
-            {tour.details.partner.verified ? <i className="fa-solid fa-circle-check text-[11px] text-[#72a8ff]" aria-label="Verified" /> : null}
+            {tour.details.partner.verified ? <span aria-label="Verified"><ReelIcon name="check" className="h-3.5 w-3.5 text-[#72a8ff]" /></span> : null}
           </div>
           <h3 className="mt-2 line-clamp-2 text-lg font-black leading-tight tracking-[-0.025em]">{tour.title}</h3>
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold text-white/70">
-            {destination ? <span><i className="fa-solid fa-location-dot mr-1" />{destination}</span> : null}
-            {duration ? <span><i className="fa-regular fa-clock mr-1" />{duration}</span> : null}
-            {tour.details.rating.value ? <span><i className="fa-solid fa-star mr-1 text-[#ffd451]" />{tour.details.rating.value}</span> : null}
+            {destination ? <span className="inline-flex items-center"><ReelIcon name="location" className="mr-1 h-3 w-3" />{destination}</span> : null}
+            {duration ? <span className="inline-flex items-center"><ReelIcon name="clock" className="mr-1 h-3 w-3" />{duration}</span> : null}
+            {tour.details.rating.value ? <span className="inline-flex items-center"><ReelIcon name="star" filled className="mr-1 h-3 w-3 text-[#ffd451]" />{tour.details.rating.value}</span> : null}
           </div>
           <div className="pointer-events-auto mt-3 flex items-center gap-3">
             {price ? (
@@ -385,11 +415,11 @@ export function ReelsViewer({
             ) : null}
             {primaryHref ? (
               <a href={primaryHref} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border-0 bg-[#d6eb50] px-4 text-xs font-black text-[#151900] no-underline shadow-lg transition hover:bg-[#e2f77b]">
-                <i className="fa-solid fa-arrow-right" aria-hidden="true" />View this trip
+                <ReelIcon name="arrow-right" className="h-4 w-4" />View this trip
               </a>
             ) : (
               <button type="button" onClick={() => { onClose(); window.setTimeout(() => { window.dispatchEvent(new Event("tripanza:open-booking")); document.getElementById("booking-request")?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 0); }} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border-0 bg-[#d6eb50] px-4 text-xs font-black text-[#151900] shadow-lg transition hover:bg-[#e2f77b]">
-                <i className="fa-solid fa-bolt" aria-hidden="true" />Book this trip
+                <ReelIcon name="bolt" className="h-4 w-4" />Book this trip
               </button>
             )}
           </div>
@@ -408,14 +438,14 @@ function ReelAction({
   onClick,
 }: {
   label: string;
-  icon: string;
+  icon: "bookmark" | "heart" | "share";
   active?: boolean;
   onClick: () => void;
 }) {
   return (
     <button type="button" onClick={onClick} aria-label={label} className="flex w-12 flex-col items-center gap-1 text-white">
       <span className={`grid h-11 w-11 place-items-center rounded-full border backdrop-blur-md transition ${active ? "border-[#ff5470]/50 bg-[#ff3158]/25 text-[#ff5470]" : "border-white/15 bg-black/35 hover:bg-black/60"}`}>
-        <i className={`${icon} text-base`} aria-hidden="true" />
+        <ReelIcon name={icon} filled={active} className="h-5 w-5" />
       </span>
       <span className="text-[8px] font-black drop-shadow">{label}</span>
     </button>
