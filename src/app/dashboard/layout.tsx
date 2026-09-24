@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getSessionToken } from "@/lib/session";
-import { getUserProfile } from "@/lib/wp";
 import Link from "next/link";
 import LogoutButton from "@/components/auth/LogoutButton";
 import "@/components/booking/booking-history.css";
@@ -13,13 +12,6 @@ export default async function DashboardLayout({
   const token = await getSessionToken();
 
   if (!token) {
-    redirect("/login");
-  }
-
-  const profile = await getUserProfile(token);
-
-  if (!profile) {
-    // If the token is invalid or expired
     redirect("/login");
   }
 

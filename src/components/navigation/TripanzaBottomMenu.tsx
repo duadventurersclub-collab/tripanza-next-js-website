@@ -310,6 +310,10 @@ export default function TripanzaBottomMenu() {
     };
   }, [authMode, modalOpen, profileEditOpen, walletOpen]);
 
+  useEffect(() => {
+    if (account.authenticated) router.prefetch("/dashboard");
+  }, [account.authenticated, router]);
+
   function openProfile() {
     setWalletOpen(false);
     setProfileEditOpen(false);
@@ -363,15 +367,6 @@ export default function TripanzaBottomMenu() {
         setAccount(payload);
       })
       .catch(() => undefined);
-  }
-
-  function showBookings() {
-    if (!account.authenticated) {
-      requireLogin();
-      return;
-    }
-    closeProfile();
-    router.push("/dashboard");
   }
 
   function showSavedTrips() {
@@ -429,7 +424,7 @@ export default function TripanzaBottomMenu() {
 
           <div className="tp-profile-menu-label">Your Tripanza</div>
           <div className="tp-profile-menu" role="list">
-            <button type="button" role="listitem" onClick={showBookings}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></button>
+            {account.authenticated ? <Link role="listitem" href="/dashboard" onClick={closeProfile}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></Link> : <button type="button" role="listitem" onClick={() => requireLogin()}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></button>}
             <Link role="listitem" href="/tours" onClick={closeProfile}><span><Icon name="compass" /><strong>Explore Trips</strong><small>Find your next escape.</small></span><b>›</b></Link>
             <button type="button" role="listitem" onClick={() => account.authenticated ? setWalletOpen(true) : requireLogin("login")}><span><Icon name="wallet" /><strong>Wallet</strong><small>Cashback &amp; rewards.</small></span><b>›</b></button>
             <Link role="listitem" href="/?tripanza_filter=saved#trips" onClick={() => { showSavedTrips(); closeProfile(); }}><span><Icon name="heart" /><strong>Favourites</strong><small>{savedCount} saved trips.</small></span><b>›</b></Link>

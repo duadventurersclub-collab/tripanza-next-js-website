@@ -62,6 +62,17 @@
 .tp-bookings-login { display:flex; width:min(100%,320px); min-height:50px; margin-top:22px; padding:0 11px 0 17px; align-items:center; justify-content:space-between; border:0; border-radius:15px; background:var(--tb-lime); color:var(--tb-ink); font-size:12px; font-weight:950; cursor:pointer; }
 .tp-bookings-login b { display:grid; width:30px; height:30px; place-items:center; border-radius:10px; background:var(--tb-blue); color:#fff; }
 .tp-bookings-filter-empty { padding:30px 16px; border:1px dashed #cfd7e5; border-radius:18px; color:var(--tb-muted); font-size:10px; font-weight:750; text-align:center; }
+.tp-bookings-loading { min-height:430px; }
+.tp-bookings-skeleton-count,.tp-bookings-loading-media,.tp-bookings-loading-copy i { background:linear-gradient(100deg,#edf1f7 30%,#f9fbfe 48%,#edf1f7 66%); background-size:240% 100%; animation:tp-bookings-shimmer 1.05s linear infinite; }
+.tp-bookings-skeleton-count { border-color:#e2e7ef; }
+.tp-bookings-loading-card { overflow:hidden; border:1px solid var(--tb-line); border-radius:24px; background:#fff; box-shadow:0 12px 36px rgba(32,61,166,.06); }
+.tp-bookings-loading-media { height:190px; }
+.tp-bookings-loading-copy { display:grid; padding:20px; gap:12px; }
+.tp-bookings-loading-copy i { display:block; height:13px; border-radius:99px; }
+.tp-bookings-loading-copy i:nth-child(1) { width:68%; }
+.tp-bookings-loading-copy i:nth-child(2) { width:92%; }
+.tp-bookings-loading-copy i:nth-child(3) { width:45%; }
+@keyframes tp-bookings-shimmer { to { background-position:-240% 0; } }
 @media(min-width:680px) { .tp-booking-card { display:grid; grid-template-columns:245px minmax(0,1fr); } .tp-booking-media { height:100%; min-height:290px; } .tp-booking-main { display:flex; padding:20px; flex-direction:column; } .tp-booking-actions { margin-top:auto; padding-top:15px; } }
 @media(max-width:420px) { .tp-bookings-intro h1 { font-size:31px; } .tp-bookings-count { min-width:62px; height:62px; } .tp-bookings-filters button { flex:1; padding:0 7px; } .tp-booking-media { height:170px; } .tp-booking-main { padding:15px; } .tp-booking-title-row h2 { font-size:18px; } }
-@media(prefers-reduced-motion:reduce) { .tp-booking-media img,.tp-booking-actions a { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .tp-booking-media img,.tp-booking-actions a { transition:none; } .tp-bookings-skeleton-count,.tp-bookings-loading-media,.tp-bookings-loading-copy i { animation:none; } }
