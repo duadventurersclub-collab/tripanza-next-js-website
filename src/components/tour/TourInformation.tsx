@@ -27,7 +27,19 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
   const details = tour.details;
   const pricing = details.pricing;
   const [activeMonth, setActiveMonth] = useState("All");
+  const [pdfPreparing, setPdfPreparing] = useState(false);
   const hasPricing = Boolean(pricing.quad || pricing.triple || pricing.twin);
+
+  const itineraryPdfUrl = (() => {
+    try {
+      const url = new URL(tour.link || `https://tripanza.com/tour/${tour.slug}/`);
+      url.searchParams.set("generate_pdf", "1");
+      url.searchParams.set("pdf_ready", "1");
+      return url.toString();
+    } catch {
+      return `https://tripanza.com/tour/${encodeURIComponent(tour.slug)}/?generate_pdf=1&pdf_ready=1`;
+    }
+  })();
 
   function openBooking() {
     window.dispatchEvent(new Event("tripanza:open-booking"));
@@ -234,13 +246,18 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
           <p>Download a detailed day-by-day PDF for offline reference before departure.</p>
         </div>
         <a
-          href={whatsappUrl}
+          href={itineraryPdfUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="tp-info-download"
+          className={`tp-info-download${pdfPreparing ? " is-preparing" : ""}`}
+          aria-busy={pdfPreparing}
+          onClick={() => {
+            setPdfPreparing(true);
+            window.setTimeout(() => setPdfPreparing(false), 3500);
+          }}
         >
-          <i className="fa-solid fa-download" aria-hidden="true" />
-          Get PDF
+          <i className={`fa-solid ${pdfPreparing ? "fa-spinner fa-spin" : "fa-download"}`} aria-hidden="true" />
+          {pdfPreparing ? "Preparing…" : "Download PDF"}
         </a>
       </div>
 
