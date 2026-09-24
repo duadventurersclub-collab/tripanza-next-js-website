@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { TourDetail } from "@/lib/wp";
 
 type ChatMessage = {
@@ -251,7 +252,7 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
         </span>
       </button>
 
-      {open && (
+      {open && createPortal((
         <div className="tp-ai-chat" role="dialog" aria-modal="true" aria-label={`Ask Kanika about ${tour.title}`}>
           <button className="tp-ai-chat__backdrop" type="button" onClick={() => setOpen(false)} aria-label="Close chat" />
           <section className="tp-ai-chat__panel">
@@ -353,7 +354,7 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
             <small className="tp-ai-chat__note">Kanika can make mistakes. Confirm important trip details before paying.</small>
           </section>
         </div>
-      )}
+      ), document.body)}
     </>
   );
 }
