@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import AutoplayReelVideo from "@/components/reels/AutoplayReelVideo";
 import type { TourDetail } from "@/lib/st-tours";
 
 interface TourReelsProps {
@@ -114,13 +115,11 @@ function ReelPreview({
       className="group relative aspect-[9/16] w-[72vw] max-w-[270px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-white/15 bg-[#252b37] text-left shadow-xl sm:w-[235px] lg:w-[250px]"
     >
       {!hasError ? (
-        <video
+        <AutoplayReelVideo
           src={url}
           poster={poster || undefined}
-          playsInline
-          muted
-          preload="metadata"
           onError={() => setHasError(true)}
+          ariaLabel={`${title}, reel ${index + 1} preview`}
           className="pointer-events-none h-full w-full object-cover opacity-95 transition duration-300 group-hover:scale-[1.025] group-hover:opacity-100"
         />
       ) : poster ? (
