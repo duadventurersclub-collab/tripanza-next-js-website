@@ -9,7 +9,7 @@ interface TourGalleryProps {
 }
 
 export default function TourGallery({ tour }: TourGalleryProps) {
-  const gallery = tour.details.gallery;
+  const gallery = tour.details.gallery.length ? tour.details.gallery : tour.featured_image ? [{ url: tour.featured_image, alt: tour.title }] : [];
   const reels = tour.details.reels;
   const reelPreviewUrl = reels[0] || "";
   const reel0 = gallery[0]?.url || tour.featured_image || "";
@@ -21,6 +21,7 @@ export default function TourGallery({ tour }: TourGalleryProps) {
   const dotsRef = useRef<HTMLButtonElement[]>([]);
   const reelVideoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
+  const countRef = useRef<HTMLSpanElement>(null);
 
   const activeIndex = useCallback(() => {
     const track = trackRef.current;
@@ -32,6 +33,7 @@ export default function TourGallery({ tour }: TourGalleryProps) {
   const renderState = useCallback(() => {
     frameRef.current = null;
     const idx = activeIndex();
+    if (countRef.current) countRef.current.textContent = String(idx + 1).padStart(2, "0");
     const slides = trackRef.current?.querySelectorAll<HTMLElement>(".tp-tour-gallery__slide") || [];
     dotsRef.current.forEach((dot, i) => {
       dot.classList.toggle("is-active", i === idx);
@@ -61,12 +63,19 @@ export default function TourGallery({ tour }: TourGalleryProps) {
     const track = trackRef.current;
     if (!track) return;
     track.addEventListener("scroll", requestState, { passive: true });
-    track.addEventListener("keydown", (e) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") { e.preventDefault(); goTo(activeIndex() + 1); }
       if (e.key === "ArrowLeft") { e.preventDefault(); goTo(activeIndex() - 1); }
-    });
+    };
+    track.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", renderState, { passive: true });
     renderState();
+    return () => {
+      track.removeEventListener("scroll", requestState);
+      track.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", renderState);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
   }, [activeIndex, goTo, renderState, requestState]);
 
   // Lazy reel preview via IntersectionObserver
@@ -121,6 +130,13 @@ export default function TourGallery({ tour }: TourGalleryProps) {
               </figure>
             ))}
           </div>
+
+          <div className="tp-app-hero-copy">
+            <span className="tp-app-hero-kicker"><span /> THE NEXT CHAPTER</span>
+            <strong>{tour.details.destination || tour.title}</strong>
+            <p>{tour.details.duration.days ? `${tour.details.duration.days} days of new stories` : "A new place. A new story."}{tour.details.origin ? ` · From ${tour.details.origin}` : ""}</p>
+          </div>
+          {galleryCount > 0 && <div className="tp-app-photo-count" aria-label={`${galleryCount} trip photos`}><i className="fa-regular fa-images" aria-hidden="true" /><span ref={countRef}>01</span><span>/ {String(galleryCount).padStart(2, "0")}</span></div>}
 
           {/* Reel Preview */}
           {reelPreviewUrl && (

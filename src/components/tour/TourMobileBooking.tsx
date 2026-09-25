@@ -34,8 +34,8 @@ export default function TourMobileBooking({ tour, whatsappUrl }: { tour: TourDet
 
   return <>
     <div className="tp-mobile-booking-bar" aria-label="Quick booking bar">
-      <div><span>Starting from</span><strong>{tour.details.pricing.starting_price || tour.price || "Contact us"}</strong></div>
-      <div className="tp-mobile-booking-actions"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp inquiry"><i className="fa-brands fa-whatsapp" aria-hidden="true" /></a><button type="button" onClick={() => setIsOpen(true)}><i className="fa-solid fa-bolt" aria-hidden="true" />Check dates</button></div>
+      <div><span>Your next adventure</span><strong>{tour.details.pricing.starting_price || tour.price || "Contact us"}</strong><small>Starting price · per person</small></div>
+      <div className="tp-mobile-booking-actions"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp inquiry"><i className="fa-brands fa-whatsapp" aria-hidden="true" /></a><button type="button" onClick={() => setIsOpen(true)}>Check dates <i className="fa-solid fa-arrow-right" aria-hidden="true" /></button></div>
     </div>
     {isOpen && typeof document !== "undefined" ? createPortal(<div className="tp-mobile-booking-modal" role="dialog" aria-modal="true" aria-label="Book this tour"><button type="button" className="tp-mobile-booking-backdrop" onClick={() => setIsOpen(false)} aria-label="Close booking form" /><div className="tp-mobile-booking-sheet"><TourBookingPanel tour={tour} mobile onClose={() => setIsOpen(false)} /></div></div>, document.body) : null}
   </>;

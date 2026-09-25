@@ -140,7 +140,7 @@ export default function TourBookingPanel({
           <div><small>Secure booking</small><strong>Plan your trip</strong></div>
           {mobile ? <button type="button" className="tp-booking-close" onClick={onClose} aria-label="Close booking form">×</button> : null}
         </header>
-        <div className="tp-booking-benefits"><span><b>✓</b><small>Live ST Tours</small><strong>Server-verified fare</strong></span><span><i className="fa-solid fa-check" /> Takes 2 min</span></div>
+        <div className="tp-booking-benefits"><span><b>✓</b><small>Your next adventure</small><strong>Plan it. Book it. Live it.</strong></span><span><i className="fa-solid fa-check" /> Secure payment</span></div>
         <ol className="tp-booking-progress" aria-label="Booking progress">{["Date", "Travellers", "Extras", "Payment"].map((label, index) => <li className={index < 3 ? "is-complete" : "is-active"} key={label}><span>{index < 3 ? "✓" : index + 1}</span><small>{label}</small></li>)}</ol>
 
         {discountRate > 0 || cashbackPerPerson > 0 || tour.details.offer.note || hasOfferTimer ? (

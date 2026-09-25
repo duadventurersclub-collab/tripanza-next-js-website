@@ -29,7 +29,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
     : details.cashback ? `Flat ${details.cashback} OFF via cashback` : "";
 
   return (
-    <div className="tp-tour-overview">
+    <div className="tp-tour-overview" id="tp-trip-overview">
       {/* Header Card */}
       <header className="tp-tour-overview__header">
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -41,6 +41,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             </div>
           )}
 
+          <div className="tp-app-overline"><span>THE TRIP, AT A GLANCE</span>{details.rating.count > 0 && <span><i className="fa-solid fa-star" aria-hidden="true" /> {details.rating.value.toFixed(1)} <small>({details.rating.count} reviews)</small></span>}</div>
           <h1 className="tp-tour-overview__title">{tour.title}</h1>
 
           {/* Value Summary Card */}
@@ -151,30 +152,6 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
       </div>}
 
       <TourAiChat tour={tour} whatsappUrl={whatsappUrl} />
-
-      {/* In-page Nav Links */}
-      <nav className="tp-overview-itinerary-nav" aria-label="Tour sections">
-        <a href="#tp-trip-days">
-          <i className="fa-solid fa-route" aria-hidden="true" />
-          Itinerary
-        </a>
-        <a href="#tp-trip-highlights">
-          <i className="fa-solid fa-sparkles" aria-hidden="true" />
-          Highlights
-        </a>
-        <a href="#tp-trip-stays">
-          <i className="fa-solid fa-bed" aria-hidden="true" />
-          Stays
-        </a>
-        <a href="#tp-trip-cover">
-          <i className="fa-solid fa-check-circle" aria-hidden="true" />
-          Inclusions
-        </a>
-        <a href="#tp-trip-faq">
-          <i className="fa-solid fa-circle-question" aria-hidden="true" />
-          FAQs
-        </a>
-      </nav>
 
       {/* Organizer Card */}
       <div className="tp-organizer-card">

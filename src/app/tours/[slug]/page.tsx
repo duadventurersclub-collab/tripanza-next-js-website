@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getTourBySlug } from "@/lib/wp";
 import type { Metadata } from "next";
 
@@ -13,9 +14,11 @@ import TourAboutDiscounts from "@/components/tour/TourAboutDiscounts";
 import TourBookingPanel from "@/components/tour/TourBookingPanel";
 import TourMobileBooking from "@/components/tour/TourMobileBooking";
 import TourReviews from "@/components/tour/TourReviews";
+import TourSectionNav from "@/components/tour/TourSectionNav";
 
 // Scoped design CSS from PHP templates
 import "./tour-design.css";
+import "./tour-app.css";
 
 export const revalidate = 300;
 
@@ -60,9 +63,19 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
   );
   const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMsg}`;
+  const sections = [
+    { id: "tp-trip-overview", label: "Overview" },
+    ...(tour.details.reels.length ? [{ id: "reels", label: "Vibes" }] : []),
+    ...(tour.details.itinerary.length ? [{ id: "tp-trip-days", label: "Itinerary" }] : []),
+    ...(tour.details.highlights.length ? [{ id: "tp-trip-highlights", label: "Highlights" }] : []),
+    ...(tour.details.stays.length ? [{ id: "tp-trip-stays", label: "Stays" }] : []),
+    ...(tour.details.included.length || tour.details.excluded.length ? [{ id: "tp-trip-cover", label: "Inclusions" }] : []),
+    ...(tour.details.faqs.length ? [{ id: "tp-trip-faq", label: "FAQs" }] : []),
+    { id: "tp-trip-dates", label: "Dates & prices" },
+  ];
 
   return (
-    <div className="tripanza-single-tour-app">
+    <div className="tripanza-single-tour-app tp-app-v2">
       {/* Scroll Progress (purely visual, client-side) */}
       <div className="tripanza-tour-scroll" aria-hidden="true">
         <span id="tp-scroll-bar" />
@@ -74,22 +87,24 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
       <main className="tripanza-tour-document">
         {/* Full-bleed Gallery with Trust Tags */}
         <TourGallery tour={tour} />
+        <TourSectionNav sections={sections} />
 
         {/* Main details and desktop booking column */}
         <div className="tp-tour-layout">
           <div className="tp-tour-main">
             <TourOverview tour={tour} whatsappUrl={whatsappUrl} />
             <TourReels tour={tour} />
+            <TourItinerary tour={tour} />
             <TourInformation tour={tour} availabilityBatches={[]} whatsappUrl={whatsappUrl} />
             <TourAboutDiscounts tour={tour} />
-            <TourItinerary tour={tour} />
             <TourReviews reviews={tour.details.reviews} />
           </div>
           <TourBookingPanel tour={tour} />
         </div>
 
         {/* Spacer for mobile sticky bottom bar */}
-        <div style={{ height: 96 }} aria-hidden="true" />
+        <footer className="tp-app-signoff"><span>See you out there.</span><strong>Good trips. Better people.</strong><Link href="/tours">Find your next escape <span aria-hidden="true">↗</span></Link></footer>
+        <div className="tp-app-bottom-space" aria-hidden="true" />
       </main>
 
       <TourMobileBooking tour={tour} whatsappUrl={whatsappUrl} />

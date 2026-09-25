@@ -26,6 +26,9 @@ function getMonthLabel(dateStr: string): string {
 export default function TourInformation({ tour, availabilityBatches, whatsappUrl }: TourInformationProps) {
   const details = tour.details;
   const pricing = details.pricing;
+  const formatPrice = (amount: number) => new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: pricing.currency || tour.currency || "INR", maximumFractionDigits: 0,
+  }).format(amount);
   const [activeMonth, setActiveMonth] = useState("All");
   const [pdfStatus, setPdfStatus] = useState<"idle" | "preparing" | "started">("idle");
   const pdfFrameRef = useRef<HTMLIFrameElement>(null);
@@ -93,7 +96,8 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
   }));
 
   return (
-    <div className="tp-tour-information">
+    <div className="tp-tour-information" id="tp-trip-dates">
+      <header className="tp-app-section-heading"><span>MAKE IT HAPPEN</span><h2>Your dates. Your escape.</h2><p>Find a departure and room sharing that work for you.</p></header>
       {/* Stats Row */}
       <div className="tp-info-stats">
         {details.duration.days && <div className="tp-info-stat">
@@ -148,8 +152,8 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
           <div>
             <div className="tp-info-price__label">Quad</div>
             <div>
-              <span className="price-amount">{pricing.quad.display}</span>
-              <small>4 in 1 room</small>
+              <span className="price-amount">{formatPrice(pricing.quad.amount)}</span>
+              <small>per person · 4 / room</small>
             </div>
           </div>
         )}
@@ -157,8 +161,8 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
           <div>
             <div className="tp-info-price__label">Triple</div>
             <div>
-              <span className="price-amount">{pricing.triple.display}</span>
-              <small>3 in 1 room</small>
+              <span className="price-amount">{formatPrice(pricing.triple.amount)}</span>
+              <small>per person · 3 / room</small>
             </div>
           </div>
         )}
@@ -166,8 +170,8 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
           <div>
             <div className="tp-info-price__label">Twin</div>
             <div>
-              <span className="price-amount">{pricing.twin.display}</span>
-              <small>2 in 1 room</small>
+              <span className="price-amount">{formatPrice(pricing.twin.amount)}</span>
+              <small>per person · 2 / room</small>
             </div>
           </div>
         )}
