@@ -178,7 +178,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
     .sort((a, b) => a.departure.date.localeCompare(b.departure.date)).slice(0, 12), [tours]);
   const departureMonths = Array.from(new Set(departures.map(({ departure }) => monthKey(departure.date)))).slice(0, 7);
 
-  const deals = tours.filter((tour) => tour.details.cashback || tour.details.booking.discount_rate > 0 || tour.details.bulk_discounts.length || tour.details.offer.ends_at).slice(0, 6);
+  const deals = tours.filter((tour) => numeric(tour.details.cashback) > 0 || tour.details.booking.discount_rate > 0 || tour.details.bulk_discounts.length || tour.details.offer.ends_at).slice(0, 6);
   const reviews = tours.flatMap((tour) => tour.details.reviews.map((review) => ({ ...review, tour }))).filter((review, index, all) => all.findIndex((item) => item.author_name === review.author_name && item.text === review.text) === index).slice(0, 8);
   const gallery = tours.flatMap((tour) => tour.details.gallery.slice(0, 2).map((image) => ({ ...image, tour }))).slice(0, 24);
   const stays = tours.flatMap((tour) => tour.details.stays.map((stay) => ({ ...stay, tour }))).filter((stay) => stay.images.length).slice(0, 5);

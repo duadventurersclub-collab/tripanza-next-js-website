@@ -24,6 +24,8 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
   const nextDepartureLabel = nextDeparture
     ? formatTourDate(nextDeparture, { day: "numeric", month: "long" })
     : "";
+  const cashbackAmount = Number((details.cashback || "").replace(/[^0-9.-]/g, ""));
+  const hasCashback = Number.isFinite(cashbackAmount) && cashbackAmount > 0;
   const cashbackLabel = details.cashback && /off|cashback/i.test(details.cashback)
     ? details.cashback
     : details.cashback ? `Flat ${details.cashback} OFF via cashback` : "";
@@ -112,7 +114,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
           </div>
 
           {/* Cashback Offer */}
-          {details.cashback && (
+          {hasCashback && (
             <div className="tp-tour-offer">
               <div className="tp-tour-offer__icon">
                 <i className="fa-solid fa-tag" aria-hidden="true" />

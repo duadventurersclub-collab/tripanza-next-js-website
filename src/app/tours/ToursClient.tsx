@@ -215,7 +215,8 @@ export default function ToursClient({ tours, total }: ToursClientProps) {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {visibleTours.map((tour) => {
               const details = tour.details;
-              const hasCashback = Boolean(details.cashback);
+              const cashbackAmount = Number((details.cashback || "").replace(/[^0-9.-]/g, ""));
+              const hasCashback = Number.isFinite(cashbackAmount) && cashbackAmount > 0;
 
               return (
                 <article
