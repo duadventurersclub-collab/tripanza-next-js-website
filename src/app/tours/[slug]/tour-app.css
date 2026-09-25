@@ -26,7 +26,7 @@
 .tp-app-v2 .tp-tour-appbar__rating { border: 0; border-radius: 99px; }
 .tp-app-v2 .tp-tour-gallery { max-width: 1288px; margin: 0 auto; padding: 16px 24px 0; }
 .tp-app-v2 .tp-tour-gallery__viewport { border-radius: 0 0 32px 32px; background: #173532; }
-.tp-app-v2 .tp-tour-gallery__track { height: clamp(360px, 35vw, 470px); }
+.tp-app-v2 .tp-tour-gallery__track { height: clamp(440px, 43vw, 580px); }
 .tp-app-v2 .tp-tour-gallery__slide::after { background: linear-gradient(180deg,rgba(9,24,24,.32),transparent 40%,rgba(9,24,24,.72)); }
 .tp-app-v2 .tp-tour-gallery__image { object-position: center 40%; }
 .tp-app-v2 .tp-tour-gallery__slide::after { background: linear-gradient(180deg,rgba(9,12,25,.31),transparent 36%,rgba(10,13,28,.78)); }
@@ -292,7 +292,7 @@
   .tp-app-v2 .tp-tour-appbar { height: calc(60px + env(safe-area-inset-top)); padding: calc(8px + env(safe-area-inset-top)) 16px 8px; gap: 8px; }
   .tp-app-v2 .tp-tour-appbar__action { width: 40px; height: 40px; }
   .tp-app-v2 .tp-tour-appbar__title { font-size: 13px; }
-  .tp-app-v2 .tp-tour-gallery__track { height: clamp(300px, 44svh, 390px); }
+  .tp-app-v2 .tp-tour-gallery__track { height: clamp(360px, 55svh, 500px); }
   .tp-app-v2 .tp-tour-gallery__viewport { border-radius: 0 0 26px 26px; }
   .tp-app-hero-copy { left: 24px; right: 90px; bottom: 66px; }
   .tp-app-hero-sticker { top: 80px; right: 12px; padding: 8px 9px; border-width: 1px; border-radius: 9px; box-shadow: 3px 3px 0 rgba(21,25,37,.7); font-size: 7px; transform: rotate(6deg); }
