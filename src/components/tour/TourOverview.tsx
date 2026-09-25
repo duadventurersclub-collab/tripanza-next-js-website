@@ -12,25 +12,26 @@ interface TourOverviewProps {
 }
 
 function OrganizerAvatar({ name, url }: { name: string; url: string }) {
-  const [mode, setMode] = useState<"optimized" | "direct" | "fallback">("optimized");
+  const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const imageUrl = url.replace(/Tripanza-Logo-3\.png(?=\?|$)/, "Tripanza-Logo-3-150x150.png");
 
   return (
     <span className="organizer-avatar organizer-avatar--fallback" role="img" aria-label={`${name} logo`}>
       <span aria-hidden="true">{name.trim().charAt(0).toUpperCase() || "T"}</span>
-      {url && mode !== "fallback" && (
+      {url && !failed && (
         <Image
           className={`organizer-avatar__image${loaded ? " is-loaded" : ""}`}
-          src={url}
+          src={imageUrl}
           alt=""
-          width={56}
-          height={56}
-          sizes="56px"
-          unoptimized={mode === "direct"}
+          width={52}
+          height={52}
+          sizes="52px"
+          unoptimized
           onLoad={() => setLoaded(true)}
           onError={() => {
             setLoaded(false);
-            setMode(mode === "optimized" ? "direct" : "fallback");
+            setFailed(true);
           }}
         />
       )}
@@ -192,17 +193,18 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             <small>Experience organized by</small>
             <div className="tp-organizer-card__name">
               <strong>{organizerName}</strong>
+              {partner.verified && <span className="tp-verified" aria-label="Verified organizer">✓</span>}
             </div>
             <div className="partner-meta">
-              {partner.rating > 0 && <span><i aria-hidden="true">★</i> {partner.rating.toFixed(1)} rating</span>}
-              {partner.trip_count > 0 && <span>{partner.trip_count}+ trips hosted</span>}
+              {partner.rating > 0 && <span><i aria-hidden="true">★</i>{partner.rating.toFixed(1)} rating</span>}
+              {partner.trip_count > 0 && <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="4" y="7" width="16" height="13" rx="2" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M4 12h16" /></svg>{partner.trip_count} trips</span>}
             </div>
           </div>
         </div>
 
         {(partner.verified || partner.instagram_url) && (
           <div className="tp-organizer-card__aside">
-            {partner.verified && <span className="trusted-partner-badge">✓ Verified organizer</span>}
+            {partner.verified && <span className="trusted-partner-badge"><span aria-hidden="true">✓</span>Trusted partner</span>}
             {partner.instagram_url && (
               <a
                 href={partner.instagram_url}
@@ -211,14 +213,14 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
                 className="organizer-social"
                 aria-label={`${organizerName} Instagram`}
               >
-                Instagram <span aria-hidden="true">↗</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
               </a>
             )}
           </div>
         )}
 
         <div className="tp-trust-line">
-          <span aria-hidden="true">✓</span>
+          <span aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2ZM10 6a2 2 0 0 1 4 0v2h-4V6Z" /></svg></span>
           <p>
             <strong>Book with Tripanza protection</strong>
             Pay only through Tripanza to keep your booking and payment support protected.
