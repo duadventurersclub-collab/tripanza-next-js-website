@@ -241,17 +241,9 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
 
   return (
     <>
-      <button type="button" className="tp-tour-assistant" onClick={openChat} aria-haspopup="dialog">
-        <span className="tp-tour-assistant__mark">
-          <i className="fa-solid fa-comment-dots" aria-hidden="true" />
-        </span>
-        <span className="tp-tour-assistant__copy">
-          <strong>Ask Kanika about this trip</strong>
-          <small>Quick answers on dates, stays and booking</small>
-        </span>
-        <span className="tp-tour-assistant__send" aria-hidden="true">
-          <i className="fa-solid fa-arrow-right" />
-        </span>
+      <button type="button" className="tp-tour-help-pill" onClick={openChat} aria-haspopup="dialog" aria-label="Need help? Ask Kanika about this trip">
+        <i className="fa-solid fa-comment-dots" aria-hidden="true" />
+        <span>Need Help?</span>
       </button>
 
       {open && createPortal((

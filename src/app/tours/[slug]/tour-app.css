@@ -103,12 +103,6 @@
 .tp-app-v2 .tp-route-direction { position: absolute; z-index: 1; top: 50%; left: 50%; width: 34px; height: 34px; min-width: 0; padding: 0; border: 1px solid #dfe5ef; border-radius: 50%; color: #3157d5; background: #fff; box-shadow: 0 2px 8px #15192512; transform: translate(-50%, -50%); }
 .tp-app-v2 .tp-route-direction::before { display: none; }
 .tp-app-v2 .tp-route-direction i { padding: 0; background: none; font-size: 12px; }
-.tp-app-v2 .tp-tour-assistant { min-height: 76px; gap: 12px; padding: 12px; border: 1px solid #cdd7f4; background: linear-gradient(105deg,#eef2ff 0%,#f8f7ff 62%,#fff0f6 100%); box-shadow: 0 9px 24px rgba(49,87,213,.08); }
-.tp-app-v2 .tp-tour-assistant__mark { width: 42px; height: 42px; border-radius: 50%; background: #fff; color: #3157d5; font-size: 18px; }
-.tp-app-v2 .tp-tour-assistant__copy { gap: 5px; }
-.tp-app-v2 .tp-tour-assistant__copy strong { font-size: 14px; font-weight: 650; }
-.tp-app-v2 .tp-tour-assistant__copy small { font-size: 11px; font-weight: 450; white-space: normal; }
-.tp-app-v2 .tp-tour-assistant__send { width: 38px; height: 38px; min-width: 38px; border-radius: 50%; background: #3157d5; }
 .tp-app-v2 .tp-organizer-card { border-color: #e2e7f0; box-shadow: 0 9px 28px rgba(27, 35, 64, .05); }
 .tp-app-v2 .tp-organizer-card__profile { min-height: 86px; }
 .tp-app-v2 .organizer-avatar { position: relative; display: grid; width: 52px; height: 52px; min-width: 52px; place-items: center; overflow: hidden; color: #3157d5; background: #f3f6fc; font-size: 22px; font-weight: 850; }
@@ -222,6 +216,9 @@
 
 /* Booking uses the same controls and checkout, now with larger touch targets. */
 .tp-app-v2 .tp-booking-panel { border: 1px solid #dfe5ef; border-radius: 24px; box-shadow: 0 12px 38px rgba(24,35,70,.1); }
+.tp-app-v2 .tp-tour-help-pill { display: inline-flex; width: max-content; min-height: 34px; align-items: center; justify-content: center; gap: 7px; margin: 12px 15px 8px auto; padding: 7px 12px; border: 1px solid #ccd8f4; border-radius: 999px; color: #3157d5; background: #eef2ff; font: 800 11px/1 var(--font-inter), ui-sans-serif, sans-serif; white-space: nowrap; cursor: pointer; }
+.tp-app-v2 .tp-tour-help-pill:hover { border-color: #9eb3ed; background: #e4ebff; }
+.tp-app-v2 .tp-tour-help-pill i { font-size: 13px; }
 .tp-app-v2 .tp-booking-panel__intro { padding: 20px; background: #fff; }
 .tp-app-v2 .tp-booking-panel__intro strong { font-size: 21px; font-weight: 650; }
 .tp-app-v2 .tp-booking-panel__intro small { font-size: 10px; font-weight: 500; }
@@ -269,7 +266,8 @@
   .tp-app-v2 .tp-tour-gallery { padding: 0; }
   .tp-app-v2 .tp-tour-gallery__viewport { border-radius: 0; }
   .tp-app-v2 .tp-tour-gallery__trust { padding-inline: 24px; }
-  .tp-app-bottom-space { display: block; height: calc(90px + env(safe-area-inset-bottom)); }
+  .tp-app-v2 .tp-mobile-booking-bar > .tp-tour-help-pill { position: absolute; right: 16px; bottom: calc(100% + 8px); min-height: 40px; margin: 0; padding: 10px 14px; background: #fff; box-shadow: 0 5px 18px rgba(20,30,65,.14); font-size: 12px; }
+  .tp-app-bottom-space { display: block; height: calc(140px + env(safe-area-inset-bottom)); }
 }
 @media (min-width: 1100px) {
   .tp-app-hero-copy > strong { font-size: clamp(40px, 5.2vw, 70px); }
@@ -325,7 +323,7 @@
   .tp-app-v2 .tp-route-city strong { font-size: 14px; line-height: 1.3; }
   .tp-app-v2 .tp-route-direction { position: static; width: 26px; height: 26px; min-width: 0; padding: 0; border: 0; background: #eef2ff; box-shadow: none; transform: none; }
   .tp-app-v2 .tp-route-direction i { padding: 0; background: none; font-size: 10px; transform: none; }
-  .tp-app-v2 :is(.tp-route-box, .tp-tour-assistant) { width: calc(100% + 24px); margin-inline: -12px; }
+  .tp-app-v2 .tp-route-box { width: calc(100% + 24px); margin-inline: -12px; }
   .tp-app-v2 .tp-organizer-card { grid-template-columns: minmax(0, 1fr) 35px; gap: 13px 12px; margin-inline: -12px; padding: 15px !important; }
   .tp-app-v2 .trusted-partner-badge { display: none; }
   .tp-app-v2 .tp-trust-line p { display: block; }
@@ -381,13 +379,14 @@
   .tp-app-v2 .tp-google-reviews h2 { font-size: 23px !important; }
   .tp-app-v2 .tp-google-review blockquote { font-size: 13px; }
   .tp-app-v2 .tp-mobile-booking-bar { min-height: 72px; gap: 8px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; box-shadow: 0 -8px 28px rgba(20,30,65,.14); }
+  .tp-app-v2 .tp-mobile-booking-bar > .tp-tour-help-pill { right: 12px; }
   .tp-app-v2 .tp-mobile-booking-bar > div:first-child { min-width: 0; }
   .tp-app-v2 .tp-mobile-booking-bar > div:first-child > span { font-size: 8px; }
   .tp-app-v2 .tp-mobile-booking-bar > div:first-child > strong { margin: 0; font-size: 21px; line-height: 1.15; white-space: nowrap; }
   .tp-app-v2 .tp-mobile-booking-bar > div:first-child > small { font-size: 8px; white-space: nowrap; }
   .tp-app-v2 .tp-mobile-booking-actions > a { width: 46px; height: 48px; }
   .tp-app-v2 .tp-mobile-booking-actions > button { height: 48px; min-height: 48px; padding: 0 14px; white-space: nowrap; }
-  .tp-app-bottom-space { height: calc(78px + env(safe-area-inset-bottom)); }
+  .tp-app-bottom-space { height: calc(126px + env(safe-area-inset-bottom)); }
   .tp-app-signoff { width: calc(100% - 32px); margin-top: 24px; padding: 42px 20px 46px; border-radius: 24px; }
 }
 @media (max-width: 359px) {

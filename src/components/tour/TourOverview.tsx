@@ -4,11 +4,9 @@ import Image from "next/image";
 import { useState } from "react";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate } from "@/lib/tour-date";
-import TourAiChat from "@/components/tour/TourAiChat";
 
 interface TourOverviewProps {
   tour: TourDetail;
-  whatsappUrl: string;
 }
 
 function OrganizerAvatar({ name, url }: { name: string; url: string }) {
@@ -39,7 +37,7 @@ function OrganizerAvatar({ name, url }: { name: string; url: string }) {
   );
 }
 
-export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
+export default function TourOverview({ tour }: TourOverviewProps) {
   const details = tour.details;
   const partner = details.partner;
   const organizerName = partner.name?.trim() || "Tour organizer";
@@ -182,8 +180,6 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
           </span>
         </div>
       </div>}
-
-      <TourAiChat tour={tour} whatsappUrl={whatsappUrl} />
 
       {/* Organizer Card */}
       <div className="tp-organizer-card">

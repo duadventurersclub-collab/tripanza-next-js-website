@@ -93,14 +93,14 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
         {/* Main details and desktop booking column */}
         <div className="tp-tour-layout">
           <div className="tp-tour-main">
-            <TourOverview tour={tour} whatsappUrl={whatsappUrl} />
+            <TourOverview tour={tour} />
             <TourReels tour={tour} />
             <TourItinerary tour={tour} />
             <TourInformation tour={tour} availabilityBatches={[]} whatsappUrl={whatsappUrl} />
             <TourAboutDiscounts tour={tour} />
             <TourReviews reviews={tour.details.reviews} />
           </div>
-          <TourBookingPanel tour={tour} />
+          <TourBookingPanel tour={tour} whatsappUrl={whatsappUrl} />
         </div>
 
         {/* Spacer for mobile sticky bottom bar */}
