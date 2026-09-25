@@ -94,7 +94,9 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
       if (event.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
-    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 220);
+    const focusTimer = window.matchMedia("(min-width: 601px)").matches
+      ? window.setTimeout(() => inputRef.current?.focus(), 220)
+      : undefined;
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
@@ -241,14 +243,14 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
     <>
       <button type="button" className="tp-tour-assistant" onClick={openChat} aria-haspopup="dialog">
         <span className="tp-tour-assistant__mark">
-          <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" />
+          <i className="fa-solid fa-comment-dots" aria-hidden="true" />
         </span>
         <span className="tp-tour-assistant__copy">
           <strong>Ask Kanika about this trip</strong>
-          <small>Dates, stays, pricing, pickup &amp; booking</small>
+          <small>Quick answers on dates, stays and booking</small>
         </span>
         <span className="tp-tour-assistant__send" aria-hidden="true">
-          <i className="fa-solid fa-arrow-up" />
+          <i className="fa-solid fa-arrow-right" />
         </span>
       </button>
 
@@ -258,14 +260,14 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
           <section className="tp-ai-chat__panel">
             <header className="tp-ai-chat__header">
               <div className="tp-ai-chat__avatar" aria-hidden="true">
-                <i className="fa-solid fa-wand-magic-sparkles" />
+                <i className="fa-solid fa-comment-dots" />
               </div>
               <div>
-                <strong>Kanika</strong>
-                <span><i /> Your live trip assistant</span>
+                <strong>Ask Kanika</strong>
+                <span>Your trip assistant</span>
               </div>
               <button type="button" className="tp-ai-chat__clear" onClick={() => void clearChat()} aria-label="Start a new chat" title="Start a new chat">
-                <i className="fa-solid fa-trash-can" aria-hidden="true" />
+                <i className="fa-solid fa-rotate-right" aria-hidden="true" />
               </button>
               <button type="button" className="tp-ai-chat__close" onClick={() => setOpen(false)} aria-label="Close chat">
                 <i className="fa-solid fa-xmark" aria-hidden="true" />
@@ -279,7 +281,10 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
 
             <div className="tp-ai-chat__messages" ref={messagesRef} aria-live="polite">
               {loadingHistory ? (
-                <div className="tp-ai-chat__loading"><span /><span /><span /> Fetching your conversation</div>
+                <>
+                  <div className="tp-ai-message tp-ai-message--assistant"><p>{welcome}</p></div>
+                  <div className="tp-ai-chat__loading"><span /><span /><span /> Loading earlier messages</div>
+                </>
               ) : (
                 messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`tp-ai-message tp-ai-message--${message.role}`}>
@@ -325,11 +330,14 @@ export default function TourAiChat({ tour, whatsappUrl }: TourAiChatProps) {
             </div>
 
             <div className="tp-ai-chat__suggestions" aria-label="Suggested questions">
-              {suggestions.map((suggestion) => (
-                <button key={suggestion} type="button" onClick={() => void sendMessage(suggestion)} disabled={sending}>
-                  {suggestion}
-                </button>
-              ))}
+              <small>QUICK QUESTIONS</small>
+              <div className="tp-ai-chat__suggestion-list">
+                {suggestions.map((suggestion) => (
+                  <button key={suggestion} type="button" onClick={() => void sendMessage(suggestion)} disabled={sending}>
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <form className="tp-ai-chat__composer" onSubmit={submit}>

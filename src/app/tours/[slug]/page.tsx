@@ -19,6 +19,7 @@ import TourSectionNav from "@/components/tour/TourSectionNav";
 // Scoped design CSS from PHP templates
 import "./tour-design.css";
 import "./tour-app.css";
+import "./tour-kanika.css";
 
 export const revalidate = 300;
 
