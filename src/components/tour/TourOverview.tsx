@@ -223,6 +223,14 @@ export default function TourOverview({ tour }: TourOverviewProps) {
           </p>
         </div>
       </div>
+
+      <div className="tp-info-promise">
+        <span className="tp-info-promise__icon"><i className="fa-solid fa-shield-heart" aria-hidden="true" /></span>
+        <span>
+          <strong>Tripanza promise</strong>
+          <small>Get what was promised, or let our support team make it right.</small>
+        </span>
+      </div>
     </div>
   );
 }

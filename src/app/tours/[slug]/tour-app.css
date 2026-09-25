@@ -331,6 +331,7 @@
   .tp-app-v2 .tp-route-direction i { padding: 0; background: none; font-size: 10px; transform: none; }
   .tp-app-v2 .tp-route-box { width: calc(100% + 24px); margin-inline: -12px; }
   .tp-app-v2 .tp-organizer-card { grid-template-columns: minmax(0, 1fr) 35px; gap: 13px 12px; margin-inline: -12px; padding: 15px !important; }
+  .tp-app-v2 .tp-tour-overview > .tp-info-promise { width: calc(100% + 24px); margin-inline: -12px; }
   .tp-app-v2 .trusted-partner-badge { display: none; }
   .tp-app-v2 .tp-trust-line p { display: block; }
   .tp-app-v2 .tp-trust-line strong { display: block; }
