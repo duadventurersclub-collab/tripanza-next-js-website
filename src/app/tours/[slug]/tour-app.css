@@ -73,21 +73,22 @@
 
 /* Trip essentials, with room to breathe. */
 .tp-app-v2 .tp-tour-overview { gap: 18px; margin: 0 0 32px; }
-.tp-app-v2 .tp-tour-overview__header { padding: 0 !important; border: 0; border-radius: 0; box-shadow: none; background: none; }
-.tp-app-overline { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; color: #3157d5; font-size: 10px; font-weight: 900; letter-spacing: .13em; }
-.tp-app-overline > span:last-child:not(:first-child) { color: #273e37; letter-spacing: 0; font-size: 12px; }
-.tp-app-overline i { color: #a88b30; }
-.tp-app-overline small { color: #74817d; font-size: 11px; }
-.tp-app-v2 .tp-tour-overview__title { margin-bottom: 20px !important; font-size: clamp(30px, 3.5vw, 46px) !important; font-weight: 950 !important; line-height: 1.06 !important; letter-spacing: -.055em !important; }
-.tp-app-v2 .tp-value-card { padding: 0 0 20px; margin: 0; background: none; border: 0; border-bottom: 1px solid var(--app-line); border-radius: 0; }
+.tp-app-v2 .tp-tour-overview__header { padding: 26px !important; border: 0; border-radius: 24px; box-shadow: 7px 7px 0 #d0e562; background: #3157d5; }
+.tp-app-overline { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; color: #d0e562; font-size: 10px; font-weight: 900; letter-spacing: .13em; }
+.tp-app-overline > span:last-child:not(:first-child) { color: #fff; letter-spacing: 0; font-size: 12px; }
+.tp-app-overline i { color: #d0e562; }
+.tp-app-overline small { color: #dce4ff; font-size: 11px; }
+.tp-app-v2 .tp-tour-overview__title { margin-bottom: 20px !important; color: #fff !important; font-size: clamp(30px, 3.5vw, 46px) !important; font-weight: 950 !important; line-height: 1.06 !important; letter-spacing: -.055em !important; }
+.tp-app-v2 .tp-value-card { padding: 14px; margin: 0; background: #203fa9; border: 1px solid #ffffff38; border-radius: 14px; }
 .tp-app-v2 .tp-value-card__copy > small { display: none; }
 .tp-app-v2 .tp-value-summary { gap: 8px; font-size: 12px; font-weight: 500; }
-.tp-app-v2 .tp-value-summary > span { padding: 7px 10px; color: #3e4a66; background: #eef2ff; border-radius: 8px; font-weight: 750; }
+.tp-app-v2 .tp-value-summary > span { padding: 7px 10px; color: #fff; background: #ffffff26; border-radius: 8px; font-weight: 750; }
 .tp-app-v2 .tp-value-summary > span + span::before { display: none; }
-.tp-app-v2 .tp-value-summary i { font-size: 12px !important; }
-.tp-app-v2 .tp-value-price { border: 0; }
+.tp-app-v2 .tp-value-summary i { color: #d0e562 !important; font-size: 12px !important; }
+.tp-app-v2 .tp-value-price { border-color: #ffffff38; }
 .tp-app-v2 .tp-value-price > small, .tp-app-v2 .tp-value-price > span { font-size: 10px; }
-.tp-app-v2 .tp-value-price__amount .price-value { font-size: 25px !important; }
+.tp-app-v2 .tp-value-price > small, .tp-app-v2 .tp-value-price > span { color: #dce4ff; }
+.tp-app-v2 .tp-value-price__amount .price-value { color: #d0e562 !important; font-size: 25px !important; }
 .tp-app-v2 .tp-overview-conversion { display: none; }
 .tp-app-v2 .tp-tour-offer { margin-top: 16px; padding: 12px 14px; border: 1px solid #d8e891; border-radius: 12px; background: #f2f8d5; }
 .tp-app-v2 .tp-tour-offer__icon { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: #d0e562; color: #263407; }
@@ -129,6 +130,18 @@
 .tp-app-v2 .tp-itinerary-section__head small { color: #3157d5; font-size: 10px; font-weight: 900; letter-spacing: .12em; margin-bottom: 6px; }
 .tp-app-v2 .tp-itinerary-section__number { width: 40px; height: 40px; min-width: 40px; color: #263407; background: #d0e562; border-radius: 12px; box-shadow: 4px 4px 0 #3157d5; font-size: 13px; font-weight: 900; transform: rotate(-4deg); }
 .tp-app-v2 .tp-itinerary-section__hint { background: transparent; padding: 0; font-size: 10px !important; }
+.tp-app-v2 .tp-itinerary-section.tp-itinerary-journey { padding: 26px; border: 0; border-radius: 24px; background: #151a25; }
+.tp-app-v2 .tp-itinerary-journey .tp-itinerary-section__head { border-color: #ffffff2e; }
+.tp-app-v2 .tp-itinerary-journey .tp-itinerary-section__head h3 { color: #fff !important; }
+.tp-app-v2 .tp-itinerary-journey .tp-itinerary-section__head small { color: #d0e562; }
+.tp-app-v2 .tp-itinerary-journey .tp-itinerary-section__number { background: #d0e562; box-shadow: 4px 4px 0 #e84d89; }
+.tp-app-v2 .tp-itinerary-journey .tp-itinerary-section__hint, .tp-app-v2 .tp-itinerary-journey .tp-itinerary-section__hint i { color: #d0e562; }
+.tp-app-v2 .tp-itinerary-journey .tp-journey-view-buttons { background: #ffffff24; }
+.tp-app-v2 .tp-itinerary-journey .tp-journey-view-buttons button { color: #fff; }
+.tp-app-v2 .tp-itinerary-journey .tp-journey-view-buttons button i { color: #d0e562; }
+.tp-app-v2 .tp-itinerary-journey .tp-journey-view-buttons button.is-active { color: #151925; background: #d0e562; }
+.tp-app-v2 .tp-itinerary-journey .tp-journey-view-buttons button.is-active i { color: #151925; }
+.tp-app-v2 .tp-itinerary-journey .tp-itinerary-day::before { background: #ffffff5c; }
 .tp-app-v2 .tp-journey-view-buttons { padding: 4px; margin-bottom: 22px; border: 0; border-radius: 14px; background: #e9eeeb; }
 .tp-app-v2 .tp-journey-view-buttons button { min-height: 48px; padding: 10px; border: 0; border-radius: 10px; }
 .tp-app-v2 .tp-journey-view-buttons button.is-active { background: #fff; box-shadow: 0 2px 5px #1823240c; }
@@ -188,17 +201,24 @@
 .tp-app-v2 .tp-info-price__label { font-size: 13px; font-weight: 600; }
 .tp-app-v2 .tp-info-prices .price-amount { font-size: 23px !important; font-weight: 700 !important; }
 .tp-app-v2 .tp-info-prices small { font-size: 11px; white-space: normal; }
-.tp-app-v2 .tp-info-availability { padding: 22px; border-color: var(--app-line); border-radius: 20px; box-shadow: none; }
+.tp-app-v2 .tp-info-availability { padding: 22px; border-color: #bdd345; border-radius: 20px; box-shadow: none; background: #d0e562; }
+.tp-app-v2 .tp-info-availability .tp-info-section-head { border-color: #15192530; }
+.tp-app-v2 .tp-info-availability .tp-info-section-head small { color: #39461d; }
+.tp-app-v2 .tp-info-availability .tp-info-section-head__icon { color: #d0e562; background: #151925; }
+.tp-app-v2 .tp-info-availability .tp-info-months button:not(.active), .tp-app-v2 .tp-info-availability .tp-info-date { background: #fff; }
+.tp-app-v2 .tp-info-availability .tp-info-disclaimer { color: #39461d; }
 .tp-app-v2 .tp-info-section-head h2 { font-size: 23px !important; font-weight: 650 !important; }
 .tp-app-v2 .tp-info-months button { min-height: 40px; padding: 9px 16px; font-size: 12px; }
 .tp-app-v2 .tp-info-date { border-radius: 14px; box-shadow: none; padding: 14px; }
 .tp-app-v2 .tp-date-main { font-size: 14px; font-weight: 650; }
 .tp-app-v2 .tp-date-sub { font-size: 11px; line-height: 1.6; }
 .tp-app-v2 .tp-info-disclaimer { font-size: 11px; line-height: 1.6; }
-.tp-app-v2 .tp-info-itinerary-card { padding: 22px; border: 1px solid #d8e891; border-radius: 20px; box-shadow: none; background: #f2f8d5; }
-.tp-app-v2 .tp-info-itinerary-card h2 { font-size: 21px !important; font-weight: 650 !important; }
-.tp-app-v2 .tp-info-itinerary-card p { font-size: 12px !important; line-height: 1.6 !important; }
-.tp-app-v2 .tp-info-download { min-height: 46px; border-radius: 12px; font-size: 12px; box-shadow: none; }
+.tp-app-v2 .tp-info-itinerary-card { padding: 22px; border: 0; border-radius: 20px; box-shadow: none; background: #3157d5; }
+.tp-app-v2 .tp-info-itinerary-card__icon { color: #151925; background: #d0e562; }
+.tp-app-v2 .tp-info-itinerary-card h2 { color: #fff !important; font-size: 21px !important; font-weight: 850 !important; }
+.tp-app-v2 .tp-info-itinerary-card p { color: #dce4ff; font-size: 12px !important; line-height: 1.6 !important; }
+.tp-app-v2 .tp-info-download { min-height: 46px; border-radius: 12px; color: #151925 !important; background: #d0e562 !important; font-size: 12px; box-shadow: none; }
+.tp-app-v2 .tp-info-download:hover { background: #e0ef91 !important; }
 .tp-app-v2 .tp-bulk-discounts { margin-top: 24px; padding: 22px; border: 1px solid var(--app-line); border-radius: 20px; background: #fff8ed; box-shadow: none; }
 .tp-app-v2 .tp-bulk-discounts header h2 { font-size: 24px !important; font-weight: 650 !important; }
 .tp-app-v2 .tp-bulk-discounts__row { font-size: 12px; }
@@ -289,6 +309,7 @@
   .tp-app-v2 .tp-tour-layout { padding: 26px 20px 0; }
   .tp-app-v2 :is(section, [id="tp-trip-overview"], [id="tp-trip-dates"], [id="tp-info-availability"]) { scroll-margin-top: calc(132px + env(safe-area-inset-top)); }
   .tp-app-v2 .tp-tour-overview { gap: 16px; margin-bottom: 28px; }
+  .tp-app-v2 .tp-tour-overview__header { padding: 20px !important; box-shadow: 5px 5px 0 #d0e562; }
   .tp-app-overline { margin-bottom: 12px; font-size: 9px; }
   .tp-app-v2 .tp-tour-overview__title { font-size: 31px !important; margin-bottom: 18px !important; }
   .tp-app-v2 .tp-value-summary { gap: 6px; font-size: 11px; }
@@ -310,6 +331,7 @@
   .tp-app-v2 #reels .group { width: 142px; max-width: 42vw; }
   .tp-app-v2 #reels header p { line-height: 1.6; }
   .tp-app-v2 .tp-itinerary-section { padding: 28px 0; }
+  .tp-app-v2 .tp-itinerary-section.tp-itinerary-journey { margin-inline: -20px; padding: 26px 20px; border-radius: 0; }
   .tp-app-v2 .tp-itinerary-section__head { gap: 10px; }
   .tp-app-v2 .tp-itinerary-section__head h3 { font-size: 25px !important; }
   .tp-app-v2 .tp-itinerary-section__hint { display: none !important; }
