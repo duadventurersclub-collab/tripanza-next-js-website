@@ -69,7 +69,7 @@
 .tp-app-section-nav__brand > span { font-size: 9px; vertical-align: super; }
 .tp-app-v2 .tp-tour-layout { max-width: 1288px; grid-template-columns: minmax(0, 1fr) 350px; gap: 48px; margin: 0 auto; padding: 36px 24px 0; }
 .tp-app-v2 .tp-tour-main { min-width: 0; }
-.tp-app-v2 .tp-tour-sidebar { top: 151px; max-height: calc(100dvh - 171px); border-radius: 24px; }
+.tp-app-v2 .tp-tour-sidebar:not(.tp-tour-sidebar--mobile) { position: static; top: auto; max-height: none; overflow: visible; border-radius: 24px; }
 
 /* Trip essentials, with room to breathe. */
 .tp-app-v2 .tp-tour-overview { gap: 18px; margin: 0 0 32px; }
