@@ -295,10 +295,9 @@
   .tp-app-section-nav { top: calc(60px + env(safe-area-inset-top)); min-height: 52px; padding-inline: 20px; }
   .tp-app-section-nav nav { gap: 24px; }
   .tp-app-section-nav a { min-height: 51px; font-size: 12px; }
-  .tp-app-v2 .tp-tour-layout { padding: 26px 8px 0; }
+  .tp-app-v2 .tp-tour-layout { padding: 26px 20px 0; }
   .tp-app-v2 :is(section, [id="tp-trip-overview"], [id="tp-trip-dates"], [id="tp-info-availability"]) { scroll-margin-top: calc(132px + env(safe-area-inset-top)); }
   .tp-app-v2 .tp-tour-overview { gap: 16px; margin-bottom: 28px; }
-  .tp-app-v2 .tp-app-overline, .tp-app-v2 .tp-tour-overview__title, .tp-app-v2 .tp-value-card { margin-inline: 12px; }
   .tp-app-overline { margin-bottom: 12px; font-size: 9px; }
   .tp-app-v2 .tp-tour-overview__title { font-size: 31px !important; margin-bottom: 18px !important; }
   .tp-app-v2 .tp-value-summary { gap: 6px; font-size: 11px; }
@@ -312,16 +311,17 @@
   .tp-app-v2 .tp-route-city strong { font-size: 14px; line-height: 1.3; }
   .tp-app-v2 .tp-route-direction { position: static; width: 26px; height: 26px; min-width: 0; padding: 0; border: 0; background: #eef2ff; box-shadow: none; transform: none; }
   .tp-app-v2 .tp-route-direction i { padding: 0; background: none; font-size: 10px; transform: none; }
-  .tp-app-v2 .tp-organizer-card { grid-template-columns: minmax(0, 1fr) 35px; gap: 13px 12px; padding: 15px !important; }
+  .tp-app-v2 :is(.tp-route-box, .tp-tour-assistant) { width: calc(100% + 24px); margin-inline: -12px; }
+  .tp-app-v2 .tp-organizer-card { grid-template-columns: minmax(0, 1fr) 35px; gap: 13px 12px; margin-inline: -12px; padding: 15px !important; }
   .tp-app-v2 .trusted-partner-badge { display: none; }
   .tp-app-v2 .tp-trust-line p { display: block; }
   .tp-app-v2 .tp-trust-line strong { display: block; }
-  .tp-app-v2 #reels { padding: 24px 16px; border-radius: 20px; }
+  .tp-app-v2 #reels { margin-inline: -20px; padding: 24px 20px; border-radius: 0; }
   .tp-app-v2 #reels h2 { max-width: 290px; font-size: 25px; line-height: 1.16; }
   .tp-app-v2 #reels .group { width: 142px; max-width: 42vw; }
   .tp-app-v2 #reels header p { line-height: 1.6; }
   .tp-app-v2 .tp-itinerary-section { padding: 28px 0; }
-  .tp-app-v2 .tp-itinerary-section__head { gap: 10px; margin-inline: 12px; }
+  .tp-app-v2 .tp-itinerary-section__head { gap: 10px; }
   .tp-app-v2 .tp-itinerary-section__head h3 { font-size: 25px !important; }
   .tp-app-v2 .tp-itinerary-section__hint { display: none !important; }
   .tp-app-v2 .tp-itinerary-section__head small { font-size: 9px; }
@@ -343,7 +343,6 @@
   .tp-app-v2 .tp-stay-card__body { padding: 18px; }
   .tp-app-v2 .tp-cover-card li { font-size: 13px; }
   .tp-app-v2 .tp-info-prices { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px !important; }
-  .tp-app-v2 .tp-app-section-heading { margin-inline: 12px; }
   .tp-app-v2 .tp-info-prices > div { min-width: 0; padding: 14px 10px !important; gap: 12px; }
   .tp-app-v2 .tp-info-prices .price-amount { font-size: 18px !important; }
   .tp-app-v2 .tp-info-prices small { font-size: 10px; }
@@ -356,13 +355,14 @@
   .tp-app-v2 .tp-info-itinerary-card__icon { width: 42px; height: 42px; min-width: 42px; }
   .tp-app-v2 .tp-bulk-discounts { padding: 18px 14px; }
   .tp-app-v2 .tp-bulk-discounts__row { grid-template-columns: minmax(0,1fr) 70px 76px; font-size: 11px; }
-  .tp-app-v2 .tp-about-tour { padding-inline: 12px; }
   .tp-app-v2 .tp-google-reviews { padding: 22px 18px; }
   .tp-app-v2 .tp-mobile-booking-bar { padding-inline: 16px; gap: 10px; }
   .tp-app-v2 .tp-mobile-booking-actions > button { padding-inline: 16px; }
-  .tp-app-signoff { width: calc(100% - 16px); margin-top: 24px; padding: 42px 20px 46px; border-radius: 24px; }
+  .tp-app-signoff { width: calc(100% - 32px); margin-top: 24px; padding: 42px 20px 46px; border-radius: 24px; }
 }
 @media (max-width: 359px) {
+  .tp-app-v2 .tp-tour-layout { padding-inline: 16px; }
+  .tp-app-v2 #reels { margin-inline: -16px; }
   .tp-app-v2 .tp-mobile-booking-actions > a { display: none; }
   .tp-app-v2 .tp-info-prices .price-amount { font-size: 16px !important; }
 }
