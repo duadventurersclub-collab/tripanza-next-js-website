@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate, formatTourDateWithOrdinal } from "@/lib/tour-date";
 
@@ -29,9 +29,14 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
     style: "currency", currency: pricing.currency || tour.currency || "INR", maximumFractionDigits: 0,
   }).format(amount);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-  const [pdfStatus, setPdfStatus] = useState<"idle" | "preparing" | "started">("idle");
+  const [pdfStatus, setPdfStatus] = useState<"idle" | "form" | "saving" | "preparing" | "started">("idle");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadError, setLeadError] = useState("");
   const pdfFrameRef = useRef<HTMLIFrameElement>(null);
   const pdfTimerRef = useRef<number | null>(null);
+  const leadAbortRef = useRef<AbortController | null>(null);
+  const downloadButtonRef = useRef<HTMLButtonElement>(null);
   const hasPricing = Boolean(pricing.quad || pricing.triple || pricing.twin);
 
   const itineraryPdfUrl = (() => {
@@ -52,19 +57,67 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
 
   useEffect(() => () => {
     if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
+    leadAbortRef.current?.abort();
   }, []);
 
-  function downloadItinerary() {
+  useEffect(() => {
+    if (pdfStatus === "idle") return;
+    const previousOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    return () => { document.documentElement.style.overflow = previousOverflow; };
+  }, [pdfStatus]);
+
+  async function submitItineraryLead(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pdfStatus === "saving") return;
+
+    const phoneDigits = leadPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+      setLeadError("Enter a valid phone number, including your country code if needed.");
+      return;
+    }
+
+    setLeadError("");
+    setPdfStatus("saving");
+    const controller = new AbortController();
+    leadAbortRef.current = controller;
+
+    try {
+      const response = await fetch("/api/itinerary-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tourId: tour.id, email: leadEmail.trim(), phone: leadPhone.trim() }),
+        signal: controller.signal,
+      });
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+      if (controller.signal.aborted) return;
+      if (!response.ok) throw new Error(result.error || "Your details could not be saved. Please try again.");
+
+      if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
+      setPdfStatus("preparing");
+      if (pdfFrameRef.current) pdfFrameRef.current.src = itineraryPdfUrl;
+      pdfTimerRef.current = window.setTimeout(() => setPdfStatus("started"), 4500);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setLeadError(error instanceof Error ? error.message : "Your details could not be saved. Please try again.");
+      setPdfStatus("form");
+    } finally {
+      if (leadAbortRef.current === controller) leadAbortRef.current = null;
+    }
+  }
+
+  function openItineraryForm() {
     if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
-    setPdfStatus("preparing");
-    if (pdfFrameRef.current) pdfFrameRef.current.src = itineraryPdfUrl;
-    pdfTimerRef.current = window.setTimeout(() => setPdfStatus("started"), 4500);
+    setLeadError("");
+    setPdfStatus("form");
   }
 
   function closePdfStatus() {
+    leadAbortRef.current?.abort();
     if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
     pdfTimerRef.current = null;
     setPdfStatus("idle");
+    downloadButtonRef.current?.focus();
   }
 
   // Use the same departures for the month pills and the visible date cards.
@@ -241,33 +294,60 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
           <p>Download a detailed day-by-day PDF for offline reference before departure.</p>
         </div>
         <button
+          ref={downloadButtonRef}
           type="button"
-          className={`tp-info-download${pdfStatus === "preparing" ? " is-preparing" : ""}`}
-          aria-busy={pdfStatus === "preparing"}
-          onClick={downloadItinerary}
+          className="tp-info-download"
+          onClick={openItineraryForm}
         >
-          <i className={`fa-solid ${pdfStatus === "preparing" ? "fa-spinner fa-spin" : "fa-download"}`} aria-hidden="true" />
-          {pdfStatus === "preparing" ? "Preparing…" : "Download PDF"}
+          <i className="fa-solid fa-download" aria-hidden="true" />
+          Download PDF
         </button>
       </div>
 
       <iframe ref={pdfFrameRef} title="Itinerary PDF download" className="tp-pdf-download-frame" />
 
       {pdfStatus !== "idle" ? (
-        <div className="tp-pdf-status" role="dialog" aria-modal="true" aria-labelledby="tp-pdf-status-title">
+        <div
+          className={`tp-pdf-status${pdfStatus === "form" || pdfStatus === "saving" ? " tp-pdf-status--lead" : ""}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tp-pdf-status-title"
+          onKeyDown={(event) => { if (event.key === "Escape") closePdfStatus(); }}
+        >
           <button type="button" className="tp-pdf-status__backdrop" onClick={closePdfStatus} aria-label="Close download status" />
-          <div className={`tp-pdf-status__card${pdfStatus === "started" ? " is-started" : ""}`}>
-            <button type="button" className="tp-pdf-status__close" onClick={closePdfStatus} aria-label="Close">×</button>
-            <span className="tp-pdf-status__visual" aria-hidden="true">
-              {pdfStatus === "started" ? <b>✓</b> : <><i>↗</i><em /></>}
-            </span>
-            <span className="tp-pdf-status__eyebrow">Tripanza · Your trip, sorted</span>
-            <h2 id="tp-pdf-status-title">{pdfStatus === "started" ? "Download started" : "Packing your itinerary"}</h2>
-            <p>{pdfStatus === "started" ? "Check your browser downloads. Your day-by-day trip plan is ready for offline use." : "We’re preparing the latest itinerary, stays and trip details. This usually takes a few seconds."}</p>
-            {pdfStatus === "preparing" ? <span className="tp-pdf-status__progress"><i /></span> : null}
-            {pdfStatus === "started" ? <button type="button" className="tp-pdf-status__done" onClick={closePdfStatus}>Done</button> : null}
-            <a href={itineraryPdfUrl} target="_blank" rel="noopener noreferrer">Download not starting? Open PDF</a>
-          </div>
+          {pdfStatus === "form" || pdfStatus === "saving" ? (
+            <div className="tp-pdf-status__card tp-pdf-lead">
+              <button type="button" className="tp-pdf-status__close" onClick={closePdfStatus} aria-label="Close">×</button>
+              <span className="tp-pdf-lead__icon" aria-hidden="true"><i className="fa-solid fa-route" /></span>
+              <span className="tp-pdf-status__eyebrow">Your trip plan, ready to go</span>
+              <h2 id="tp-pdf-status-title">Get your PDF itinerary</h2>
+              <p>Enter your details to download the trip plan. We&apos;ll use them only for this request and trip-related support.</p>
+              <form className="tp-pdf-lead__form" onSubmit={submitItineraryLead}>
+                <label htmlFor="tp-itinerary-email">Email address</label>
+                <input id="tp-itinerary-email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={leadEmail} onChange={(event) => setLeadEmail(event.target.value)} required autoFocus />
+                <label htmlFor="tp-itinerary-phone">Phone number</label>
+                <input id="tp-itinerary-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" value={leadPhone} onChange={(event) => setLeadPhone(event.target.value)} required />
+                {leadError ? <span className="tp-pdf-lead__error" role="alert">{leadError}</span> : null}
+                <button type="submit" disabled={pdfStatus === "saving"}>
+                  <i className={`fa-solid ${pdfStatus === "saving" ? "fa-spinner fa-spin" : "fa-download"}`} aria-hidden="true" />
+                  {pdfStatus === "saving" ? "Saving your details…" : "Download itinerary"}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className={`tp-pdf-status__card${pdfStatus === "started" ? " is-started" : ""}`}>
+              <button type="button" className="tp-pdf-status__close" onClick={closePdfStatus} aria-label="Close">×</button>
+              <span className="tp-pdf-status__visual" aria-hidden="true">
+                {pdfStatus === "started" ? <b>✓</b> : <><i>↗</i><em /></>}
+              </span>
+              <span className="tp-pdf-status__eyebrow">Tripanza · Your trip, sorted</span>
+              <h2 id="tp-pdf-status-title">{pdfStatus === "started" ? "Download started" : "Packing your itinerary"}</h2>
+              <p>{pdfStatus === "started" ? "Check your browser downloads. Your day-by-day trip plan is ready for offline use." : "We’re preparing the latest itinerary, stays and trip details. This usually takes a few seconds."}</p>
+              {pdfStatus === "preparing" ? <span className="tp-pdf-status__progress"><i /></span> : null}
+              {pdfStatus === "started" ? <button type="button" className="tp-pdf-status__done" onClick={closePdfStatus}>Done</button> : null}
+              <a href={itineraryPdfUrl} target="_blank" rel="noopener noreferrer">Download not starting? Open PDF</a>
+            </div>
+          )}
         </div>
       ) : null}
 
