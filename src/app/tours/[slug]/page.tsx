@@ -97,7 +97,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
             <TourOverview tour={tour} />
             <TourReels tour={tour} />
             <TourItinerary tour={tour} />
-            <TourInformation tour={tour} availabilityBatches={[]} whatsappUrl={whatsappUrl} />
+            <TourInformation key={tour.id} tour={tour} whatsappUrl={whatsappUrl} />
             <TourAboutDiscounts tour={tour} />
             <TourReviews reviews={tour.details.reviews} />
           </div>

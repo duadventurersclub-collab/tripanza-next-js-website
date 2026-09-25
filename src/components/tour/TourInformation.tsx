@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { TourDetail, TourAvailabilityBatch } from "@/lib/wp";
+import type { TourDetail } from "@/lib/wp";
 import { formatTourDate, formatTourDateWithOrdinal } from "@/lib/tour-date";
 
 interface TourInformationProps {
   tour: TourDetail;
-  availabilityBatches: TourAvailabilityBatch[];
   whatsappUrl: string;
 }
 
@@ -20,16 +19,16 @@ function getBadgeClass(status: string): string {
 }
 
 function getMonthLabel(dateStr: string): string {
-  return formatTourDate(dateStr, { month: "short", year: "numeric" }) || "All";
+  return formatTourDate(dateStr, { month: "short", year: "numeric" });
 }
 
-export default function TourInformation({ tour, availabilityBatches, whatsappUrl }: TourInformationProps) {
+export default function TourInformation({ tour, whatsappUrl }: TourInformationProps) {
   const details = tour.details;
   const pricing = details.pricing;
   const formatPrice = (amount: number) => new Intl.NumberFormat("en-IN", {
     style: "currency", currency: pricing.currency || tour.currency || "INR", maximumFractionDigits: 0,
   }).format(amount);
-  const [activeMonth, setActiveMonth] = useState("All");
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [pdfStatus, setPdfStatus] = useState<"idle" | "preparing" | "started">("idle");
   const pdfFrameRef = useRef<HTMLIFrameElement>(null);
   const pdfTimerRef = useRef<number | null>(null);
@@ -68,32 +67,13 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
     setPdfStatus("idle");
   }
 
-  // Build month filter list from batches
-  const months = ["All"];
-  availabilityBatches.forEach((b) => {
-    if (b.check_in_formatted) {
-      const m = getMonthLabel(b.check_in_formatted);
-      if (!months.includes(m)) months.push(m);
-    }
-  });
-
-  const filteredBatches = activeMonth === "All"
-    ? availabilityBatches
-    : availabilityBatches.filter((b) => b.check_in_formatted && getMonthLabel(b.check_in_formatted) === activeMonth);
-
-  const departuresToShow = filteredBatches.length > 0 ? filteredBatches : details.departures.map((d) => ({
-    check_in: 0,
-    check_out: 0,
-    adult_price: "",
-    child_price: "",
-    infant_price: "",
-    status: d.status,
-    promoted: d.promoted,
-    badge: d.badge || undefined,
-    check_in_formatted: d.date,
-    check_out_formatted: d.check_out,
-    benefit: d.benefit || undefined,
-  }));
+  // Use the same departures for the month pills and the visible date cards.
+  const departures = details.departures;
+  const months = ["All dates", ...new Set(departures.map((d) => getMonthLabel(d.date)))];
+  const activeMonth = selectedMonth && months.includes(selectedMonth) ? selectedMonth : (months[1] || months[0]);
+  const departuresToShow = activeMonth === "All dates"
+    ? departures
+    : departures.filter((d) => getMonthLabel(d.date) === activeMonth);
 
   return (
     <div className="tp-tour-information" id="tp-trip-dates">
@@ -202,7 +182,7 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
               type="button"
               className={`tp-adv-filter-btn${activeMonth === m ? " active" : ""}`}
               aria-pressed={activeMonth === m}
-              onClick={() => setActiveMonth(m)}
+              onClick={() => setSelectedMonth(m)}
             >
               {m}
             </button>
@@ -227,10 +207,10 @@ export default function TourInformation({ tour, availabilityBatches, whatsappUrl
                       <span className="tp-info-date__promotion">{dep.badge}</span>
                     )}
                     <div className="tp-date-main">
-                      {dep.check_in_formatted ? formatTourDateWithOrdinal(dep.check_in_formatted) : "Upcoming Batch"}
+                      {dep.date ? formatTourDateWithOrdinal(dep.date) : "Upcoming Batch"}
                     </div>
-                    {dep.check_out_formatted && (
-                      <div className="tp-date-sub">Return: {formatTourDate(dep.check_out_formatted, { day: "numeric", month: "long", year: "numeric" })}</div>
+                    {dep.check_out && (
+                      <div className="tp-date-sub">Return: {formatTourDate(dep.check_out, { day: "numeric", month: "long", year: "numeric" })}</div>
                     )}
                     {isPromoted && dep.benefit && (
                       <span className="tp-info-date__benefit">{dep.benefit}</span>
