@@ -271,17 +271,31 @@
   .tp-app-v2 .tp-tour-gallery__trust { padding-inline: 24px; }
   .tp-app-bottom-space { display: block; height: calc(90px + env(safe-area-inset-bottom)); }
 }
+@media (min-width: 1100px) {
+  .tp-app-hero-copy > strong { font-size: clamp(40px, 5.2vw, 70px); }
+  .tp-app-v2 .tp-tour-overview__title { font-size: clamp(34px, 3.65vw, 49px) !important; }
+  .tp-app-v2 #reels h2 { font-size: 30px; }
+  .tp-app-v2 .tp-itinerary-section__head h3 { font-size: 31px !important; }
+  .tp-app-v2 .tp-app-section-heading h2 { font-size: 34px; }
+  .tp-app-v2 .tp-about-tour h2 { font-size: 28px !important; }
+  .tp-app-v2 .tp-about-tour p,
+  .tp-app-v2 .tp-itinerary-day__desc,
+  .tp-app-v2 .tp-itinerary-day__desc p,
+  .tp-app-v2 .tp-itinerary-panel__content,
+  .tp-app-v2 .tp-itinerary-panel__content p,
+  .tp-app-v2 .tp-google-review blockquote { font-size: 15px !important; }
+}
 @media (max-width: 767px) {
   .tp-app-v2 .tp-tour-appbar { height: calc(60px + env(safe-area-inset-top)); padding: calc(8px + env(safe-area-inset-top)) 16px 8px; gap: 8px; }
   .tp-app-v2 .tp-tour-appbar__action { width: 40px; height: 40px; }
   .tp-app-v2 .tp-tour-appbar__title { font-size: 13px; }
-  .tp-app-v2 .tp-tour-gallery__track { height: clamp(330px, 49svh, 430px); }
+  .tp-app-v2 .tp-tour-gallery__track { height: clamp(300px, 44svh, 390px); }
   .tp-app-v2 .tp-tour-gallery__viewport { border-radius: 0 0 26px 26px; }
   .tp-app-hero-copy { left: 24px; right: 90px; bottom: 66px; }
   .tp-app-hero-sticker { top: 80px; right: 12px; padding: 8px 9px; border-width: 1px; border-radius: 9px; box-shadow: 3px 3px 0 rgba(21,25,37,.7); font-size: 7px; transform: rotate(6deg); }
   .tp-app-hero-sticker i { display: none; }
   .tp-app-hero-kicker { margin-bottom: 12px; font-size: 9px; letter-spacing: .16em; }
-  .tp-app-hero-copy > strong { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: clamp(34px, 10vw, 48px); line-height: 1.04; }
+  .tp-app-hero-copy > strong { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: clamp(31px, 9vw, 43px); line-height: 1.04; }
   .tp-app-hero-copy > p { margin-top: 12px; font-size: 11px; line-height: 1.6; }
   .tp-app-photo-count { right: 18px; bottom: 20px; padding: 7px 10px; font-size: 10px; }
   .tp-app-v2 .tp-tour-gallery__reel { width: 58px; right: 16px; bottom: 72px; border-radius: 13px; }
@@ -297,9 +311,9 @@
   .tp-app-section-nav a { min-height: 51px; font-size: 12px; }
   .tp-app-v2 .tp-tour-layout { padding: 26px 20px 0; }
   .tp-app-v2 :is(section, [id="tp-trip-overview"], [id="tp-trip-dates"], [id="tp-info-availability"]) { scroll-margin-top: calc(132px + env(safe-area-inset-top)); }
-  .tp-app-v2 .tp-tour-overview { gap: 16px; margin-bottom: 28px; }
+  .tp-app-v2 .tp-tour-overview { gap: 14px; margin-bottom: 24px; }
   .tp-app-overline { margin-bottom: 12px; font-size: 9px; }
-  .tp-app-v2 .tp-tour-overview__title { font-size: 31px !important; margin-bottom: 18px !important; }
+  .tp-app-v2 .tp-tour-overview__title { font-size: 28px !important; margin-bottom: 15px !important; }
   .tp-app-v2 .tp-value-summary { gap: 6px; font-size: 11px; }
   .tp-app-v2 .tp-value-summary > span { padding: 7px 9px; }
   .tp-app-v2 .tp-route-box { grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) !important; gap: 7px; padding: 14px; }
@@ -317,12 +331,12 @@
   .tp-app-v2 .tp-trust-line p { display: block; }
   .tp-app-v2 .tp-trust-line strong { display: block; }
   .tp-app-v2 #reels { margin-inline: -20px; padding: 24px 20px; border-radius: 0; }
-  .tp-app-v2 #reels h2 { max-width: 290px; font-size: 25px; line-height: 1.16; }
+  .tp-app-v2 #reels h2 { max-width: 290px; font-size: 23px; line-height: 1.16; }
   .tp-app-v2 #reels .group { width: 142px; max-width: 42vw; }
   .tp-app-v2 #reels header p { line-height: 1.6; }
-  .tp-app-v2 .tp-itinerary-section { padding: 28px 0; }
+  .tp-app-v2 .tp-itinerary-section { padding: 24px 0; }
   .tp-app-v2 .tp-itinerary-section__head { gap: 10px; }
-  .tp-app-v2 .tp-itinerary-section__head h3 { font-size: 25px !important; }
+  .tp-app-v2 .tp-itinerary-section__head h3 { font-size: 23px !important; }
   .tp-app-v2 .tp-itinerary-section__hint { display: none !important; }
   .tp-app-v2 .tp-itinerary-section__head small { font-size: 9px; }
   .tp-app-v2 .tp-itinerary-section__number { width: 34px; height: 34px; min-width: 34px; border-radius: 10px; font-size: 11px; }
@@ -337,27 +351,43 @@
   .tp-app-v2 .tp-itinerary-day__media { aspect-ratio: 16/9; min-height: 0; max-height: 210px; }
   .tp-app-v2 .tp-itinerary-day__media img { min-height: 0; }
   .tp-app-v2 .tp-itinerary-day__body { padding: 16px; }
-  .tp-app-v2 .tp-itinerary-day__desc, .tp-app-v2 .tp-itinerary-day__desc p { font-size: 13px !important; }
+  .tp-app-v2 .tp-itinerary-day__desc, .tp-app-v2 .tp-itinerary-day__desc p { font-size: 13px !important; line-height: 1.6 !important; }
   .tp-app-v2 .tp-itinerary-highlights li { font-size: 13px; }
   .tp-app-v2 .tp-stay-card { grid-template-columns: 1fr; }
   .tp-app-v2 .tp-stay-card__body { padding: 18px; }
-  .tp-app-v2 .tp-cover-card li { font-size: 13px; }
+  .tp-app-v2 .tp-cover-card li { font-size: 12px; }
+  .tp-app-v2 .tp-itinerary-panel__trigger strong { font-size: 13px; }
+  .tp-app-v2 .tp-itinerary-panel__content, .tp-app-v2 .tp-itinerary-panel__content p { font-size: 13px !important; }
+  .tp-app-v2 .tp-tour-information { gap: 16px; padding-top: 24px; }
+  .tp-app-v2 .tp-app-section-heading h2 { font-size: 27px; }
   .tp-app-v2 .tp-info-prices { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px !important; }
   .tp-app-v2 .tp-info-prices > div { min-width: 0; padding: 14px 10px !important; gap: 12px; }
-  .tp-app-v2 .tp-info-prices .price-amount { font-size: 18px !important; }
+  .tp-app-v2 .tp-info-prices .price-amount { font-size: 17px !important; }
   .tp-app-v2 .tp-info-prices small { font-size: 10px; }
   .tp-app-v2 .tp-info-price__label { font-size: 11px; }
   .tp-app-v2 .tp-info-availability { padding: 18px 14px; }
+  .tp-app-v2 .tp-info-section-head h2 { font-size: 21px !important; }
   .tp-app-v2 .tp-date-main { font-size: 13px; }
   .tp-app-v2 .tp-info-date__calendar { display: none; }
   .tp-app-v2 .tp-info-itinerary-card { padding: 18px; gap: 12px; }
-  .tp-app-v2 .tp-info-itinerary-card h2 { font-size: 19px !important; }
+  .tp-app-v2 .tp-info-itinerary-card h2 { font-size: 18px !important; }
   .tp-app-v2 .tp-info-itinerary-card__icon { width: 42px; height: 42px; min-width: 42px; }
   .tp-app-v2 .tp-bulk-discounts { padding: 18px 14px; }
+  .tp-app-v2 .tp-bulk-discounts header h2 { font-size: 21px !important; }
   .tp-app-v2 .tp-bulk-discounts__row { grid-template-columns: minmax(0,1fr) 70px 76px; font-size: 11px; }
+  .tp-app-v2 .tp-about-tour h2 { font-size: 23px !important; }
+  .tp-app-v2 .tp-about-tour p { font-size: 13px !important; line-height: 1.65 !important; }
   .tp-app-v2 .tp-google-reviews { padding: 22px 18px; }
-  .tp-app-v2 .tp-mobile-booking-bar { padding-inline: 16px; gap: 10px; }
-  .tp-app-v2 .tp-mobile-booking-actions > button { padding-inline: 16px; }
+  .tp-app-v2 .tp-google-reviews h2 { font-size: 23px !important; }
+  .tp-app-v2 .tp-google-review blockquote { font-size: 13px; }
+  .tp-app-v2 .tp-mobile-booking-bar { min-height: 72px; gap: 8px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; box-shadow: 0 -8px 28px rgba(20,30,65,.14); }
+  .tp-app-v2 .tp-mobile-booking-bar > div:first-child { min-width: 0; }
+  .tp-app-v2 .tp-mobile-booking-bar > div:first-child > span { font-size: 8px; }
+  .tp-app-v2 .tp-mobile-booking-bar > div:first-child > strong { margin: 0; font-size: 21px; line-height: 1.15; white-space: nowrap; }
+  .tp-app-v2 .tp-mobile-booking-bar > div:first-child > small { font-size: 8px; white-space: nowrap; }
+  .tp-app-v2 .tp-mobile-booking-actions > a { width: 46px; height: 48px; }
+  .tp-app-v2 .tp-mobile-booking-actions > button { height: 48px; min-height: 48px; padding: 0 14px; white-space: nowrap; }
+  .tp-app-bottom-space { height: calc(78px + env(safe-area-inset-bottom)); }
   .tp-app-signoff { width: calc(100% - 32px); margin-top: 24px; padding: 42px 20px 46px; border-radius: 24px; }
 }
 @media (max-width: 359px) {
