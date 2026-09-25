@@ -124,6 +124,9 @@ function ReelPreview({
       )}
 
       <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/5 to-black/15" />
+      <span className="pointer-events-none absolute left-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-white/20 text-white shadow-xl backdrop-blur-md transition group-hover:scale-105 group-hover:bg-white/30 sm:h-14 sm:w-14">
+        <ReelIcon name="play" filled className="ml-0.5 h-4 w-4 sm:ml-1 sm:h-5 sm:w-5" />
+      </span>
       <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2.5 sm:gap-3 sm:p-3.5">
         <span className="min-w-0">
           <strong className="block truncate text-[10px] font-black text-white sm:text-[11px]">{title}</strong>
