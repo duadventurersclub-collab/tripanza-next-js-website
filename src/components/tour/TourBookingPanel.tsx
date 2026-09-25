@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { BookingSelection } from "@/lib/booking";
 import type { TourDetail } from "@/lib/wp";
 
@@ -52,6 +52,7 @@ export default function TourBookingPanel({
   onClose?: () => void;
 }) {
   const router = useRouter();
+  const sidebarRef = useRef<HTMLElement>(null);
   const options = (["quad", "triple", "twin"] as Sharing[]).filter((key) => Boolean(tour.details.pricing[key]));
   const [sharing, setSharing] = useState<Sharing>(options[0] || "quad");
   const [travellers, setTravellers] = useState(1);
@@ -99,6 +100,17 @@ export default function TourBookingPanel({
     return () => window.clearInterval(timer);
   }, [hasOfferTimer, offerEnd]);
 
+  useEffect(() => {
+    if (mobile || !sidebarRef.current) return;
+    const sidebar = sidebarRef.current;
+    // Tall forms pin by their bottom edge after the page has revealed every control.
+    const updateHeight = () => sidebar.style.setProperty("--tp-booking-height", `${sidebar.getBoundingClientRect().height}px`);
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(sidebar);
+    updateHeight();
+    return () => observer.disconnect();
+  }, [mobile]);
+
   async function proceedToCheckout(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!departure || travellers < 1) {
@@ -133,7 +145,7 @@ export default function TourBookingPanel({
   }
 
   return (
-    <aside className={`tp-tour-sidebar${mobile ? " tp-tour-sidebar--mobile" : ""}`} aria-label="Book this tour" id={mobile ? "mobile-booking-request" : "booking-request"}>
+    <aside ref={sidebarRef} className={`tp-tour-sidebar${mobile ? " tp-tour-sidebar--mobile" : ""}`} aria-label="Book this tour" id={mobile ? "mobile-booking-request" : "booking-request"}>
       <form className="tp-booking-panel" onSubmit={proceedToCheckout}>
         <header className="tp-booking-panel__intro">
           <span><i className="fa-solid fa-lock" aria-hidden="true" /></span>
