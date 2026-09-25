@@ -93,10 +93,16 @@
 .tp-app-v2 .tp-tour-offer__icon { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: #d0e562; color: #263407; }
 .tp-app-v2 .tp-tour-offer__content > strong { font-size: 13px; font-weight: 650; }
 .tp-app-v2 .tp-tour-offer__content > small { font-size: 11px; font-weight: 450; }
-.tp-app-v2 .tp-route-box { padding: 16px 18px; border: 1px solid var(--app-line); border-radius: 16px; box-shadow: none; background: #fff; }
-.tp-app-v2 .tp-route-city__icon { width: 35px; height: 35px; min-width: 35px; border-radius: 50%; color: #3157d5; background: #eef2ff; }
-.tp-app-v2 .tp-route-city small { font-size: 10px; font-weight: 500; text-transform: none; }
-.tp-app-v2 .tp-route-city strong { font-size: 15px; font-weight: 650; }
+.tp-app-v2 .tp-route-box { position: relative; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; padding: 14px; border: 1px solid var(--app-line); border-radius: 18px; box-shadow: none; background: #fff; }
+.tp-app-v2 .tp-route-city { min-height: 76px; gap: 12px; padding: 13px 15px; border: 1px solid #e3e9f5; border-radius: 13px; background: #f8faff; }
+.tp-app-v2 .tp-route-city--destination { justify-content: flex-start; }
+.tp-app-v2 .tp-route-city__icon { width: 38px; height: 38px; min-width: 38px; border-radius: 12px; color: #3157d5; background: #e8eeff; }
+.tp-app-v2 .tp-route-city > span:last-child { gap: 4px; }
+.tp-app-v2 .tp-route-city small { color: #68758b; font-size: 10px; font-weight: 750; letter-spacing: .02em; text-transform: none; }
+.tp-app-v2 .tp-route-city strong { overflow: visible; color: #151925; font-size: 15px; font-weight: 750; line-height: 1.35; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
+.tp-app-v2 .tp-route-direction { position: absolute; z-index: 1; top: 50%; left: 50%; width: 34px; height: 34px; min-width: 0; padding: 0; border: 1px solid #dfe5ef; border-radius: 50%; color: #3157d5; background: #fff; box-shadow: 0 2px 8px #15192512; transform: translate(-50%, -50%); }
+.tp-app-v2 .tp-route-direction::before { display: none; }
+.tp-app-v2 .tp-route-direction i { padding: 0; background: none; font-size: 12px; }
 .tp-app-v2 .tp-tour-assistant { min-height: 76px; gap: 12px; padding: 12px; border: 1px solid #cdd7f4; background: linear-gradient(105deg,#eef2ff 0%,#f8f7ff 62%,#fff0f6 100%); box-shadow: 0 9px 24px rgba(49,87,213,.08); }
 .tp-app-v2 .tp-tour-assistant__mark { width: 42px; height: 42px; border-radius: 50%; background: #fff; color: #3157d5; font-size: 18px; }
 .tp-app-v2 .tp-tour-assistant__copy { gap: 5px; }
@@ -293,11 +299,13 @@
   .tp-app-v2 .tp-tour-overview__title { font-size: 31px !important; margin-bottom: 18px !important; }
   .tp-app-v2 .tp-value-summary { gap: 6px; font-size: 11px; }
   .tp-app-v2 .tp-value-summary > span { padding: 7px 9px; }
-  .tp-app-v2 .tp-route-box { gap: 8px; padding: 14px 12px; }
-  .tp-app-v2 .tp-route-city { gap: 8px; }
-  .tp-app-v2 .tp-route-city__icon { display: none; }
-  .tp-app-v2 .tp-route-city strong { font-size: 14px; white-space: normal; }
-  .tp-app-v2 .tp-route-city small { margin-bottom: 4px; }
+  .tp-app-v2 .tp-route-box { grid-template-columns: minmax(0, 1fr) !important; gap: 0; padding: 11px; }
+  .tp-app-v2 .tp-route-city { min-height: 64px; gap: 11px; padding: 11px 12px; }
+  .tp-app-v2 .tp-route-city__icon { display: grid; width: 34px; height: 34px; min-width: 34px; }
+  .tp-app-v2 .tp-route-city strong { font-size: 14px; }
+  .tp-app-v2 .tp-route-direction { position: relative; top: auto; left: auto; justify-self: start; width: 28px; height: 28px; margin: 2px 0 2px 15px; border: 0; box-shadow: none; transform: none; }
+  .tp-app-v2 .tp-route-direction::before { display: block; top: -2px; right: auto; bottom: -2px; left: 50%; width: 1px; height: auto; background: #c4cde2; }
+  .tp-app-v2 .tp-route-direction i { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid #dfe5ef; border-radius: 50%; background: #fff; font-size: 9px; transform: rotate(90deg); }
   .tp-app-v2 .tp-organizer-card { grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
   .tp-app-v2 .organizer-avatar { width: 40px; height: 40px; min-width: 40px; }
   .tp-app-v2 .tp-organizer-card__name strong { font-size: 13px; }

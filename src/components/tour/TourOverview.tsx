@@ -140,7 +140,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
           </span>
         </div>
         <div className="tp-route-direction" aria-hidden="true">
-          <i className="fa-solid fa-location-arrow" />
+          <i className="fa-solid fa-arrow-right" />
         </div>
         <div className="tp-route-city tp-route-city--destination">
           <div className="tp-route-city__icon">
