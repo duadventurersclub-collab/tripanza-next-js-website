@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { BookingSelection } from "@/lib/booking";
 import type { TourDetail } from "@/lib/wp";
-import TourAiChat from "./TourAiChat";
 
 type Sharing = "quad" | "triple" | "twin";
 const labels: Record<Sharing, { title: string; occupancy: string }> = {
@@ -45,12 +44,10 @@ function numericValue(value?: string) {
 
 export default function TourBookingPanel({
   tour,
-  whatsappUrl,
   mobile = false,
   onClose,
 }: {
   tour: TourDetail;
-  whatsappUrl: string;
   mobile?: boolean;
   onClose?: () => void;
 }) {
@@ -173,8 +170,6 @@ export default function TourBookingPanel({
             {discountRate > 0 ? <b>{tour.details.booking.discount_type === "percent" ? `${discountRate}% OFF` : `${money(discountRate, tour.currency)} OFF`}</b> : null}
           </section>
         ) : null}
-
-        {!mobile && <TourAiChat tour={tour} whatsappUrl={whatsappUrl} />}
 
         <section className="tp-booking-step">
           <header><span>01</span><div><strong>Select departure</strong><small>Choose the batch that works for you</small></div></header>

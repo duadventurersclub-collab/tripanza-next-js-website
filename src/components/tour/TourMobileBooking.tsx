@@ -39,6 +39,6 @@ export default function TourMobileBooking({ tour, whatsappUrl }: { tour: TourDet
       <div className="tp-mobile-booking-actions"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp inquiry"><i className="fa-brands fa-whatsapp" aria-hidden="true" /></a><button type="button" onClick={() => setIsOpen(true)}>Check dates <i className="fa-solid fa-arrow-right" aria-hidden="true" /></button></div>
       <TourAiChat tour={tour} whatsappUrl={whatsappUrl} />
     </div>
-    {isOpen && typeof document !== "undefined" ? createPortal(<div className="tp-mobile-booking-modal" role="dialog" aria-modal="true" aria-label="Book this tour"><button type="button" className="tp-mobile-booking-backdrop" onClick={() => setIsOpen(false)} aria-label="Close booking form" /><div className="tp-mobile-booking-sheet"><TourBookingPanel tour={tour} whatsappUrl={whatsappUrl} mobile onClose={() => setIsOpen(false)} /></div></div>, document.body) : null}
+    {isOpen && typeof document !== "undefined" ? createPortal(<div className="tp-mobile-booking-modal" role="dialog" aria-modal="true" aria-label="Book this tour"><button type="button" className="tp-mobile-booking-backdrop" onClick={() => setIsOpen(false)} aria-label="Close booking form" /><div className="tp-mobile-booking-sheet"><TourBookingPanel tour={tour} mobile onClose={() => setIsOpen(false)} /></div></div>, document.body) : null}
   </>;
 }

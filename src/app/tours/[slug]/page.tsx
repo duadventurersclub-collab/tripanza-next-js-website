@@ -13,6 +13,7 @@ import TourItinerary from "@/components/tour/TourItinerary";
 import TourAboutDiscounts from "@/components/tour/TourAboutDiscounts";
 import TourBookingPanel from "@/components/tour/TourBookingPanel";
 import TourMobileBooking from "@/components/tour/TourMobileBooking";
+import TourAiChat from "@/components/tour/TourAiChat";
 import TourReviews from "@/components/tour/TourReviews";
 import TourSectionNav from "@/components/tour/TourSectionNav";
 
@@ -100,7 +101,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
             <TourAboutDiscounts tour={tour} />
             <TourReviews reviews={tour.details.reviews} />
           </div>
-          <TourBookingPanel tour={tour} whatsappUrl={whatsappUrl} />
+          <TourBookingPanel tour={tour} />
         </div>
 
         {/* Spacer for mobile sticky bottom bar */}
@@ -109,6 +110,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
       </main>
 
       <TourMobileBooking tour={tour} whatsappUrl={whatsappUrl} />
+      <TourAiChat tour={tour} whatsappUrl={whatsappUrl} />
 
       {/* Scroll progress script */}
       <script
