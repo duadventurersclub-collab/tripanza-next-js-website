@@ -136,6 +136,7 @@ export default function TourGallery({ tour }: TourGalleryProps) {
             <strong>{tour.details.destination || tour.title}</strong>
             <p>{tour.details.duration.days ? `${tour.details.duration.days} days of new stories` : "A new place. A new story."}{tour.details.origin ? ` · From ${tour.details.origin}` : ""}</p>
           </div>
+          <span className="tp-app-hero-sticker" aria-hidden="true">GOOD TRIPS.<br />BETTER PEOPLE. <i>✳</i></span>
           {galleryCount > 0 && <div className="tp-app-photo-count" aria-label={`${galleryCount} trip photos`}><i className="fa-regular fa-images" aria-hidden="true" /><span ref={countRef}>01</span><span>/ {String(galleryCount).padStart(2, "0")}</span></div>}
 
           {/* Reel Preview */}

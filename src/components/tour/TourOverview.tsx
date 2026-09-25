@@ -41,7 +41,7 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
             </div>
           )}
 
-          <div className="tp-app-overline"><span>THE TRIP, AT A GLANCE</span>{details.rating.count > 0 && <span><i className="fa-solid fa-star" aria-hidden="true" /> {details.rating.value.toFixed(1)} <small>({details.rating.count} reviews)</small></span>}</div>
+          <div className="tp-app-overline"><span>YOUR NEXT MAIN-CHARACTER MOMENT</span>{details.rating.count > 0 && <span><i className="fa-solid fa-star" aria-hidden="true" /> {details.rating.value.toFixed(1)} <small>({details.rating.count} reviews)</small></span>}</div>
           <h1 className="tp-tour-overview__title">{tour.title}</h1>
 
           {/* Value Summary Card */}
