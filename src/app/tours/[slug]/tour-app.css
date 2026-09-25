@@ -166,9 +166,11 @@
 .tp-app-v2 .tp-stay-card__desc, .tp-app-v2 .tp-stay-card__desc p { font-size: 13px !important; line-height: 1.7 !important; }
 .tp-app-v2 .tp-stay-card__amenities span, .tp-app-v2 .tp-stay-card__meta span, .tp-app-v2 .tp-stay-card__amenities-more { font-size: 11px; font-weight: 500; }
 .tp-app-v2 .tp-cover-card { border: 1px solid var(--app-line); border-radius: 18px; box-shadow: none; }
-.tp-app-v2 .tp-cover-card header { padding: 18px; }
+.tp-app-v2 .tp-cover-card header { padding: 0; }
+.tp-app-v2 .tp-cover-card header div { justify-items: start; text-align: left; }
 .tp-app-v2 .tp-cover-card header h4 { font-size: 16px; font-weight: 650; }
-.tp-app-v2 .tp-cover-card li { padding-block: 12px; font-size: 13px; line-height: 1.65; }
+.tp-app-v2 .tp-cover-card ul { align-content: start; gap: 11px; }
+.tp-app-v2 .tp-cover-card li { padding: 0; font-size: 13px; line-height: 1.55; }
 .tp-app-v2 .tp-itinerary-panel { border-color: var(--app-line); border-radius: 14px; background: white; box-shadow: none; }
 .tp-app-v2 .tp-itinerary-panel__trigger { min-height: 62px; grid-template-columns: minmax(0,1fr) auto; padding: 16px !important; }
 .tp-app-v2 .tp-itinerary-panel__trigger strong { font-size: 14px; font-weight: 600; line-height: 1.5; }
