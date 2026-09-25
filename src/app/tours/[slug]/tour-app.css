@@ -72,14 +72,14 @@
 .tp-app-v2 .tp-tour-sidebar:not(.tp-tour-sidebar--mobile) { position: sticky; top: min(151px, calc(100dvh - var(--tp-booking-height, 0px) - 20px)); max-height: none; overflow: visible; border-radius: 24px; }
 
 /* Trip essentials, with room to breathe. */
-.tp-app-v2 .tp-tour-overview { gap: 18px; margin: 0 0 32px; }
-.tp-app-v2 .tp-tour-overview__header { padding: 0 !important; border: 0; border-radius: 0; box-shadow: none; background: none; }
-.tp-app-overline { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; color: #3157d5; font-size: 10px; font-weight: 900; letter-spacing: .13em; }
+.tp-app-v2 .tp-tour-overview { gap: 16px; margin: 0 0 32px; }
+.tp-app-v2 .tp-tour-overview__header { padding: 22px 24px !important; border: 1px solid var(--app-line); border-radius: 20px; box-shadow: 0 9px 28px rgba(27, 35, 64, .05); background: #fff; }
+.tp-app-overline { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; color: #3157d5; font-size: 10px; font-weight: 900; letter-spacing: .13em; }
 .tp-app-overline > span:last-child:not(:first-child) { color: #273e37; letter-spacing: 0; font-size: 12px; }
 .tp-app-overline i { color: #a88b30; }
 .tp-app-overline small { color: #74817d; font-size: 11px; }
-.tp-app-v2 .tp-tour-overview__title { margin-bottom: 20px !important; font-size: clamp(30px, 3.5vw, 46px) !important; font-weight: 950 !important; line-height: 1.06 !important; letter-spacing: -.055em !important; }
-.tp-app-v2 .tp-value-card { padding: 0 0 20px; margin: 0; background: none; border: 0; border-bottom: 1px solid var(--app-line); border-radius: 0; }
+.tp-app-v2 .tp-tour-overview__title { margin-bottom: 18px !important; font-size: clamp(30px, 3.5vw, 46px) !important; font-weight: 950 !important; line-height: 1.06 !important; letter-spacing: -.055em !important; }
+.tp-app-v2 .tp-value-card { padding: 0; margin: 0; background: none; border: 0; border-radius: 0; }
 .tp-app-v2 .tp-value-card__copy > small { display: none; }
 .tp-app-v2 .tp-value-summary { gap: 8px; font-size: 12px; font-weight: 500; }
 .tp-app-v2 .tp-value-summary > span { padding: 7px 10px; color: #3e4a66; background: #eef2ff; border-radius: 8px; font-weight: 750; }
@@ -315,6 +315,7 @@
   .tp-app-v2 .tp-tour-layout { padding: 26px 20px 0; }
   .tp-app-v2 :is(section, [id="tp-trip-overview"], [id="tp-trip-dates"], [id="tp-info-availability"]) { scroll-margin-top: calc(132px + env(safe-area-inset-top)); }
   .tp-app-v2 .tp-tour-overview { gap: 14px; margin-bottom: 24px; }
+  .tp-app-v2 .tp-tour-overview__header { width: calc(100% + 24px) !important; margin-inline: -12px !important; padding: 18px !important; }
   .tp-app-overline { margin-bottom: 12px; font-size: 9px; }
   .tp-app-v2 .tp-tour-overview__title { font-size: 28px !important; margin-bottom: 15px !important; }
   .tp-app-v2 .tp-value-summary { gap: 6px; font-size: 11px; }
