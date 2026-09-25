@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate } from "@/lib/tour-date";
 import TourAiChat from "@/components/tour/TourAiChat";
@@ -10,9 +11,37 @@ interface TourOverviewProps {
   whatsappUrl: string;
 }
 
+function OrganizerAvatar({ name, url }: { name: string; url: string }) {
+  const [mode, setMode] = useState<"optimized" | "direct" | "fallback">("optimized");
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <span className="organizer-avatar organizer-avatar--fallback" role="img" aria-label={`${name} logo`}>
+      <span aria-hidden="true">{name.trim().charAt(0).toUpperCase() || "T"}</span>
+      {url && mode !== "fallback" && (
+        <Image
+          className={`organizer-avatar__image${loaded ? " is-loaded" : ""}`}
+          src={url}
+          alt=""
+          width={56}
+          height={56}
+          sizes="56px"
+          unoptimized={mode === "direct"}
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            setLoaded(false);
+            setMode(mode === "optimized" ? "direct" : "fallback");
+          }}
+        />
+      )}
+    </span>
+  );
+}
+
 export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
   const details = tour.details;
   const partner = details.partner;
+  const organizerName = partner.name?.trim() || "Tour organizer";
   const pricing = details.pricing;
   const includedText = details.included.join(" ");
   const hotelNights = Number(includedText.match(/(\d+)\s*night/i)?.[1] || 0);
@@ -158,65 +187,38 @@ export default function TourOverview({ tour, whatsappUrl }: TourOverviewProps) {
       {/* Organizer Card */}
       <div className="tp-organizer-card">
         <div className="tp-organizer-card__profile">
-          {partner.logo_url ? (
-            <Image
-              className="organizer-avatar"
-              src={partner.logo_url}
-              alt={partner.name}
-              width={56}
-              height={56}
-              sizes="56px"
-            />
-          ) : (
-            <span className="organizer-avatar grid place-items-center bg-slate-100 text-slate-500" aria-hidden="true">
-              <i className="fa-solid fa-building" />
-            </span>
-          )}
+          <OrganizerAvatar key={partner.logo_url} name={organizerName} url={partner.logo_url} />
           <div className="organizer-info">
             <small>Experience organized by</small>
             <div className="tp-organizer-card__name">
-              <strong>{partner.name}</strong>
-              {partner.verified && (
-                <span className="tp-verified" aria-label="Verified organizer">
-                  <i className="fa-solid fa-check" aria-hidden="true" />
-                </span>
-              )}
+              <strong>{organizerName}</strong>
             </div>
             <div className="partner-meta">
-              <span>
-                <i className="fa-solid fa-star" aria-hidden="true" />
-                {partner.rating.toFixed(1)}
-              </span>
-              <span>
-                <i className="fa-solid fa-route" aria-hidden="true" />
-                {partner.trip_count}+ trips
-              </span>
+              {partner.rating > 0 && <span><i aria-hidden="true">★</i> {partner.rating.toFixed(1)} rating</span>}
+              {partner.trip_count > 0 && <span>{partner.trip_count}+ trips hosted</span>}
             </div>
           </div>
         </div>
 
-        <div className="tp-organizer-card__aside">
-          <span className="trusted-partner-badge">
-            <i className="fa-solid fa-shield-check" aria-hidden="true" />
-            Trusted partner
-          </span>
-          {partner.instagram_url && (
-            <a
-              href={partner.instagram_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="organizer-social"
-              aria-label={`${partner.name} Instagram`}
-            >
-              <i className="fa-brands fa-instagram" aria-hidden="true" />
-            </a>
-          )}
-        </div>
+        {(partner.verified || partner.instagram_url) && (
+          <div className="tp-organizer-card__aside">
+            {partner.verified && <span className="trusted-partner-badge">✓ Verified organizer</span>}
+            {partner.instagram_url && (
+              <a
+                href={partner.instagram_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="organizer-social"
+                aria-label={`${organizerName} Instagram`}
+              >
+                Instagram <span aria-hidden="true">↗</span>
+              </a>
+            )}
+          </div>
+        )}
 
         <div className="tp-trust-line">
-          <span aria-hidden="true">
-            <i className="fa-solid fa-shield-heart" />
-          </span>
+          <span aria-hidden="true">✓</span>
           <p>
             <strong>Book with Tripanza protection</strong>
             Pay only through Tripanza to keep your booking and payment support protected.
