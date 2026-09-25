@@ -1,7 +1,22 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
 import type { TourReview } from "@/lib/st-tours";
+
+function ReviewAvatar({ name, photoUrl }: { name: string; photoUrl: string }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  return (
+    <span className="tp-google-review__avatar" aria-hidden="true">
+      {photoUrl && !imageFailed ? (
+        <Image src={photoUrl} alt="" width={43} height={43} unoptimized onError={() => setImageFailed(true)} />
+      ) : (
+        name.charAt(0).toUpperCase()
+      )}
+    </span>
+  );
+}
 
 export default function TourReviews({ reviews }: { reviews: TourReview[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -60,7 +75,7 @@ export default function TourReviews({ reviews }: { reviews: TourReview[] }) {
           <article className={`tp-google-review${index === activeIndex ? " is-active" : ""}`} key={`${review.author_name}-${index}`}>
             <div className="tp-google-review__top">
               <div className="tp-google-review__person">
-                <span aria-hidden="true">{review.author_name.charAt(0).toUpperCase()}</span>
+                <ReviewAvatar name={review.author_name} photoUrl={review.profile_photo_url} />
                 <div><strong>{review.author_name}</strong>{review.date ? <small>{review.date}</small> : null}</div>
               </div>
               <span className="tp-google-review__google" aria-label="Google review">G</span>
