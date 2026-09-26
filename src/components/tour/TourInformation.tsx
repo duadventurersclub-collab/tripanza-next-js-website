@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate, formatTourDateWithOrdinal } from "@/lib/tour-date";
 
@@ -306,7 +307,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
 
       <iframe ref={pdfFrameRef} title="Itinerary PDF download" className="tp-pdf-download-frame" />
 
-      {pdfStatus !== "idle" ? (
+      {pdfStatus !== "idle" ? createPortal((
         <div
           className={`tp-pdf-status${pdfStatus === "form" || pdfStatus === "saving" ? " tp-pdf-status--lead" : ""}`}
           role="dialog"
@@ -317,20 +318,20 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
           <button type="button" className="tp-pdf-status__backdrop" onClick={closePdfStatus} aria-label="Close download status" />
           {pdfStatus === "form" || pdfStatus === "saving" ? (
             <div className="tp-pdf-status__card tp-pdf-lead">
-              <button type="button" className="tp-pdf-status__close" onClick={closePdfStatus} aria-label="Close">×</button>
+              <button type="button" className="tp-pdf-status__close" onClick={closePdfStatus} aria-label="Close" autoFocus>×</button>
               <span className="tp-pdf-lead__icon" aria-hidden="true"><i className="fa-solid fa-route" /></span>
               <span className="tp-pdf-status__eyebrow">Your trip plan, ready to go</span>
-              <h2 id="tp-pdf-status-title">Get your PDF itinerary</h2>
-              <p>Enter your details to download the trip plan. We&apos;ll use them only for this request and trip-related support.</p>
+              <h2 id="tp-pdf-status-title">Where should we send updates?</h2>
+              <p>Enter your details to download the itinerary and receive relevant trip information.</p>
               <form className="tp-pdf-lead__form" onSubmit={submitItineraryLead}>
                 <label htmlFor="tp-itinerary-email">Email address</label>
-                <input id="tp-itinerary-email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={leadEmail} onChange={(event) => setLeadEmail(event.target.value)} required autoFocus />
+                <input id="tp-itinerary-email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={leadEmail} onChange={(event) => setLeadEmail(event.target.value)} required />
                 <label htmlFor="tp-itinerary-phone">Phone number</label>
                 <input id="tp-itinerary-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" value={leadPhone} onChange={(event) => setLeadPhone(event.target.value)} required />
                 {leadError ? <span className="tp-pdf-lead__error" role="alert">{leadError}</span> : null}
                 <button type="submit" disabled={pdfStatus === "saving"}>
-                  <i className={`fa-solid ${pdfStatus === "saving" ? "fa-spinner fa-spin" : "fa-download"}`} aria-hidden="true" />
-                  {pdfStatus === "saving" ? "Saving your details…" : "Download itinerary"}
+                  <span>{pdfStatus === "saving" ? "Saving your details…" : "Download itinerary"}</span>
+                  <i className={`fa-solid ${pdfStatus === "saving" ? "fa-spinner fa-spin" : "fa-arrow-right"}`} aria-hidden="true" />
                 </button>
               </form>
             </div>
@@ -349,7 +350,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
             </div>
           )}
         </div>
-      ) : null}
+      ), document.body) : null}
 
       {/* Book Seat CTA Block */}
       <div style={{
