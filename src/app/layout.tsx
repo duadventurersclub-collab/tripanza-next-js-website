@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Suspense } from "react";
 import TripanzaBottomMenu from "@/components/navigation/TripanzaBottomMenu";
+import NavigationProgress from "@/components/navigation/NavigationProgress";
 import "./globals.css";
 import "@/components/navigation/tripanza-bottom-menu.css";
 
@@ -26,6 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+        <Suspense fallback={null}><NavigationProgress /></Suspense>
         {children}
         <TripanzaBottomMenu />
       </body>
