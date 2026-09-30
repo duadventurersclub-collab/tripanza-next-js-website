@@ -62,9 +62,9 @@
 .tp-app-section-nav { position: sticky; top: 72px; z-index: 90; display: flex; align-items: center; justify-content: space-between; gap: 30px; min-height: 60px; padding-inline: max(24px, calc((100vw - 1240px) / 2)); border-top: 1px solid var(--app-line); border-bottom: 1px solid var(--app-line); background: rgba(255,255,255,.97); backdrop-filter: blur(16px); }
 .tp-app-section-nav nav { position: relative; display: flex; align-items: center; gap: 26px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .tp-app-section-nav nav::-webkit-scrollbar { display: none; }
-.tp-app-section-nav a { position: relative; flex: none; display: flex; min-height: 59px; align-items: center; color: #778181; font-size: 13px; font-weight: 600; white-space: nowrap; transition: color .15s; }
-.tp-app-section-nav a[aria-current] { color: #3157d5; }
-.tp-app-section-nav a[aria-current]::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 4px 4px 0 0; background: #3157d5; content: ""; }
+.tp-app-section-nav button { position: relative; flex: none; display: flex; min-height: 59px; align-items: center; padding: 0; border: 0; color: #778181; background: none; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color .15s; }
+.tp-app-section-nav button[aria-current] { color: #3157d5; }
+.tp-app-section-nav button[aria-current]::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 4px 4px 0 0; background: #3157d5; content: ""; }
 .tp-app-section-nav__brand { color: #151925; font-size: 24px; font-weight: 950; letter-spacing: -.065em; }
 .tp-app-section-nav__brand > span { font-size: 9px; vertical-align: super; }
 .tp-app-v2 .tp-tour-layout { max-width: 1288px; grid-template-columns: minmax(0, 1fr) 350px; gap: 48px; margin: 0 auto; padding: 36px 24px 0; }
@@ -311,7 +311,7 @@
   .tp-app-v2 .tp-tour-gallery__trust-tags span { flex: 1; padding: 7px 4px; font-size: 10px; text-align: center; }
   .tp-app-section-nav { top: calc(60px + env(safe-area-inset-top)); min-height: 52px; padding-inline: 20px; }
   .tp-app-section-nav nav { gap: 24px; }
-  .tp-app-section-nav a { min-height: 51px; font-size: 12px; }
+  .tp-app-section-nav button { min-height: 51px; font-size: 12px; }
   .tp-app-v2 .tp-tour-layout { padding: 26px 20px 0; }
   .tp-app-v2 :is(section, [id="tp-trip-overview"], [id="tp-trip-dates"], [id="tp-info-availability"]) { scroll-margin-top: calc(132px + env(safe-area-inset-top)); }
   .tp-app-v2 .tp-tour-overview { gap: 14px; margin-bottom: 24px; }

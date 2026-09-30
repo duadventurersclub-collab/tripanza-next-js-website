@@ -32,15 +32,16 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
   };
 
   const handleShare = () => {
+    const pageUrl = window.location.href.split("#")[0];
     if (navigator.share) {
-      navigator.share({ title: document.title, text: "Explore this Tripanza experience", url: window.location.href }).catch((err) => {
+      navigator.share({ title: document.title, text: "Explore this Tripanza experience", url: pageUrl }).catch((err) => {
         if (!err || err.name !== "AbortError") {
-          setSharePageUrl(window.location.href);
+          setSharePageUrl(pageUrl);
           setShareOpen(true);
         }
       });
     } else {
-      setSharePageUrl(window.location.href);
+      setSharePageUrl(pageUrl);
       setShareOpen(true);
     }
   };
@@ -48,14 +49,15 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
   const closeShare = () => setShareOpen(false);
 
   const handleCopy = () => {
+    const pageUrl = window.location.href.split("#")[0];
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(window.location.href).then(() => {
+      navigator.clipboard.writeText(pageUrl).then(() => {
         setCopyStatus("Link copied");
         setTimeout(closeShare, 550);
       });
     } else {
       const ta = document.createElement("textarea");
-      ta.value = window.location.href;
+      ta.value = pageUrl;
       ta.style.position = "fixed";
       ta.style.opacity = "0";
       document.body.appendChild(ta);

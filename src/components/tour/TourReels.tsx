@@ -263,8 +263,8 @@ export function ReelsViewer({
 
   async function shareReel() {
     const shareUrl = primaryHref
-      ? new URL(`${primaryHref}#reels`, window.location.origin).toString()
-      : `${window.location.href.split("#")[0]}#reels`;
+      ? new URL(primaryHref, window.location.origin).toString().split("#")[0]
+      : window.location.href.split("#")[0];
     const shareData = {
       title: tour.title,
       text: `Watch ${tour.title} on Tripanza`,

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import type { TourDetail } from "@/lib/wp";
+import { scrollToTourSection } from "@/lib/tour-section-scroll";
 
 interface TourGalleryProps {
   tour: TourDetail;
@@ -141,9 +142,10 @@ export default function TourGallery({ tour }: TourGalleryProps) {
 
           {/* Reel Preview */}
           {reelPreviewUrl && (
-            <a
+            <button
+              type="button"
               className="tp-tour-gallery__reel"
-              href="#reels"
+              onClick={() => scrollToTourSection("reels")}
               aria-label="Watch trip videos"
             >
               <video
@@ -159,7 +161,7 @@ export default function TourGallery({ tour }: TourGalleryProps) {
                 <i className="fa-solid fa-play" aria-hidden="true" />
                 Trip vibes
               </span>
-            </a>
+            </button>
           )}
 
           {/* Navigation Arrows */}

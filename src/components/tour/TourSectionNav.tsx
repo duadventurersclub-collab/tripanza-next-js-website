@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { scrollToTourSection } from "@/lib/tour-section-scroll";
 
 export type TourSection = { id: string; label: string };
 
@@ -10,6 +11,15 @@ export default function TourSectionNav({ sections }: { sections: TourSection[] }
 
   useEffect(() => {
     let frame = 0;
+    let legacyHashFrame = 0;
+    const legacyHash = window.location.hash.slice(1);
+    if (sections.some((section) => section.id === legacyHash) || legacyHash === "tp-info-availability") {
+      // Existing shared section links still land on the section, then show the clean tour URL.
+      legacyHashFrame = requestAnimationFrame(() => {
+        document.getElementById(legacyHash)?.scrollIntoView({ block: "start" });
+        window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`);
+      });
+    }
     const update = () => {
       frame = 0;
       let current = sections[0]?.id || "";
@@ -25,6 +35,7 @@ export default function TourSectionNav({ sections }: { sections: TourSection[] }
     window.addEventListener("resize", onScroll);
     return () => {
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(legacyHashFrame);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
@@ -32,7 +43,7 @@ export default function TourSectionNav({ sections }: { sections: TourSection[] }
 
   useEffect(() => {
     const nav = navRef.current;
-    const item = nav?.querySelector<HTMLElement>(`[href="#${active}"]`);
+    const item = nav?.querySelector<HTMLElement>(`[data-section-id="${active}"]`);
     if (nav && item) nav.scrollTo({ left: item.offsetLeft - nav.clientWidth / 2 + item.clientWidth / 2, behavior: "smooth" });
   }, [active]);
 
@@ -40,8 +51,8 @@ export default function TourSectionNav({ sections }: { sections: TourSection[] }
     <div className="tp-app-section-nav">
       <nav ref={navRef} aria-label="Explore this trip">
         {sections.map((section) => (
-          <a key={section.id} href={`#${section.id}`} aria-current={active === section.id ? "location" : undefined}
-            onClick={() => setActive(section.id)}>{section.label}</a>
+          <button key={section.id} type="button" data-section-id={section.id} aria-current={active === section.id ? "location" : undefined}
+            onClick={() => { setActive(section.id); scrollToTourSection(section.id); }}>{section.label}</button>
         ))}
       </nav>
       <span className="tp-app-section-nav__brand">tripanza<span>®</span></span>

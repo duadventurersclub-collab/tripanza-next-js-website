@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate } from "@/lib/tour-date";
+import { scrollToTourSection } from "@/lib/tour-section-scroll";
 
 interface TourOverviewProps {
   tour: TourDetail;
@@ -124,14 +125,14 @@ export default function TourOverview({ tour }: TourOverviewProps) {
           {/* Primary overview links */}
           <div className="tp-overview-conversion">
             <div className="tp-overview-actions">
-              <a href="#tp-info-availability" className="tp-overview-cta tp-overview-cta--primary">
+              <button type="button" onClick={() => scrollToTourSection("tp-info-availability")} className="tp-overview-cta tp-overview-cta--primary">
                 <i className="fa-solid fa-calendar-check" aria-hidden="true" />
                 Check available dates
-              </a>
-              <a href="#tp-trip-cover" className="tp-overview-cta tp-overview-cta--secondary">
+              </button>
+              <button type="button" onClick={() => scrollToTourSection("tp-trip-cover")} className="tp-overview-cta tp-overview-cta--secondary">
                 <i className="fa-solid fa-list-check" aria-hidden="true" />
                 See what&apos;s included
-              </a>
+              </button>
             </div>
             {(nextDeparture || details.seats_left) && (
               <div className="tp-live-proof">
