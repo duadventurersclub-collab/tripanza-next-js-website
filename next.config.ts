@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/about-us", destination: "/about", permanent: true },
+      { source: "/contact-us", destination: "/contact", permanent: true },
+      { source: "/cookie-policy", destination: "/cookies-policy", permanent: true },
+      { source: "/terms-and-conditions", destination: "/tnc", permanent: true },
+      { source: "/cancellation-and-refund-policy", destination: "/cancellation-policy", permanent: true },
+    ];
+  },
   images: {
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",

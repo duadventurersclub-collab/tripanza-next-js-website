@@ -3,8 +3,10 @@ import { Geist } from "next/font/google";
 import { Suspense } from "react";
 import TripanzaBottomMenu from "@/components/navigation/TripanzaBottomMenu";
 import NavigationProgress from "@/components/navigation/NavigationProgress";
+import SiteFooter from "@/components/info/SiteFooter";
 import "./globals.css";
 import "@/components/navigation/tripanza-bottom-menu.css";
+import "@/components/info/info-pages.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <Suspense fallback={null}><NavigationProgress /></Suspense>
         {children}
+        <SiteFooter />
         <TripanzaBottomMenu />
       </body>
     </html>

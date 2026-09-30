@@ -1,11 +1,18 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import InfoHeader from "@/components/info/InfoHeader";
+
+export const metadata: Metadata = { title: "Contact Us | Tripanza", description: "Contact Tripanza for trip planning, booking help, cancellations or any travel question." };
+
 export default function ContactPage() {
   return (
-    <main className="mx-auto max-w-4xl px-6 py-20">
-      <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-600">Contact</p>
-      <h1 className="mt-3 text-4xl font-black text-slate-900">Let’s plan your next trip</h1>
-      <p className="mt-6 text-lg text-slate-600">
-        Connect your real lead form or WordPress contact flow here. The frontend remains decoupled and fast while all business-critical actions remain server-side in WordPress.
-      </p>
+    <main className="tp-info-page">
+      <InfoHeader />
+      <div className="tp-info-shell">
+        <div className="tp-info-breadcrumb"><Link href="/">Home</Link><span>/</span><span>Contact us</span></div>
+        <div className="tp-info-hero"><span className="tp-info-kicker">We are here to help</span><h1>Your next great story starts with hello.</h1><p>Bring us the destination, the dream or even just a rough idea. Our travel team will help turn it into a journey worth talking about.</p></div>
+        <section className="tp-story-section tp-contact-section"><span>Choose your route</span><h2>Talk to a real person.</h2><p>Questions about a trip, an existing booking, or a policy? Reach us in whichever way feels easiest.</p><div className="tp-contact-cards"><a href="tel:+918130117254"><h3>Call us</h3><p>+91 81301 17254</p></a><a href="mailto:hello@tripanza.com"><h3>Email us</h3><p>hello@tripanza.com</p></a><div><h3>Find us</h3><p>Dwarka, Delhi NCR, India</p></div></div><div className="tp-contact-actions"><a className="tp-info-cta" href="https://wa.me/918130117254" target="_blank" rel="noopener noreferrer">Chat on WhatsApp →</a><a className="tp-info-cta" href="mailto:hello@tripanza.com?subject=Tripanza%20enquiry">Send an email →</a></div><div className="tp-contact-note"><strong>For cancellations and refunds:</strong> email your booking reference, lead traveller name and departure date to <a href="mailto:hello@tripanza.com">hello@tripanza.com</a>. Written requests help us track your case accurately.</div></section>
+      </div>
     </main>
   );
 }

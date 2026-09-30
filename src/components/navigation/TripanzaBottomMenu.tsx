@@ -443,7 +443,7 @@ export default function TripanzaBottomMenu() {
 
           <nav className="tp-profile-legal" aria-label="Help, company and legal links">
             <strong>Help &amp; legal</strong>
-            <div><a href="https://tripanza.com/cancellation-policy/">Cancellation &amp; refunds</a><Link href="/contact" onClick={closeProfile}>Contact Tripanza</Link><a href="https://tripanza.com/tnc/">Terms &amp; conditions</a><a href="https://tripanza.com/privacy-policy/">Privacy policy</a><a href="https://tripanza.com/cookies-policy/">Cookie policy</a><a href="https://tripanza.com/disclaimer/">Disclaimer</a><Link href="/about" onClick={closeProfile}>About Tripanza</Link></div>
+            <div><Link href="/cancellation-policy" onClick={closeProfile}>Cancellation &amp; refunds</Link><Link href="/contact" onClick={closeProfile}>Contact Tripanza</Link><Link href="/tnc" onClick={closeProfile}>Terms &amp; conditions</Link><Link href="/privacy-policy" onClick={closeProfile}>Privacy policy</Link><Link href="/cookies-policy" onClick={closeProfile}>Cookie policy</Link><Link href="/disclaimer" onClick={closeProfile}>Disclaimer</Link><Link href="/about" onClick={closeProfile}>About Tripanza</Link></div>
           </nav>
           <p className="tp-profile-signoff">Made for the group chat that actually travels.</p>
         </div>

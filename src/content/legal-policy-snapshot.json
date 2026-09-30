@@ -1,0 +1,307 @@
+{
+  "cancellation": [
+    {
+      "id": "overview",
+      "title": "A fair and transparent process",
+      "html": "<span class=\"refund-number\">01 — Overview</span><h2>A fair and transparent process</h2><p>Tripanza is a unit of DU Adventurers Club and is operated by Akshay Verma. We understand that travel plans can change and aim to handle cancellation and refund requests consistently and transparently.</p><p>By confirming a booking, you accept this Policy together with our Terms and Conditions and the package-specific information supplied before payment.</p><div class=\"refund-highlight\">All cancellation and refund requests must be submitted in writing to <strong>hello@tripanza.com</strong>. The cancellation date is the date on which Tripanza receives the written request.</div>"
+    },
+    {
+      "id": "traveller-cancellation",
+      "title": "Standard cancellation charges",
+      "html": "<span class=\"refund-number\">02 — Cancellation by the traveller</span><h2>Standard cancellation charges</h2><p>Unless your package states a different schedule, the following charges apply to the total package price. In every case, non-refundable supplier expenses already incurred or committed on your behalf—including flights, permits, event tickets or specially contracted accommodation—may also be deducted where disclosed and legally permitted.</p>\n          <div class=\"refund-table-wrap\"><table class=\"refund-table\"><thead><tr><th>Written notice received</th><th>Standard cancellation charge</th><th>Refund basis</th></tr></thead><tbody>\n            <tr><td><strong>30 days or more</strong>before departure</td><td>No standard cancellation fee</td><td>Refund of amounts paid, less disclosed non-refundable supplier expenses.</td></tr>\n            <tr><td><strong>15–29 days</strong>before departure</td><td>25% of total package cost</td><td>Balance refunded after the cancellation fee and eligible non-refundable expenses.</td></tr>\n            <tr><td><strong>8–14 days</strong>before departure</td><td>50% of total package cost</td><td>Balance refunded after the cancellation fee and eligible non-refundable expenses.</td></tr>\n            <tr><td><strong>7 days or fewer</strong>before departure</td><td>100% of total package cost</td><td>No refund, except where required by applicable law.</td></tr>\n          </tbody></table></div>\n          <p class=\"refund-highlight\">If deductions would exceed the amount paid, no additional cancellation amount will be charged unless you separately requested or authorised non-refundable services whose cost remains payable.</p>\n        "
+    },
+    {
+      "id": "tripanza-cancellation",
+      "title": "If we must cancel a trip",
+      "html": "<span class=\"refund-number\">03 — Cancellation by Tripanza</span><h2>If we must cancel a trip</h2><p>We may cancel or materially reschedule a trip because of safety concerns, severe weather, natural disaster, political or civil disruption, government restrictions, transport interruption, insufficient bookings, supplier failure or another circumstance affecting safe or practical delivery.</p><ul><li>Where reasonably possible, we will offer a rescheduled departure, travel credit or suitable alternative.</li><li>If you do not accept an available alternative, we will refund the amount paid to Tripanza for the cancelled service, less any lawful, disclosed and genuinely non-recoverable supplier expense where the cancellation arose from circumstances beyond our reasonable control.</li><li>If Tripanza cancels for a reason within our reasonable control, the refundable package amount will not be reduced by our own administrative cancellation fee.</li><li>We are not responsible for independently booked flights, visas, insurance or other arrangements, except where applicable law requires otherwise.</li></ul>"
+    },
+    {
+      "id": "refunds",
+      "title": "How and when refunds are issued",
+      "html": "<span class=\"refund-number\">04 — Refund process</span><h2>How and when refunds are issued</h2><div class=\"refund-flow\"><div class=\"refund-step\"><span>1</span><strong>Write to us</strong><p>Send your booking details and cancellation request to hello@tripanza.com.</p></div><div class=\"refund-step\"><span>2</span><strong>We calculate</strong><p>We confirm the applicable fee, supplier deductions and refundable balance.</p></div><div class=\"refund-step\"><span>3</span><strong>Funds return</strong><p>The approved refund is initiated to the original payment method.</p></div></div><ul><li>Approved refunds are normally initiated within 15–20 business days after receiving the complete request and any information reasonably required to process it.</li><li>Banks, card networks, UPI providers and payment gateways may take additional time to credit the amount.</li><li>Refunds are made to the original payment method and in the original booking currency where operationally possible.</li><li>Payment-gateway, foreign-exchange or bank charges are refundable only where recovered from the relevant provider or required by law.</li><li>We will provide a calculation of material deductions on request.</li></ul>"
+    },
+    {
+      "id": "unused-services",
+      "title": "Services missed after departure",
+      "html": "<span class=\"refund-number\">05 — No-shows and unused services</span><h2>Services missed after departure</h2><p>No refund is normally available for a no-show, late arrival, missed departure, voluntary early departure or service not used by the traveller, including accommodation, meals, transfers, transport or activities included in the package.</p><p>If a service cannot be provided due to a Tripanza or supplier failure, we will assess an appropriate alternative, travel credit or refund for the affected component in accordance with the booking terms and applicable law.</p>"
+    },
+    {
+      "id": "changes",
+      "title": "Changing dates, names or services",
+      "html": "<span class=\"refund-number\">06 — Amendments</span><h2>Changing dates, names or services</h2><p>Change requests must be made in writing and are subject to availability and supplier approval. Any fare difference, rebooking fee, permit cost or other additional supplier charge is payable by the traveller before the change is confirmed.</p><ul><li>A change is not confirmed until Tripanza confirms it in writing.</li><li>A substantial change requested close to departure may be treated as a cancellation and new booking.</li><li>Bookings and promotional benefits are not transferable unless expressly approved.</li><li>If a requested change reduces the package value, the difference is not automatically refundable where the original service is non-refundable.</li></ul>"
+    },
+    {
+      "id": "payments",
+      "title": "Deposits and final balances",
+      "html": "<span class=\"refund-number\">07 — Payment terms</span><h2>Deposits and final balances</h2><ul><li>A booking is confirmed only after the required deposit—typically 30% to 50% of the package cost—or full payment is received and written confirmation is issued.</li><li>The exact deposit and balance schedule shown before payment or in your booking confirmation applies.</li><li>The final balance is generally due 15–30 days before departure, unless a different deadline is stated.</li><li>If payment remains overdue after reasonable notice, we may cancel the booking and apply the relevant cancellation charges.</li><li>A payment dispute or chargeback should be raised with us first so we have an opportunity to investigate. Fraudulent or abusive chargebacks may result in suspension of future bookings.</li></ul>"
+    },
+    {
+      "id": "special-cases",
+      "title": "Promotions, medical issues and force majeure",
+      "html": "<span class=\"refund-number\">08 — Special cases</span><h2>Promotions, medical issues and force majeure</h2><h3>Promotional and BOGO bookings</h3><p>If a primary booking linked to a discount or BOGO benefit is cancelled, the linked booking may also be cancelled or repriced. Refunds are based on the amount actually paid and the offer-specific conditions.</p><h3>Medical or personal emergencies</h3><p>The standard schedule applies unless a package expressly provides different flexibility. We may request supporting documentation when considering a discretionary exception. Travel insurance is strongly recommended because it may cover circumstances this Policy does not.</p><h3>Force majeure</h3><p>Where performance is affected by an event beyond reasonable control, available remedies will depend on safety, supplier recoveries, rescheduling options and applicable law. We will communicate the available options as soon as reasonably practicable.</p><div class=\"refund-highlight\">Nothing in this Policy excludes or limits a refund, compensation or other remedy that cannot lawfully be excluded under the Consumer Protection Act, 2019 or other applicable law.</div>"
+    },
+    {
+      "id": "updates",
+      "title": "Changes to this Policy",
+      "html": "<span class=\"refund-number\">09 — Policy updates</span><h2>Changes to this Policy</h2><p>We may update this Policy prospectively to reflect operational, supplier or legal changes. The version accepted when your booking was confirmed generally applies to that booking unless a later change is required by law or expressly agreed with you.</p>"
+    },
+    {
+      "id": "contact",
+      "title": "Need help with a cancellation?",
+      "html": "<span class=\"refund-number\">10 — Contact</span><h2>Need help with a cancellation?</h2><p>Include the lead traveller’s name, booking reference, departure date and reason for cancellation so we can assist quickly.</p><p>Email: hello@tripanza.com<br>Phone: +91 81301 17254<br>Location: Dwarka, Delhi NCR, India</p><a href=\"/contact\">Contact Tripanza <span aria-hidden=\"true\">&rarr;</span></a>"
+    }
+  ],
+  "cookies": [
+    {
+      "id": "overview",
+      "title": "Our approach to cookies",
+      "html": "<span class=\"cookie-number\">01 — Introduction</span><h2>Our approach to cookies</h2><p>This Cookie Policy explains how Tripanza, a unit of DU Adventurers Club operated by Akshay Verma (“Tripanza”, “we”, “us” or “our”), uses cookies and similar technologies on tripanza.com.</p><p>We do not treat continued browsing as consent to optional tracking. Where a technology requires consent under applicable law, it will not be activated until the visitor takes a clear affirmative action.</p><div class=\"cookie-highlight\">If the website is configured to use only strictly necessary technologies, no optional-cookie consent choice is presented because there are no optional cookies to accept or reject.</div>"
+    },
+    {
+      "id": "what",
+      "title": "What are cookies?",
+      "html": "<span class=\"cookie-number\">02 — Cookie basics</span><h2>What are cookies?</h2><p>Cookies are small text files stored by a browser when a website is visited. Similar technologies include local storage, session storage, pixels and software identifiers. They can keep a session secure, remember a requested setting, maintain a booking basket or measure activity.</p><p>Session cookies normally expire when the browser closes. Persistent cookies remain until their stated expiry date or until deleted through browser controls.</p>"
+    },
+    {
+      "id": "cookies-we-use",
+      "title": "What Tripanza uses automatically",
+      "html": "<span class=\"cookie-number\">03 — Technologies used</span><h2>What Tripanza uses automatically</h2><p>The exact cookie names can change when website software is securely updated, but their purposes remain limited as described below.</p><div class=\"cookie-table-wrap\"><table class=\"cookie-table\"><thead><tr><th>Category</th><th>Typical purpose</th><th>Default status</th></tr></thead><tbody>\n          <tr><td><strong>Strictly necessary</strong>Security, fraud prevention and core sessions</td><td>Protects forms and accounts, balances traffic, maintains a secure session and delivers a service requested by the visitor.</td><td><span class=\"cookie-yes\">Active when needed</span></td></tr>\n          <tr><td><strong>Booking functionality</strong>Basket and checkout continuity</td><td>Remembers trip selections or booking progress so the requested transaction can be completed.</td><td><span class=\"cookie-yes\">Active when used</span></td></tr>\n          <tr><td><strong>Preference storage</strong>Visitor-requested choices</td><td>Stores a setting that the visitor actively selects where this is needed to provide that preference.</td><td><span class=\"cookie-yes\">Active when requested</span></td></tr>\n          <tr><td><strong>Analytics</strong>Audience and behaviour measurement</td><td>Tracks visits or behaviour across pages to produce usage reports.</td><td><span class=\"cookie-no\">Off by default</span></td></tr>\n          <tr><td><strong>Advertising and retargeting</strong>Profiles and campaign tracking</td><td>Tracks visitors for personalised advertising, remarketing or cross-site measurement.</td><td><span class=\"cookie-no\">Not used by default</span></td></tr>\n          <tr><td><strong>Social-media tracking</strong>Embedded platform measurement</td><td>Allows a social platform to recognise a visitor or measure engagement across websites.</td><td><span class=\"cookie-no\">Not used by default</span></td></tr>\n        </tbody></table></div>"
+    },
+    {
+      "id": "no-tracking",
+      "title": "No analytics or advertising cookies by default",
+      "html": "<span class=\"cookie-number\">04 — Optional technologies</span><h2>No analytics or advertising cookies by default</h2><p>Tripanza does not automatically use cookies for behavioural advertising, retargeting, cross-site tracking or non-essential audience analytics. We do not sell personal information collected through cookies.</p><p>If we later introduce an optional technology that requires consent, we will provide an appropriate choice before it loads. Refusing or withdrawing that choice will not prevent access to the core website, although the optional feature itself may be unavailable.</p>"
+    },
+    {
+      "id": "third-parties",
+      "title": "Maps, videos and external websites",
+      "html": "<span class=\"cookie-number\">05 — Third-party services</span><h2>Maps, videos and external websites</h2><p>Some pages may link to services operated by third parties, such as payment providers, maps, video platforms, social networks or booking suppliers. A normal link does not place that provider’s cookie through Tripanza merely because it is displayed. If you follow the link, the provider’s own privacy and cookie terms apply.</p><p>A cookie-setting third-party embed should be loaded only after you actively request it or, where applicable, provide consent. Tripanza does not control cookies placed after you leave our website or directly interact with an external provider.</p><div class=\"cookie-highlight\"><strong>Important configuration note:</strong> third-party scripts and embeds must remain blocked until interaction or consent if they set non-essential cookies. Publishing this Policy alone does not block them.</div>"
+    },
+    {
+      "id": "manage",
+      "title": "Managing cookies in your browser",
+      "html": "<span class=\"cookie-number\">06 — Your controls</span><h2>Managing cookies in your browser</h2><p>You can review, block or delete cookies through your browser settings. Blocking strictly necessary cookies may prevent secure forms, account access, basket functions or booking checkout from working correctly.</p><ul><li>Use private or incognito browsing to limit persistent local storage.</li><li>Delete stored cookies and site data through the browser’s privacy settings.</li><li>Block third-party cookies or enable the browser’s tracking-protection tools.</li><li>Review permissions separately for each browser and device you use.</li></ul>"
+    },
+    {
+      "id": "data",
+      "title": "Cookies and privacy",
+      "html": "<span class=\"cookie-number\">07 — Personal data</span><h2>Cookies and privacy</h2><p>A cookie identifier may be personal data when it identifies or can reasonably be linked to an individual. Where cookie-related information is personal data, we process it in accordance with our Privacy Policy and applicable data-protection law.</p><p>Necessary security and service data is retained only for as long as reasonably required for its purpose, legal obligations, dispute prevention and system security. Optional consent-based processing, if introduced, can be withdrawn as easily as it was given.</p>"
+    },
+    {
+      "id": "updates",
+      "title": "Changes to this Policy",
+      "html": "<span class=\"cookie-number\">08 — Policy updates</span><h2>Changes to this Policy</h2><p>We may update this Policy when our technology, providers or legal obligations change. Material changes will be reflected on this page and the “Updated” date will be revised. We recommend reviewing this page periodically.</p>"
+    },
+    {
+      "id": "contact",
+      "title": "Questions about cookies?",
+      "html": "<span class=\"cookie-number\">09 — Contact</span><h2>Questions about cookies?</h2><p>Contact Tripanza if you have a question about website storage, privacy or a third-party service appearing on our website.</p><p>Email: hello@tripanza.com<br>Phone: +91 81301 17254<br>Location: Dwarka, Delhi NCR, India</p><a href=\"/contact\">Contact Tripanza <span aria-hidden=\"true\">&rarr;</span></a>"
+    }
+  ],
+  "disclaimer": [
+    {
+      "id": "scope",
+      "title": "Using the Tripanza website",
+      "html": "<span class=\"disclaimer-number\">01 — Scope</span><h2>Using the Tripanza website</h2><p>Tripanza is a unit of DU Adventurers Club and is operated by Akshay Verma (“Tripanza”, “we”, “us” or “our”). By using this website, you acknowledge this Disclaimer. If you make a booking, additional contractual terms apply.</p><p>This website provides general information about destinations, itineraries and travel services. Website content is not legal, medical, immigration, financial, safety or professional advice.</p>"
+    },
+    {
+      "id": "accuracy",
+      "title": "Travel information can change",
+      "html": "<span class=\"disclaimer-number\">02 — Accuracy of information</span><h2>Travel information can change</h2><p>We take reasonable care to keep website information useful and current, but travel conditions, schedules, routes, accommodation, entry rules, weather, prices and availability can change quickly. Images may be illustrative and experiences can vary by season, local conditions and supplier availability.</p><p>A booking is based on the details confirmed to you in writing, not on outdated cached pages, third-party search results or informal statements. Please ask us to verify any detail that is important to your decision before payment.</p>"
+    },
+    {
+      "id": "services",
+      "title": "Tripanza and third-party providers",
+      "html": "<span class=\"disclaimer-number\">03 — Travel services</span><h2>Tripanza and third-party providers</h2><p>Tripanza may organise or coordinate parts of a trip and may also arrange services supplied by independent hotels, transport operators, airlines, guides, activity providers, payment providers and other vendors. We do not own or directly control every third-party service.</p><p>Supplier schedules, operational rules and terms may apply. We use reasonable care when selecting and coordinating suppliers but cannot guarantee that every independent provider will operate without delay, change or disruption.</p><div class=\"disclaimer-cards\"><div class=\"disclaimer-card\"><span>01</span><strong>Tripanza responsibilities</strong><p>Services expressly promised by Tripanza remain subject to the booking terms and applicable law.</p></div><div class=\"disclaimer-card\"><span>02</span><strong>Supplier responsibilities</strong><p>Independent providers remain responsible for services they operate, subject to Tripanza’s legal obligations.</p></div></div>"
+    },
+    {
+      "id": "risk",
+      "title": "Informed participation matters",
+      "html": "<span class=\"disclaimer-number\">04 — Travel risks</span><h2>Informed participation matters</h2><p>Travel may involve road journeys, altitude, remote areas, weather exposure, uneven terrain, unfamiliar food, limited medical facilities, physical activities and other inherent risks. Conditions can change without notice and not every risk can be eliminated.</p><ul><li>Assess whether the itinerary is suitable for your health, fitness, mobility and experience.</li><li>Follow reasonable instructions from trip leaders, authorities and service providers.</li><li>Obtain suitable travel insurance covering medical care, evacuation, cancellation and personal belongings.</li><li>Seek qualified medical advice regarding vaccinations, medication, altitude and individual health concerns.</li></ul>"
+    },
+    {
+      "id": "documents",
+      "title": "Passports, visas and permissions",
+      "html": "<span class=\"disclaimer-number\">05 — Travel documents</span><h2>Passports, visas and permissions</h2><p>Travellers are responsible for valid identification, passports, visas, permits, vaccination records and other documents required for their itinerary. Entry and permit requirements are determined by governments and authorities and may change.</p><p>Tripanza may provide general guidance but does not guarantee that an application will be approved or that a traveller will be admitted by an authority. Loss caused by incomplete, invalid or incorrect documentation remains the traveller’s responsibility except where directly caused by Tripanza’s proven failure to perform an agreed service.</p>"
+    },
+    {
+      "id": "prices",
+      "title": "Availability is confirmed at booking",
+      "html": "<span class=\"disclaimer-number\">06 — Prices and promotions</span><h2>Availability is confirmed at booking</h2><p>Website prices and availability may change until a booking is confirmed. Taxes, permits, fuel adjustments, currency movements or supplier changes may affect pricing where permitted and disclosed. An obvious technical or typographical pricing error does not create an automatic right to book at that incorrect price.</p><p>Promotions are subject to their advertised validity period, availability, eligibility and offer-specific terms. Discounts cannot be combined unless expressly stated.</p>"
+    },
+    {
+      "id": "links",
+      "title": "Websites we do not operate",
+      "html": "<span class=\"disclaimer-number\">07 — External links</span><h2>Websites we do not operate</h2><p>Links to government pages, maps, payment providers, suppliers, social platforms or other external websites are provided for convenience. Tripanza does not control their content, availability, security or privacy practices, and a link does not necessarily mean endorsement.</p><p>Review the external provider’s terms and privacy information before submitting personal information, making payment or relying on its content.</p>"
+    },
+    {
+      "id": "testimonials",
+      "title": "Individual experiences vary",
+      "html": "<span class=\"disclaimer-number\">08 — Reviews and media</span><h2>Individual experiences vary</h2><p>Traveller reviews, testimonials, photographs and social-media content reflect individual experiences and do not guarantee that every participant will have the same result. Photographs may be cropped or edited for presentation but should not be treated as a precise promise of weather, group composition, room, vehicle or destination conditions.</p>"
+    },
+    {
+      "id": "availability",
+      "title": "Technical interruptions",
+      "html": "<span class=\"disclaimer-number\">09 — Website availability</span><h2>Technical interruptions</h2><p>We aim to keep the website accessible and secure but do not guarantee uninterrupted or error-free operation. Maintenance, hosting faults, network disruption, cyber incidents or circumstances beyond reasonable control may temporarily affect access. Contact us directly if a technical issue prevents you from completing or confirming a transaction.</p>"
+    },
+    {
+      "id": "liability",
+      "title": "Limits that remain subject to law",
+      "html": "<span class=\"disclaimer-number\">10 — Limitation of liability</span><h2>Limits that remain subject to law</h2><p>To the maximum extent permitted by law, Tripanza is not responsible for indirect or consequential loss, loss caused by a traveller’s act or omission, or events and independent third-party actions outside our reasonable control.</p><p>Nothing in this Disclaimer excludes or limits liability for fraud, wilful misconduct, death or personal injury caused by negligence where it cannot lawfully be excluded, breach of an express contractual obligation, or any mandatory right or remedy under the Consumer Protection Act, 2019 or other applicable law.</p><div class=\"disclaimer-highlight\">This Disclaimer does not replace the promises made in a confirmed booking and does not waive rights that the law does not permit a business or consumer to waive.</div>"
+    },
+    {
+      "id": "intellectual-property",
+      "title": "Copyright and trademarks",
+      "html": "<span class=\"disclaimer-number\">11 — Intellectual property</span><h2>Copyright and trademarks</h2><p>Tripanza names, branding, logos, photographs, graphics, text, itineraries and other website materials are owned by or licensed to Tripanza unless stated otherwise. You may view them for personal, non-commercial use but may not reproduce, distribute, sell, alter or commercially exploit them without written permission, except where applicable law permits.</p>"
+    },
+    {
+      "id": "updates",
+      "title": "Changes to this Disclaimer",
+      "html": "<span class=\"disclaimer-number\">12 — Updates</span><h2>Changes to this Disclaimer</h2><p>We may update this Disclaimer prospectively when our website, services or legal obligations change. The revised version applies from the date published. A confirmed booking remains governed by the version of the contractual terms accepted for that booking unless a later change is required by law or agreed with you.</p>"
+    },
+    {
+      "id": "law",
+      "title": "Law and jurisdiction",
+      "html": "<span class=\"disclaimer-number\">13 — Governing law</span><h2>Law and jurisdiction</h2><p>This Disclaimer is governed by the laws of India. Subject to mandatory rights to approach a consumer commission or another competent authority, courts with lawful jurisdiction in New Delhi will have jurisdiction over disputes concerning website use.</p>"
+    },
+    {
+      "id": "contact",
+      "title": "Need clarification?",
+      "html": "<span class=\"disclaimer-number\">14 — Contact</span><h2>Need clarification?</h2><p>Contact Tripanza before booking if a destination, activity, inclusion, supplier or safety detail is important to your decision.</p><p>Email: hello@tripanza.com<br>Phone: +91 81301 17254<br>Location: Dwarka, Delhi NCR, India</p><a href=\"/contact\">Contact Tripanza <span aria-hidden=\"true\">&rarr;</span></a>"
+    }
+  ],
+  "privacy": [
+    {
+      "id": "overview",
+      "title": "Welcome to Tripanza",
+      "html": "\n                <span class=\"privacy-section__number\">01 &mdash; Overview</span>\n                <h2>Welcome to Tripanza</h2>\n                <p>This Privacy Policy describes how Tripanza (\"Tripanza\", \"we\", \"us\", or \"our\") handles personal information when you visit <a href=\"/\">tripanza.com</a>, create an account, make or manage a travel booking, contact our team, or otherwise use our services (collectively, the \"Services\").</p>\n                <p>By using the Services, you acknowledge that you have read this Policy. Where consent is required by applicable law, we will ask for it separately and you may withdraw it at any time.</p>\n            "
+    },
+    {
+      "id": "information",
+      "title": "Information you provide and information collected automatically",
+      "html": "\n                <span class=\"privacy-section__number\">02 &mdash; Information we collect</span>\n                <h2>Information you provide and information collected automatically</h2>\n                <h3>Information you provide</h3>\n                <ul>\n                    <li>Identity and contact details, such as your name, email address, phone number, billing address, and account details.</li>\n                    <li>Booking and traveller details, such as destinations, dates, preferences, special requests, and information about other travellers included in a booking.</li>\n                    <li>Payment and transaction details. Payments may be processed by third-party payment providers; we generally do not store complete payment-card details.</li>\n                    <li>Messages, reviews, support requests, survey responses, and other information you choose to share with us.</li>\n                </ul>\n                <h3>Information collected automatically</h3>\n                <ul>\n                    <li>Device and network data, including IP address, browser type, operating system, device identifiers, and approximate location derived from IP.</li>\n                    <li>Usage data, including pages viewed, links selected, referring pages, session times, and interactions with our Services.</li>\n                    <li>Cookie and similar-technology data, as described below.</li>\n                </ul>\n                <p>If you provide information about another person, please ensure that you have their permission to do so and that they understand how we will use their information.</p>\n            "
+    },
+    {
+      "id": "use",
+      "title": "We use information to operate and improve your travel experience",
+      "html": "\n                <span class=\"privacy-section__number\">03 &mdash; How we use information</span>\n                <h2>We use information to operate and improve your travel experience</h2>\n                <ul>\n                    <li>Process and manage bookings, payments, cancellations, refunds, and related travel services.</li>\n                    <li>Send confirmations, service notices, itinerary updates, security alerts, and customer-support responses.</li>\n                    <li>Personalise content and provide relevant recommendations, where permitted by law.</li>\n                    <li>Send marketing communications when you have opted in or when otherwise permitted; you can unsubscribe at any time.</li>\n                    <li>Monitor performance, analyse how the Services are used, troubleshoot issues, and develop new features.</li>\n                    <li>Prevent fraud, misuse, security incidents, and other harmful or unlawful activity.</li>\n                    <li>Comply with legal obligations, resolve disputes, enforce agreements, and protect our rights and those of others.</li>\n                </ul>\n                <p>Depending on where you live, our legal bases may include performing a contract with you, complying with law, pursuing legitimate business interests, and your consent.</p>\n            "
+    },
+    {
+      "id": "cookies",
+      "title": "Cookies and similar technologies",
+      "html": "\n                <span class=\"privacy-section__number\">04 &mdash; Cookies</span>\n                <h2>Cookies and similar technologies</h2>\n                <p>We and our service providers may use cookies, pixels, local storage, and similar technologies to keep the Services working, remember preferences, understand usage, measure performance, and &mdash; with permission where required &mdash; support personalised advertising.</p>\n                <p>You can manage cookies through your browser settings and any cookie controls we make available. Blocking certain cookies may affect some features. Learn more in our <a href=\"/cookies-policy\">Cookie Policy</a>.</p>\n            "
+    },
+    {
+      "id": "sharing",
+      "title": "When we share personal information",
+      "html": "\n                <span class=\"privacy-section__number\">05 &mdash; Sharing information</span>\n                <h2>When we share personal information</h2>\n                <p>We do not sell your personal information for money. We may share relevant information with:</p>\n                <ul>\n                    <li><strong>Travel providers</strong>, including hotels, airlines, activity operators, transport providers, and other suppliers needed to fulfil your booking.</li>\n                    <li><strong>Service providers</strong> that support payments, communications, analytics, hosting, security, customer service, and other business functions.</li>\n                    <li><strong>Business partners</strong> when you request or consent to a jointly offered service or promotion.</li>\n                    <li><strong>Authorities and other parties</strong> when disclosure is required by law or reasonably necessary to protect safety, rights, property, or prevent fraud.</li>\n                    <li><strong>Transaction participants</strong> in connection with a merger, financing, acquisition, reorganisation, or sale of some or all of our business, subject to appropriate safeguards.</li>\n                </ul>\n                <p>Travel providers and other third parties may process information under their own privacy policies. We encourage you to review those policies before completing a booking.</p>\n            "
+    },
+    {
+      "id": "retention",
+      "title": "How long we keep information and how we protect it",
+      "html": "\n                <span class=\"privacy-section__number\">06 &mdash; Retention &amp; security</span>\n                <h2>How long we keep information and how we protect it</h2>\n                <p>We retain personal information only for as long as reasonably necessary for the purposes described in this Policy, including providing the Services, maintaining business and transaction records, resolving disputes, preventing fraud, and meeting legal, tax, accounting, and reporting obligations. Retention periods vary according to the type of information and applicable requirements.</p>\n                <p>We use reasonable administrative, technical, and organisational safeguards designed to protect personal information. However, no online service or storage system is completely secure, and we cannot guarantee absolute security.</p>\n                <h3>International transfers</h3>\n                <p>Tripanza, travel providers, and service providers may process information in countries other than the one where you live. Where required, we use appropriate safeguards for these transfers in accordance with applicable law.</p>\n            "
+    },
+    {
+      "id": "rights",
+      "title": "Your choices and privacy rights",
+      "html": "\n                <span class=\"privacy-section__number\">07 &mdash; Your rights</span>\n                <h2>Your choices and privacy rights</h2>\n                <p>Depending on applicable law, you may have the right to request access to, correction of, deletion of, or a copy of your personal information; object to or restrict certain processing; withdraw consent; or lodge a complaint with a relevant data-protection authority.</p>\n                <ul>\n                    <li>Update certain account information through your account settings, where available.</li>\n                    <li>Unsubscribe from marketing emails using the link in those messages. We may still send essential booking and service communications.</li>\n                    <li>Manage cookies using our cookie controls or your browser settings.</li>\n                    <li>Submit a privacy request through our <a href=\"/contact\">contact page</a>. We may need to verify your identity before completing a request.</li>\n                </ul>\n                <div class=\"privacy-note\">These rights are not absolute and may be limited where permitted by law, including where information must be retained for legal or legitimate business purposes.</div>\n            "
+    },
+    {
+      "id": "children",
+      "title": "Our Services are not directed to young children",
+      "html": "\n                <span class=\"privacy-section__number\">08 &mdash; Children's privacy</span>\n                <h2>Our Services are not directed to young children</h2>\n                <p>Our Services are not directed to children under 13, and we do not knowingly collect personal information directly from children under 13. Information about a child traveller should be provided only by a parent, guardian, or authorised adult and only as necessary to arrange travel. If you believe a child has provided information to us improperly, please contact us so we can take appropriate action.</p>\n            "
+    },
+    {
+      "id": "changes",
+      "title": "Updates to this Privacy Policy",
+      "html": "\n                <span class=\"privacy-section__number\">09 &mdash; Changes</span>\n                <h2>Updates to this Privacy Policy</h2>\n                <p>We may update this Policy to reflect changes to our practices, technology, Services, or legal obligations. When we do, we will publish the revised Policy and update its effective date. Where required, we will provide additional notice or request renewed consent.</p>\n            "
+    },
+    {
+      "id": "contact",
+      "title": "Questions? We are here to help.",
+      "html": "\n                <span class=\"privacy-section__number\">10 &mdash; Contact</span>\n                <h2>Questions? We are here to help.</h2>\n                <p>If you have a question, concern, or privacy request, please reach us through the <a href=\"/contact\">Tripanza contact page</a>. Please do not send sensitive payment or identity information through an unsecured message.</p>\n            "
+    }
+  ],
+  "terms": [
+    {
+      "id": "scope",
+      "title": "Scope and acceptance",
+      "html": "<span class=\"terms-number\">01 — Introduction</span><h2>Scope and acceptance</h2><p>These Terms and Conditions govern bookings and travel-related services offered through Tripanza. Tripanza is a unit of DU Adventurers Club and is operated by Akshay Verma, trading as Tripanza (referred to as “Tripanza”, “we”, “us” or “our”).</p><p>By making a booking, paying any amount, using our website, or participating in a trip, you confirm that you have read and accepted these Terms and that the information you provide is accurate. If you book for others, you confirm that you are authorised to accept these Terms on their behalf and will share all booking information with them.</p>"
+    },
+    {
+      "id": "eligibility",
+      "title": "Who may book",
+      "html": "<span class=\"terms-number\">02 — Eligibility</span><h2>Who may book</h2><ul><li>You must be at least 18 years old and legally capable of entering into a contract to make a booking.</li><li>A participant under 18 must travel with, or have written consent from, a parent or legal guardian and may be subject to additional trip-specific requirements.</li><li>We may refuse or cancel a booking where information is materially inaccurate, payment appears unauthorised or fraudulent, participation would create a safety concern, or the booking violates applicable law.</li></ul>"
+    },
+    {
+      "id": "booking",
+      "title": "Confirming your place",
+      "html": "<span class=\"terms-number\">03 — Booking and payment</span><h2>Confirming your place</h2><ul><li>A booking is confirmed only after we issue written confirmation and receive the required deposit or full payment.</li><li>Deposits may be non-refundable where stated before payment or where already committed to non-refundable supplier costs.</li><li>The balance must be paid by the deadline in your booking confirmation. We may treat an overdue balance as a cancellation by you after giving reasonable notice.</li><li>Prices are quoted in Indian Rupees unless stated otherwise. Payment-gateway charges, taxes or statutory levies may apply where disclosed.</li><li>Pricing errors may be corrected before confirmation. After confirmation, price changes will only be made where permitted by law or caused by a requested change, government levy, tax or clearly disclosed variable supplier cost.</li></ul><h3>Inclusions and exclusions</h3><p>Only items expressly listed as included form part of the package. Personal expenses, insurance, permits, meals, transfers, activities, upgrades and 4x4 vehicles are excluded unless the package specifically says otherwise.</p>"
+    },
+    {
+      "id": "cancellations",
+      "title": "If you cancel",
+      "html": "<span class=\"terms-number\">04 — Cancellation and refunds</span><h2>If you cancel</h2><p>Cancellation requests must be sent in writing to <a href=\"mailto:hello@tripanza.com\">hello@tripanza.com</a>. The request is effective when received by us. Charges depend on the package, departure date, notice given and supplier commitments, and will be disclosed before booking or in the confirmation.</p><ul><li>Non-refundable deposits, payment-processing charges and amounts already paid or committed to suppliers may be deducted where disclosed and legally permitted.</li><li>No refund is normally available for a no-show, voluntary early departure, unused service or missed departure caused by the traveller.</li><li>Where a refund is due, it will be returned to the original payment method within the communicated processing period, subject to bank or payment-provider timelines and applicable law.</li><li>Name, date or participant changes are subject to availability, supplier rules and any additional cost.</li></ul><div class=\"terms-highlight\">Nothing in this section limits a refund or remedy that cannot lawfully be excluded under applicable consumer law.</div>"
+    },
+    {
+      "id": "changes",
+      "title": "Itineraries sometimes need to move",
+      "html": "<span class=\"terms-number\">05 — Changes by Tripanza</span><h2>Itineraries sometimes need to move</h2><p>Travel is affected by weather, road conditions, government orders, supplier changes, safety concerns and other local circumstances. We may reasonably modify routes, timings, accommodation, transport, activities or trip leaders while aiming to preserve the overall character and value of the experience.</p><p>If we cancel the entire trip before departure, you may choose an available alternative or receive a refund of amounts paid to us for the cancelled service, less any lawful and clearly disclosed non-recoverable amounts where the cancellation results from circumstances beyond our reasonable control. We are not responsible for separately booked flights, visas or other arrangements, so suitable travel insurance is strongly recommended.</p>"
+    },
+    {
+      "id": "traveller",
+      "title": "Documents, punctuality and conduct",
+      "html": "<span class=\"terms-number\">06 — Traveller responsibilities</span><h2>Documents, punctuality and conduct</h2><ul><li>You are responsible for valid identification, passports, visas, permits, vaccinations and other documents required for the trip.</li><li>You must follow reasonable safety instructions, local laws, accommodation rules and departure times.</li><li>Harassment, discrimination, violence, illegal drug use, dangerous conduct or behaviour that materially disrupts the group is not permitted.</li><li>We may remove a participant whose conduct creates a safety, legal or serious welfare risk. Any resulting transport, accommodation or other cost is the participant’s responsibility, and no refund is due for services missed because of removal where permitted by law.</li><li>You are responsible for your belongings and should take appropriate precautions against loss or theft.</li></ul>"
+    },
+    {
+      "id": "risk",
+      "title": "Travel requires informed participation",
+      "html": "<span class=\"terms-number\">07 — Health, insurance and inherent risk</span><h2>Travel requires informed participation</h2><p>You must assess whether a trip is suitable for your health, mobility, experience and fitness level, and disclose any condition that may reasonably affect your safety or require assistance. We may request medical clearance for demanding activities.</p><p>Adventure travel can involve altitude, uneven terrain, remote locations, weather exposure, road travel and limited access to medical care. By participating, you acknowledge risks that cannot be completely eliminated even when reasonable care is taken. Travel insurance covering medical treatment, evacuation, cancellation, baggage and personal liability is strongly recommended and may be mandatory for certain trips.</p>"
+    },
+    {
+      "id": "suppliers",
+      "title": "Hotels, carriers and activity providers",
+      "html": "<span class=\"terms-number\">08 — Third-party services</span><h2>Hotels, carriers and activity providers</h2><p>Accommodation providers, transport operators, guides, activity operators and other suppliers may be independent third parties. Their own terms may apply and will be shared where available and material to your booking.</p><p>We will use reasonable care in selecting and coordinating suppliers, but are not responsible for an independent supplier’s act or omission beyond the extent required by applicable law. Complaints about a supplier should be reported promptly so that we have a fair opportunity to assist.</p>"
+    },
+    {
+      "id": "media",
+      "title": "Your image and information",
+      "html": "<span class=\"terms-number\">09 — Photography and privacy</span><h2>Your image and information</h2><p>Trip leaders may take group photographs or videos for trip memories and Tripanza marketing. You may opt out before or during the trip by informing the trip leader or writing to us. We will respect reasonable requests not to feature you prominently and will address later removal requests where reasonably practicable.</p><p>Personal information is handled in accordance with our Privacy Policy and applicable data-protection law. Please do not submit sensitive information unless it is reasonably necessary for the requested service.</p>"
+    },
+    {
+      "id": "force-majeure",
+      "title": "Force majeure",
+      "html": "<span class=\"terms-number\">10 — Events beyond control</span><h2>Force majeure</h2><p>Neither party is responsible for delay or failure caused by events beyond reasonable control, including severe weather, natural disaster, epidemic, conflict, civil unrest, strike, transport disruption, government action, closure, internet or utility failure, or similar events. We may suspend, reschedule, modify or cancel affected services and will communicate available options after considering safety, supplier recoveries and applicable law.</p>"
+    },
+    {
+      "id": "liability",
+      "title": "A fair allocation of responsibility",
+      "html": "<span class=\"terms-number\">11 — Liability</span><h2>A fair allocation of responsibility</h2><p>To the maximum extent permitted by law, Tripanza is not responsible for indirect or consequential loss, loss caused by your breach of these Terms, or loss arising from an event or independent third party outside our reasonable control.</p><p>Nothing in these Terms excludes or limits liability for fraud, wilful misconduct, death or personal injury caused by negligence where liability cannot lawfully be excluded, or any right or remedy available under the Consumer Protection Act, 2019 or other applicable law.</p>"
+    },
+    {
+      "id": "website",
+      "title": "Using Tripanza content",
+      "html": "<span class=\"terms-number\">12 — Website and intellectual property</span><h2>Using Tripanza content</h2><p>Tripanza names, designs, photographs, text, itineraries and website content are owned by or licensed to us. They may not be copied, republished, sold or commercially exploited without written permission, except where applicable law permits. You must not misuse the website, attempt unauthorised access, introduce malicious code or use automated systems in a way that disrupts the service.</p>"
+    },
+    {
+      "id": "promotions",
+      "title": "Offer-specific conditions",
+      "html": "<span class=\"terms-number\">13 — Promotions and BOGO</span><h2>Offer-specific conditions</h2><p>A promotion applies only during its stated validity period, to eligible new bookings and while availability lasts. It cannot be combined with another offer unless expressly stated. Offer-specific advertising and booking confirmation form part of these Terms.</p><h3>Buy One Get One offers</h3><ul><li>Both packages must be booked together using the stated code or booking method.</li><li>The benefit applies to the eligible package of equal or lower value and may be a discount rather than a completely free package, as stated in the offer.</li><li>Participant, destination and travel-date restrictions shown in the promotion apply.</li><li>If the primary booking is cancelled, the linked benefit may also be cancelled or repriced. Any refund is calculated under the applicable cancellation policy and the value actually paid.</li><li>If Tripanza cannot provide only the promotional package, the remedy is limited to the amount actually paid for that affected package, without limiting mandatory consumer remedies.</li><li>Changes may incur supplier charges or make the booking ineligible. Suspected fraud or misuse may result in refusal after reasonable review.</li></ul>"
+    },
+    {
+      "id": "complaints",
+      "title": "Tell us while we can help",
+      "html": "<span class=\"terms-number\">14 — Complaints</span><h2>Tell us while we can help</h2><p>Raise an issue promptly with the trip leader during travel where possible. If it remains unresolved, email full details, booking information and supporting material to <a href=\"mailto:hello@tripanza.com\">hello@tripanza.com</a>. We will acknowledge and address complaints within a reasonable period and in accordance with applicable consumer-law requirements.</p>"
+    },
+    {
+      "id": "disputes",
+      "title": "Governing law",
+      "html": "<span class=\"terms-number\">15 — Law and disputes</span><h2>Governing law</h2><p>These Terms are governed by the laws of India. The parties should first attempt to resolve a dispute in good faith through written discussion. Subject to any mandatory rights to approach a consumer commission or another competent authority, courts with lawful jurisdiction in New Delhi will have jurisdiction.</p><p>If any provision is held invalid or unenforceable, the remaining provisions continue in effect. A delay in enforcing a right is not a waiver. We may update these Terms prospectively; the version accepted at the time of booking generally governs that booking unless a change is required by law or agreed with you.</p>"
+    },
+    {
+      "id": "contact",
+      "title": "Questions before you book?",
+      "html": "<span class=\"terms-number\">16 — Contact</span><h2>Questions before you book?</h2><p>Tripanza is operated by Akshay Verma and is a unit of DU Adventurers Club. For booking questions, cancellations, complaints or clarification of these Terms, contact us before making payment.</p><p>Email: hello@tripanza.com<br>Phone: +91 81301 17254<br>Location: Dwarka, Delhi NCR, India</p><a href=\"/contact\">Contact Tripanza <span aria-hidden=\"true\">&rarr;</span></a>"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 
 export type AuthenticatedUser = { id?: number; email?: string; display_name?: string };
 type AuthChannel = "email" | "whatsapp";
@@ -131,6 +132,6 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
         <button className="tp-auth-submit tp-auth-verify" type="submit" disabled={loading || otp.length !== 4}>{loading ? <><i /> Checking your code</> : "Verify & Login"}</button>
       </>}
     </form>
-    <p className="tp-auth-legal">By continuing, you agree to Tripanza&apos;s <a href="https://tripanza.com/tnc/">terms</a> and <a href="https://tripanza.com/privacy-policy/">privacy policy</a>.</p>
+    <p className="tp-auth-legal">By continuing, you agree to Tripanza&apos;s <Link href="/tnc" target="_blank">terms</Link> and <Link href="/privacy-policy" target="_blank">privacy policy</Link>.</p>
   </div>;
 }

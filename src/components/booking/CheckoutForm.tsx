@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BookingQuote, BookingTraveller } from "@/lib/booking";
@@ -306,7 +307,7 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
 
             <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs font-semibold leading-relaxed text-slate-600">
               <input type="checkbox" required checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
-              <span>I agree to Tripanza&apos;s <a href="https://tripanza.com/tnc/" target="_blank" rel="noreferrer" className="font-black text-blue-600 hover:underline">terms and conditions</a> and <a href="https://tripanza.com/cancellation-policy/" target="_blank" rel="noreferrer" className="font-black text-blue-600 hover:underline">cancellation policy</a>.</span>
+              <span>I agree to Tripanza&apos;s <Link href="/tnc" target="_blank" className="font-black text-blue-600 hover:underline">terms and conditions</Link> and <Link href="/cancellation-policy" target="_blank" className="font-black text-blue-600 hover:underline">cancellation policy</Link>.</span>
             </label>
 
             {error ? <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
