@@ -220,7 +220,8 @@ export default function TripanzaBottomMenu() {
   const pathParts = pathname.split("/").filter(Boolean);
   const hiddenOnTourDetail = pathParts[0] === "tours" && pathParts.length > 1;
   const hiddenOnReels = pathParts[0] === "trips";
-  const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels;
+  const hiddenOnHost = pathParts[0] === "host" || ["host-dashboard", "admin-host-trips", "host-reels", "host-customer-booking-history", "host-payout-details", "host-wallet", "crm"].includes(pathParts[0]);
+  const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels || hiddenOnHost;
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -432,6 +433,7 @@ export default function TripanzaBottomMenu() {
           <div className="tp-profile-menu" role="list">
             {account.authenticated ? <Link role="listitem" href="/dashboard" onClick={closeProfile}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></Link> : <button type="button" role="listitem" onClick={() => requireLogin()}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></button>}
             <Link role="listitem" href="/tours" onClick={closeProfile}><span><Icon name="compass" /><strong>Explore Trips</strong><small>Find your next escape.</small></span><b>›</b></Link>
+            <Link role="listitem" href="/host" onClick={closeProfile}><span><Icon name="compass" /><strong>Become a Host</strong><small>Build your crew and earn.</small></span><b>›</b></Link>
             <button type="button" role="listitem" onClick={() => account.authenticated ? setWalletOpen(true) : requireLogin("login")}><span><Icon name="wallet" /><strong>Wallet</strong><small>Cashback &amp; rewards.</small></span><b>›</b></button>
             <Link role="listitem" href="/?tripanza_filter=saved#trips" onClick={() => { showSavedTrips(); closeProfile(); }}><span><Icon name="heart" /><strong>Favourites</strong><small>{savedCount} saved trips.</small></span><b>›</b></Link>
           </div>

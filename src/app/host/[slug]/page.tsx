@@ -1,0 +1,19 @@
+import { notFound } from "next/navigation";
+import { getPrivateHostData, getPublicHostData, type HostProfile, type HostReel } from "@/lib/host";
+import HostProfileView from "@/components/host/HostProfileView";
+import "@/components/host/host.css";
+
+export default async function HostProfilePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ confirm_host_identity?: string }> }) {
+  const { slug } = await params;
+  const { confirm_host_identity: token } = await searchParams;
+  const confirmation = token
+    ? await getPublicHostData<{ ok: boolean; message: string }>(`host/profile/${encodeURIComponent(slug)}/confirm?token=${encodeURIComponent(token)}`, 0)
+    : null;
+  const [profile, reelData, viewer] = await Promise.all([
+    getPublicHostData<HostProfile>(`host/profile/${encodeURIComponent(slug)}`, 0),
+    getPublicHostData<{ items: HostReel[] }>(`host/profile/${encodeURIComponent(slug)}/reels`, 0),
+    getPrivateHostData<HostProfile>("host/me"),
+  ]);
+  if (!profile) notFound();
+  return <HostProfileView initial={{ ...profile, phone: viewer?.id === profile.id ? viewer.phone : undefined }} reels={reelData?.items || []} owner={viewer?.id === profile.id} notice={token ? confirmation?.message || "This confirmation link is invalid or expired." : ""} />;
+}

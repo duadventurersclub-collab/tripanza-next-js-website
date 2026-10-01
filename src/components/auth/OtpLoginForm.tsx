@@ -59,8 +59,9 @@ export default function OtpLoginForm() {
         throw new Error(data.error || "Invalid OTP");
       }
 
-      // Successful verification! Redirect to dashboard.
-      router.push("/dashboard");
+      const requested = new URLSearchParams(window.location.search).get("next") || "";
+      const safeNext = requested.startsWith("/") && !requested.startsWith("//") && !requested.includes("\\") ? requested : "/dashboard";
+      router.push(safeNext);
       router.refresh(); // Force refresh to re-evaluate server components (like the layout checking cookies)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Invalid OTP");
