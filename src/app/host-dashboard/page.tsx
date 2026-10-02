@@ -4,8 +4,7 @@ import { getPrivateHostData, type HostDashboard } from "@/lib/host";
 
 export default async function HostDashboardPage({ searchParams }: { searchParams: Promise<{ setup?: string }> }) {
   const { setup } = await searchParams;
-  return <HostPrivatePage path="/host-dashboard" original>{async profile => {
-    const data = await getPrivateHostData<HostDashboard>("host/dashboard");
+  return <HostPrivatePage path="/host-dashboard" original load={() => getPrivateHostData<HostDashboard>("host/dashboard")}>{(profile, data) => {
     if (!data) return <div role="alert">Host dashboard is unavailable. Check that the updated WordPress Host API is installed, then refresh.</div>;
     return <HostDashboardOriginal profile={profile} data={data} setup={setup} />;
   }}</HostPrivatePage>;

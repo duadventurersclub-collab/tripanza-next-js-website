@@ -5,11 +5,14 @@ import HostShell from "./HostShell";
 import HostOriginalMenu from "./HostOriginalMenu";
 import "./host.css";
 
-export default async function HostPrivatePage({ path, children, original = false }: { path: string; children: (profile: HostProfile) => Promise<React.ReactNode> | React.ReactNode; original?: boolean }) {
+export default async function HostPrivatePage<T = undefined>({ path, children, load, original = false }: { path: string; children: (profile: HostProfile, data: T) => Promise<React.ReactNode> | React.ReactNode; load?: () => Promise<T>; original?: boolean }) {
   const token = await getSessionToken();
   if (!token) redirect(`/login?next=${encodeURIComponent(path)}`);
-  const profile = await getPrivateHostData<HostProfile>("host/me");
+  const [profile, data] = await Promise.all([
+    getPrivateHostData<HostProfile>("host/me"),
+    load ? load() : Promise.resolve(undefined as T),
+  ]);
   if (!profile) redirect("/host?register=1");
-  if (original) return <>{await children(profile)}<HostOriginalMenu profile={profile} /></>;
-  return <HostShell profile={profile}>{await children(profile)}</HostShell>;
+  if (original) return <>{await children(profile, data)}<HostOriginalMenu profile={profile} /></>;
+  return <HostShell profile={profile}>{await children(profile, data)}</HostShell>;
 }

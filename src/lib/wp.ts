@@ -73,6 +73,8 @@ export interface UserAccount {
   avatar: string;
   wallet: UserWallet;
   bookings_count: number;
+  profile?: UserProfile;
+  bookings?: UserBooking[];
 }
 
 export interface UserBooking {
@@ -288,6 +290,8 @@ export async function getUserAccount(sessionToken: string): Promise<UserAccount 
           updated_at: payload.wallet?.updated_at,
         },
         bookings_count: Number(payload.bookings_count) || 0,
+        profile: payload.profile,
+        bookings: Array.isArray(payload.bookings) ? payload.bookings : undefined,
       };
     } catch {
       // Try the next supported account endpoint.

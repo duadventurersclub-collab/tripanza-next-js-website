@@ -225,6 +225,7 @@ export default function TripanzaBottomMenu() {
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const shouldFetchAccount = !hiddenOnRoute || modalOpen;
   const [walletOpen, setWalletOpen] = useState(false);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
@@ -285,7 +286,13 @@ export default function TripanzaBottomMenu() {
       setAccountLoading(false);
     }) : 0;
 
-    fetch("/api/account", { cache: "no-store" })
+    if (!shouldFetchAccount) return () => {
+      active = false;
+      if (cacheFrame) window.cancelAnimationFrame(cacheFrame);
+    };
+
+    const controller = new AbortController();
+    fetch("/api/account", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Account refresh failed");
         return response.json() as Promise<AccountPayload>;
@@ -303,9 +310,10 @@ export default function TripanzaBottomMenu() {
       .finally(() => { if (active) setAccountLoading(false); });
     return () => {
       active = false;
+      controller.abort();
       if (cacheFrame) window.cancelAnimationFrame(cacheFrame);
     };
-  }, []);
+  }, [shouldFetchAccount]);
 
   useEffect(() => {
     if (!modalOpen) return;

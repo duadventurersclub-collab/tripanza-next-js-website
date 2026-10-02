@@ -35,14 +35,20 @@ export default function HostLanding({ trips, hosts, leaderboard, signedIn, accou
   const onboardingSteps = existingEmail ? [0, 3, 4] : [0, 1, 2, 3, 4];
   const progressIndex = onboardingSteps.indexOf(step);
 
+  function navigate(path: string) {
+    window.dispatchEvent(new Event("tripanza:navigation-start"));
+    router.push(path);
+  }
+
   function start() {
-    if (isHost) { router.push("/host-dashboard"); return; }
-    if (!signedIn) { router.push("/login?next=%2Fhost%3Fregister%3D1"); return; }
+    if (isHost) { navigate("/host-dashboard"); return; }
+    if (!signedIn) { navigate("/login?next=%2Fhost%3Fregister%3D1"); return; }
     setOpen(true);
   }
 
   async function submit() {
     setBusy(true); setError("");
+    let navigating = false;
     try {
       if (step === 0) {
         if (name.trim().length < 2) throw new Error("Enter a host or community name.");
@@ -61,14 +67,19 @@ export default function HostLanding({ trips, hosts, leaderboard, signedIn, accou
           const form = new FormData(); form.set("kind", "logo"); form.set("image", logo);
           const response = await fetch("/api/host/media", { method: "POST", body: form });
           if (!response.ok) {
-            router.push("/host-dashboard?setup=logo"); router.refresh();
+            navigating = true;
+            navigate("/host-dashboard?setup=logo");
             return;
           }
         }
-        router.push("/host-dashboard"); router.refresh();
+        navigating = true;
+        navigate("/host-dashboard");
       }
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Please try again."); }
-    finally { setBusy(false); }
+    finally {
+      if (navigating) window.setTimeout(() => setBusy(false), 12000);
+      else setBusy(false);
+    }
   }
 
   return <div className="th-host-root"><main className="th-page"><header className="th-top th-shell"><button type="button" className="th-back" aria-label="Go back" onClick={() => window.history.length > 1 ? window.history.back() : router.push("/")}><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><Link className="th-logo" href="/"><i>T</i>Tripanza</Link></header>

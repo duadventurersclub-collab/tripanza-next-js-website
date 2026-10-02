@@ -23,11 +23,13 @@ export async function GET() {
     });
   }
 
-  const [profile, account, wallet, bookings] = await Promise.all([
-    getUserProfile(token),
-    getUserAccount(token),
-    getUserWallet(token),
-    getUserBookings(token),
+  // WordPress /account already includes the profile, wallet and bookings.
+  // Only use the separate endpoints for older installations without that payload.
+  const account = await getUserAccount(token);
+  const [profile, wallet, bookings] = await Promise.all([
+    account?.profile ? Promise.resolve(account.profile) : getUserProfile(token),
+    account?.wallet ? Promise.resolve(account.wallet) : getUserWallet(token),
+    account?.bookings ? Promise.resolve(account.bookings) : getUserBookings(token),
   ]);
 
   if (!profile && !account) {
