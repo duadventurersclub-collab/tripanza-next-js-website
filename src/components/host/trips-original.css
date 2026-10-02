@@ -163,13 +163,18 @@
 
     .trip-dates-header {
         display: flex;
+        width: 100%;
         justify-content: space-between;
         align-items: center;
         padding: 18px 20px;
+        border: 0;
         background: transparent;
+        color: inherit;
         cursor: pointer;
+        font: inherit;
         font-weight: 600;
         font-size: 16px;
+        text-align: left;
         transition: background 0.2s ease;
     }
 
@@ -178,6 +183,7 @@
     }
 
     .dates-toggle {
+        display: inline-block;
         background: none;
         border: none;
         font-size: 18px;
@@ -187,7 +193,7 @@
     }
 
     .trip-dates-card.active .dates-toggle {
-        transform: rotate(180deg);
+        transform: none;
     }
 
     .trip-dates-body {
@@ -262,7 +268,7 @@
     }
 
     .trip-date-card.active .trip-toggle {
-        transform: rotate(180deg);
+        transform: none;
     }
 
     /* PRICE PANEL */
