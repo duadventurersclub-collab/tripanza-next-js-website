@@ -220,7 +220,7 @@ export default function TripanzaBottomMenu() {
   const pathParts = pathname.split("/").filter(Boolean);
   const hiddenOnTourDetail = pathParts[0] === "tours" && pathParts.length > 1;
   const hiddenOnReels = pathParts[0] === "trips";
-  const hiddenOnHost = pathParts[0] === "host" || ["host-dashboard", "admin-host-trips", "host-reels", "host-customer-booking-history", "host-payout-details", "host-wallet", "crm"].includes(pathParts[0]);
+  const hiddenOnHost = pathParts[0] === "host" || ["host-dashboard", "admin-host-trips", "add-your-own-trip", "poster-download", "host-reels", "host-customer-booking-history", "host-payout-details", "host-wallet", "crm"].includes(pathParts[0]);
   const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels || hiddenOnHost;
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);

@@ -6,10 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import type { HostSummary } from "@/lib/host";
 import "./menu-original.css";
 
-const wordpress = (process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
 const groups = [
   ["RUN THE CREW", [["Dashboard", "/host-dashboard", "dashboard"], ["Leads", "/crm", "leads"], ["Bookings", "/host-customer-booking-history", "bookings"]]],
-  ["BUILD TRIPS", [["Pick a Tripanza trip", "/admin-host-trips", "compass"], ["Add your own trip", `${wordpress}/add-your-own-trip/`, "plus"], ["Download posters", `${wordpress}/poster-download/`, "download"]]],
+  ["BUILD TRIPS", [["Pick a Tripanza trip", "/admin-host-trips", "compass"], ["Add your own trip", "/add-your-own-trip", "plus"], ["Download posters", "/poster-download", "download"]]],
   ["HOST MONEY", [["Wallet", "/host-wallet", "wallet"], ["Payout details", "/host-payout-details", "bank"]]],
 ] as const;
 

@@ -3,7 +3,7 @@ import { getSessionToken } from "@/lib/session";
 const upstream = (process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
 const allowed = new Set([
   "registration/send-code", "registration/verify-code", "registration", "me", "media", "trips",
-  "bookings", "bookings/adjustment", "payout", "reels",
+  "custom-trips", "bookings", "bookings/adjustment", "payout", "reels",
 ]);
 
 function validRequestOrigin(request: Request) {
