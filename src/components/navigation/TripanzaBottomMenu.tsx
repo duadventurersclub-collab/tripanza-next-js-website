@@ -236,6 +236,18 @@ export default function TripanzaBottomMenu() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
+    if (!hiddenOnHost) return;
+    const openHostProfile = () => {
+      setWalletOpen(false);
+      setProfileEditOpen(false);
+      setAuthMode(null);
+      setModalOpen(true);
+    };
+    window.addEventListener("tripanza:open-profile", openHostProfile);
+    return () => window.removeEventListener("tripanza:open-profile", openHostProfile);
+  }, [hiddenOnHost]);
+
+  useEffect(() => {
     const refreshSaved = () => setSavedCount(savedTripCount());
     const onFocusIn = (event: FocusEvent) => {
       const target = event.target;
@@ -393,7 +405,7 @@ export default function TripanzaBottomMenu() {
     }
   }
 
-  if (hiddenOnRoute) return null;
+  if (hiddenOnRoute && !hiddenOnHost) return null;
 
   const active = modalOpen || pathname.startsWith("/account") || pathname.startsWith("/dashboard")
     ? "profile"
@@ -406,8 +418,8 @@ export default function TripanzaBottomMenu() {
   const latestBooking = account.bookings[0];
 
   return <>
-    <div className="tpybm-spacer" aria-hidden="true" />
-    <nav className={`tpybm-nav${keyboardOpen ? " is-keyboard-hidden" : ""}`} aria-label="Tripanza navigation">
+    {!hiddenOnRoute && <div className="tpybm-spacer" aria-hidden="true" />}
+    {!hiddenOnRoute && <nav className={`tpybm-nav${keyboardOpen ? " is-keyboard-hidden" : ""}`} aria-label="Tripanza navigation">
       <ul className="tpybm-nav__list">
         <li className="tpybm-nav__item"><Link className={`tpybm-nav__link${active === "home" ? " is-active" : ""}`} href="/" onClick={() => setSavedView(false)} aria-current={active === "home" ? "page" : undefined}><span className="tpybm-nav__icon"><Icon name="home" /></span><span className="tpybm-nav__label">Home</span></Link></li>
         <li className="tpybm-nav__item"><Link className="tpybm-nav__link" href="/#why-tripanza" onClick={() => setSavedView(false)}><span className="tpybm-nav__icon"><Icon name="people" /></span><span className="tpybm-nav__label">Icebreaker</span></Link></li>
@@ -415,7 +427,7 @@ export default function TripanzaBottomMenu() {
         <li className="tpybm-nav__item"><Link className={`tpybm-nav__link${active === "saved" ? " is-active" : ""}`} href="/?tripanza_filter=saved#trips" onClick={showSavedTrips} aria-current={active === "saved" ? "page" : undefined}><span className="tpybm-nav__icon"><Icon name="heart" /></span><span className="tpybm-nav__label">Saved</span><span className={`tpybm-nav__count${savedCount ? " has-items" : ""}`} aria-label={`${savedCount} saved trips`}>{savedCount > 99 ? "99+" : savedCount}</span></Link></li>
         <li className="tpybm-nav__item"><button ref={profileButtonRef} className={`tpybm-nav__link${active === "profile" ? " is-active" : ""}`} type="button" onClick={openProfile} aria-haspopup="dialog" aria-controls="tripanzaProfileModal"><span className="tpybm-nav__icon">{account.profile?.avatar ? <Image className="tpybm-nav__avatar" src={account.profile.avatar} alt="" width={27} height={27} unoptimized /> : <Icon name="profile" />}</span><span className="tpybm-nav__label">Me</span></button></li>
       </ul>
-    </nav>
+    </nav>}
 
     <section id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
       {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onSuccess={completeLogin} /> : walletOpen ? <WalletView wallet={account.wallet} onBack={() => setWalletOpen(false)} /> : profileEditOpen && account.profile ? <ProfileEditor profile={account.profile} onBack={() => setProfileEditOpen(false)} onSaved={(profile) => { setAccount((current) => { const next = { ...current, profile }; writeCachedAccount(next); return next; }); window.setTimeout(() => setProfileEditOpen(false), 700); }} /> : <>
