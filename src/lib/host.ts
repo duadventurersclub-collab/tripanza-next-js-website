@@ -5,8 +5,16 @@ export type HostTour = {
   slug: string;
   title: string;
   image: string;
+  gallery?: string[];
+  pdf_url?: string;
   address: string;
   duration: string;
+  price?: number;
+  old_price?: number;
+  rating?: number;
+  reviews?: number;
+  sold_out?: boolean;
+  premium?: boolean;
   parent_id: number;
   inventory_id: number;
   host_id: number;
@@ -19,6 +27,8 @@ export type HostTour = {
 export type HostSummary = { id: number; slug: string; name: string; logo: string; verified: boolean; trip_count: number };
 export type HostProfile = HostSummary & {
   phone?: string;
+  help_whatsapp_url?: string;
+  call_url?: string;
   tagline: string;
   bio: string;
   cover: string;
@@ -28,17 +38,26 @@ export type HostProfile = HostSummary & {
   font: string;
   palette: Record<string, string>;
   trips: HostTour[];
+  stays?: { tour_title: string; tour_slug: string; title: string; location: string; type: string; images: string[]; amenities: string[] }[];
+  deals?: { title: string; slug: string; cover: string; destination: string; duration: string; price: number; old_price: number; tags: { kind: string; label: string }[] }[];
 };
 export type HostBooking = {
-  id: number; tour_id: number; tour_title: string; customer: string; email: string; phone: string;
+  id: number; tour_id: number; tour_title: string; tour_slug?: string; customer: string; email: string; phone: string;
   guests: number; check_in: string; status: string; payment_status: string; total: number;
   advance: number; balance: number; adjustment: number; commission_per_person: number; host_earnings: number; created_at: string;
+  commission_credited?: boolean; bank_paid?: boolean;
 };
 export type HostReel = { id: number; video: string; title: string; tour: Pick<HostTour, "id" | "slug" | "title" | "image" | "address" | "duration">; date: string };
 export type HostDashboard = {
   profile: HostSummary;
   stats: { trips: number; bookings: number; confirmed: number; guests: number; revenue: number; earnings: number; pipeline: number };
   payout_ready: boolean;
+  first_name?: string;
+  wallet_balance?: number;
+  bank_paid?: number;
+  upcoming?: number;
+  months?: { label: string; revenue: number; profit: number }[];
+  leaderboard?: { id: number; name: string; slug: string; avatar: string; verified: boolean; revenue: number; earnings: number; bookings: number }[];
   recent_bookings: HostBooking[];
   trips: HostTour[];
 };

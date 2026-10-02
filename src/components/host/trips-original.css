@@ -1,0 +1,449 @@
+.ty-page {
+        --abnb-primary: #FF385C;
+        --abnb-primary-dark: #D70466;
+        --abnb-text-main: #222222;
+        --abnb-text-muted: #717171;
+        --abnb-border: #EBEBEB;
+        --abnb-border-dark: #B0B0B0;
+        --abnb-bg-light: #F7F7F7;
+        --abnb-success: #008a05;
+        --radius-lg: 12px;
+        --radius-md: 8px;
+        --font-stack: Circular, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    .trip-host-wrapper {
+        max-width: 800px;
+        margin: 60px auto;
+        padding: 0 24px;
+        font-family: var(--font-stack);
+        color: var(--abnb-text-main);
+    }
+
+    .trip-host-wrapper h2 {
+        font-size: 26px;
+        font-weight: 600;
+        margin-bottom: 32px;
+        color: var(--abnb-text-main);
+        letter-spacing: -0.02em;
+    }
+
+    .success-notice {
+        max-width: 800px;
+        margin: 20px auto 30px;
+        background: #F7FFF7;
+        border: 1px solid #D5F1D5;
+        padding: 16px 24px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--font-stack);
+        font-weight: 600;
+        color: var(--abnb-text-main);
+    }
+
+    /* CARD STYLING */
+    .host-trip-card {
+        background: #fff;
+        border: 1px solid var(--abnb-border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 24px;
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .host-trip-card:hover {
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        border-color: transparent;
+    }
+
+    .host-trip-card label.main-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    /* CHECKBOXES & RADIOS */
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        accent-color: var(--abnb-text-main);
+        border: 1px solid var(--abnb-border-dark);
+        border-radius: 4px;
+    }
+
+    input[type="radio"] {
+        border-radius: 50%; /* Make radio buttons circular */
+    }
+
+    /* IMAGE */
+    .host-trip-card img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        background: var(--abnb-bg-light);
+    }
+
+    /* TITLE */
+    .trip-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--abnb-text-main);
+        line-height: 1.3;
+    }
+
+    /* EARNINGS BOX */
+    .tripanza-earnings-box {
+        margin-top: 24px;
+        background: #ffffff;
+        border: 1px solid var(--abnb-border);
+        border-radius: var(--radius-lg);
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .tripanza-earnings-input label {
+        display: block;
+        font-size: 14px;
+        color: var(--abnb-text-muted);
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+
+    .tripanza-earnings-input input {
+        width: 100%;
+        max-width: 120px;
+        padding: 10px 14px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--abnb-border-dark);
+        font-size: 15px;
+        font-family: inherit;
+        transition: border-color 0.2s ease;
+    }
+
+    .tripanza-earnings-input input:focus {
+        outline: none;
+        border-color: var(--abnb-text-main);
+        box-shadow: 0 0 0 1px var(--abnb-text-main);
+    }
+
+    .tripanza-earnings-result {
+        font-size: 15px;
+        color: var(--abnb-text-muted);
+        font-weight: 500;
+        text-align: right;
+    }
+
+    .tripanza-earnings {
+        display: block;
+        font-weight: 600;
+        color: var(--abnb-text-main);
+        font-size: 20px;
+        margin-top: 4px;
+    }
+
+    /* DATES ACCORDION */
+    .trip-dates-card {
+        margin-top: 24px;
+        border: 1px solid var(--abnb-border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .trip-dates-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 16px;
+        transition: background 0.2s ease;
+    }
+
+    .trip-dates-header:hover {
+        background: var(--abnb-bg-light);
+    }
+
+    .dates-toggle {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: var(--abnb-text-main);
+        transition: transform 0.2s ease;
+    }
+
+    .trip-dates-card.active .dates-toggle {
+        transform: rotate(180deg);
+    }
+
+    .trip-dates-body {
+        display: none;
+        padding: 0 20px 20px;
+        border-top: 1px solid var(--abnb-border);
+    }
+
+    .trip-dates-card.active .trip-dates-body {
+        display: block;
+    }
+
+    /* SELECT ALL DATES (NEW) */
+    .select-all-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: #f7f7f7;
+        border: 1px solid var(--abnb-border);
+        border-radius: var(--radius-md);
+        margin-top: 16px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .select-all-wrapper:hover {
+        background: #ebebeb;
+    }
+
+    /* INDIVIDUAL DATE CARD */
+    .trip-date-card {
+        border: 1px solid var(--abnb-border);
+        border-radius: var(--radius-md);
+        margin-top: 16px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .trip-date-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .trip-date-header:hover {
+        background: var(--abnb-bg-light);
+    }
+
+    .trip-date-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+    }
+
+    .trip-date {
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .trip-toggle {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: var(--abnb-text-muted);
+        transition: transform 0.2s ease;
+    }
+
+    .trip-date-card.active .trip-toggle {
+        transform: rotate(180deg);
+    }
+
+    /* PRICE PANEL */
+    .trip-price-panel {
+        display: none;
+        padding: 20px;
+        background: var(--abnb-bg-light);
+        border-top: 1px solid var(--abnb-border);
+    }
+
+    .trip-date-card.active .trip-price-panel {
+        display: block;
+    }
+
+    .trip-price-slider {
+        width: 100%;
+    }
+
+    .base-prices {
+        display: flex;
+        gap: 24px;
+        font-size: 14px;
+        color: var(--abnb-text-muted);
+        margin-bottom: 12px;
+    }
+
+   .new-prices {
+        display: flex;
+        gap: 24px;
+        font-size: 14px;
+        color: var(--abnb-text-muted);
+        margin-bottom: 12px;
+        display: none!important;
+    }
+
+    .new-prices {
+        color: var(--abnb-text-main);
+        font-weight: 600;
+        margin-bottom: 0;
+        margin-top: 12px;
+
+    }
+
+    .base-prices div span, .new-prices div span {
+        margin-left: 4px;
+    }
+
+    .markup-slider {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 20px 0;
+        padding: 16px 0;
+        border-top: 1px dashed var(--abnb-border-dark);
+        border-bottom: 1px dashed var(--abnb-border-dark);
+        display:none!important;
+    }
+
+    .markup-slider label {
+        font-weight: 500;
+        font-size: 14px;
+        min-width: 140px;
+    }
+
+    .markup-range {
+        flex: 1;
+        accent-color: var(--abnb-text-main);
+        cursor: pointer;
+    }
+
+    .markup-value {
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--abnb-text-main);
+        min-width: 60px;
+        text-align: right;
+    }
+
+    /* SUBMIT BUTTON */
+    .host-submit-btn {
+        display: block;
+        width: 100%;
+        background: linear-gradient(to right, #E61E4D 0%, #E31C5F 50%, #D70466 100%);
+        color: #fff;
+        padding: 16px 24px;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 32px;
+        text-align: center;
+        transition: transform 0.1s ease, filter 0.2s ease;
+    }
+
+    .host-submit-btn:hover {
+        filter: brightness(0.95);
+    }
+
+    .host-submit-btn:active {
+        transform: scale(0.98);
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+        .host-trip-card label.main-checkbox-label {
+            align-items: flex-start;
+        }
+        .tripanza-earnings-box {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .tripanza-earnings-result {
+            text-align: left;
+            margin-top: 8px;
+        }
+        .base-prices, .new-prices {
+            flex-direction: column;
+            gap: 8px;
+        }
+        .markup-slider {
+            flex-wrap: wrap;
+        }
+    }
+
+
+
+    /* Container positioning (optional, adjust to your layout) */
+.airbnb-back-btn {
+  position: absolute;
+  top: 10px;
+  left: 24px;
+
+  /* Flexbox to perfectly center the SVG */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Sizing and Shape */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  /* Colors and Borders */
+  background-color: #ffffff;
+  color: #222222;
+  border: 1px solid rgba(0, 0, 0, 0.08); /* Extremely subtle border */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); /* Airbnb's signature soft shadow */
+
+  /* Interaction */
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  z-index: 10;
+}
+
+/* The Icon */
+.airbnb-back-btn svg {
+  display: block;
+  height: 14px;
+  width: 14px;
+  stroke: currentColor;
+  stroke-width: 4; /* Thick, bold stroke like the Airbnb app */
+  overflow: visible;
+  margin-right: 2px; /* Slight visual tweak to center the chevron perfectly */
+}
+
+/* Hover State - Slight scale up and darker background */
+.airbnb-back-btn:hover {
+  background-color: #f7f7f7;
+  transform: scale(1.04);
+}
+
+/* Active/Click State - Slight scale down for a tactile feel */
+.airbnb-back-btn:active {
+  transform: scale(0.96);
+  background-color: #ebebeb;
+}
+
+
+/* Tripanza Youth host trip builder. */
+.ty-page{--ty-blue:#3157d5;--ty-lime:#d0e562;--ty-ink:#151925;--ty-muted:#707a8d;--ty-line:#dce3ee;--ty-paper:#f8f9fc}.ty-page *{box-sizing:border-box}html:has(.ty-page){touch-action:manipulation}body:has(.ty-page){max-width:100%;margin:0;overflow-x:hidden;background:radial-gradient(circle at 95% 2%,#d0e56266,transparent 22%),var(--ty-paper);color:var(--ty-ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.ty-topbar{display:flex;width:min(calc(100% - 32px),980px);height:70px;margin:auto;align-items:center;justify-content:space-between}.airbnb-back-btn{position:static;display:grid;width:42px;height:42px;padding:0;place-items:center;border:1px solid var(--ty-line);border-radius:50%;background:#fff;color:var(--ty-blue);box-shadow:0 8px 22px #1f2b4912}.airbnb-back-btn svg{width:17px;height:17px;margin:0;stroke-width:3}.ty-logo{display:flex;align-items:center;color:var(--ty-ink);font-size:17px;font-weight:950;text-decoration:none}.ty-logo img{display:block;max-width:135px;height:31px;object-fit:contain}.ty-logo i{display:grid;width:26px;height:26px;margin-right:7px;place-items:center;border-radius:50%;background:var(--ty-blue);color:#fff;font-style:normal}.trip-host-wrapper{width:min(calc(100% - 32px),980px);max-width:none;margin:0 auto;padding:46px 0 100px}.ty-host-head{margin-bottom:29px}.ty-host-head>span{color:var(--ty-blue);font-size:8px;font-weight:950;letter-spacing:1.5px}.ty-host-head h1{margin:11px 0 10px;font-size:clamp(44px,7vw,67px);font-weight:950;line-height:.91;letter-spacing:-3.5px}.ty-host-head h1 em{color:var(--ty-blue);font-style:normal}.ty-host-head p{max-width:550px;margin:0;color:var(--ty-muted);font-size:12px;line-height:1.6}.ty-form-error{display:flex;margin-bottom:15px;padding:14px;align-items:center;gap:10px;border:1px solid #ffd0da;border-radius:16px;background:#fff3f5;color:#bd2947;font-size:10px;font-weight:800}.ty-form-error b{display:grid;width:29px;height:29px;place-items:center;border-radius:9px;background:#ffdce3}.host-trip-card{position:relative;margin-bottom:14px;padding:18px;overflow:hidden;border:1px solid var(--ty-line);border-radius:24px;background:#fff;box-shadow:0 15px 45px #1d28450d;transition:.2s}.host-trip-card:hover{border-color:#bdcaf0;box-shadow:0 20px 55px #1d284518}.host-trip-card:has(.main-checkbox-label input:checked){border:2px solid var(--ty-blue);padding:17px;box-shadow:0 0 0 5px #3157d510}.host-trip-card label.main-checkbox-label{display:grid;grid-template-columns:auto 94px minmax(0,1fr);gap:15px;align-items:center}.host-trip-card label.main-checkbox-label>input{width:22px;height:22px;accent-color:var(--ty-blue)}.host-trip-card img{width:94px;height:94px;border-radius:17px}.trip-title{font-size:20px;font-weight:950;line-height:1.08}.tripanza-earnings-box{margin:17px 0 0 37px;padding:14px;border:0;border-radius:17px;background:#f2f5fb;box-shadow:none}.tripanza-earnings-input label{font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.5px}.tripanza-earnings-input input{height:43px;border:1px solid var(--ty-line);border-radius:12px;font-size:15px}.tripanza-earnings-result{color:var(--ty-muted);font-size:9px}.tripanza-earnings{color:var(--ty-blue);font-size:20px;font-weight:950}.trip-dates-card{margin:14px 0 0 37px;border-color:var(--ty-line);border-radius:17px}.trip-dates-header{padding:15px 16px;color:var(--ty-blue);font-size:10px;font-weight:900}.dates-toggle,.trip-toggle{color:var(--ty-blue)}.trip-dates-body{padding:0 13px 14px;border-color:var(--ty-line)}.select-all-wrapper{margin-top:13px;padding:12px;border:0;border-radius:13px;background:#eef2ff;color:var(--ty-blue)}.trip-date-card{margin-top:9px;border-color:var(--ty-line);border-radius:13px}.trip-date-header{padding:12px}.trip-date{font-size:10px}.trip-price-panel{padding:14px;background:#f8f9fc}.base-prices{display:grid;margin:0;grid-template-columns:repeat(3,1fr);gap:7px;color:var(--ty-muted);font-size:8px}.base-prices div{padding:9px;border-radius:10px;background:#fff}.host-submit-btn{position:sticky;z-index:5;bottom:max(8px,env(safe-area-inset-bottom));display:flex;min-height:62px;margin-top:22px;padding:0 12px 0 19px;align-items:center;border-radius:19px;background:var(--ty-lime);color:var(--ty-ink);font-size:11px;font-weight:950;box-shadow:0 15px 40px #15192530}.host-submit-btn:after{display:grid;width:39px;height:39px;margin-left:auto;place-items:center;border-radius:12px;background:var(--ty-blue);color:#fff;content:"→";font-size:19px}.success-notice{border-color:#dce8a7;border-radius:17px;background:#fbffed}.trip-host-wrapper input[type=checkbox],.trip-host-wrapper input[type=radio]{accent-color:var(--ty-blue)}@media(max-width:600px),(max-device-width:600px){.ty-topbar,.trip-host-wrapper{width:min(calc(100% - 28px),980px)}.ty-topbar{height:62px}.trip-host-wrapper{padding:35px 0 90px}.ty-host-head h1{font-size:46px;letter-spacing:-2.8px}.ty-host-head p{font-size:10px}.host-trip-card{padding:13px;border-radius:20px}.host-trip-card:has(.main-checkbox-label input:checked){padding:12px}.host-trip-card label.main-checkbox-label{grid-template-columns:auto 74px minmax(0,1fr);gap:10px}.host-trip-card img{width:74px;height:78px;border-radius:14px}.trip-title{font-size:15px}.tripanza-earnings-box,.trip-dates-card{margin-left:0}.tripanza-earnings-box{display:grid;grid-template-columns:1fr 1fr}.tripanza-earnings-result{text-align:right}.base-prices{grid-template-columns:1fr}.trip-dates-header{min-height:50px}.host-submit-btn{bottom:max(5px,env(safe-area-inset-bottom))}.ty-logo img{max-width:120px}}
+
+.ty-topbar{justify-content:flex-end}.ty-empty{padding:34px;border:1px solid var(--ty-line);border-radius:25px;background:#fff;box-shadow:0 20px 55px #1d284512}.ty-empty>b{color:var(--ty-blue);font-size:8px;letter-spacing:1.4px}.ty-empty h2{max-width:500px;margin:12px 0 9px;font-size:34px!important;font-weight:950!important;line-height:1!important}.ty-empty p{max-width:500px;margin:0;color:var(--ty-muted);font-size:11px;line-height:1.55}.ty-empty a{display:inline-flex;margin-top:20px;padding:13px 16px;border-radius:13px;background:var(--ty-lime);color:var(--ty-ink);font-size:9px;font-weight:900;text-decoration:none}.host-submit-btn:disabled{opacity:.62;cursor:wait}
+.ty-page{min-height:100vh;background:radial-gradient(circle at 95% 2%,#d0e56266,transparent 22%),#f8f9fc;color:#151925}
