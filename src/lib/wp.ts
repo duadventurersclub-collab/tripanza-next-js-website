@@ -1,3 +1,5 @@
+import { getSiteSettings, publicCacheOptions } from "./site-settings";
+
 export {
   getAppTourAvailability,
   getAppTours,
@@ -114,8 +116,8 @@ const WORDPRESS_URL = (
 export async function wpFetch<T>(path: string, revalidate = 300): Promise<T> {
   const url = `${WORDPRESS_URL}/${path.replace(/^\//, "")}`;
   const response = await fetch(url, {
-    next: { revalidate },
     headers: { Accept: "application/json" },
+    ...await publicCacheOptions("site", ["site"], revalidate === 0),
   });
 
   if (!response.ok) {
@@ -173,7 +175,7 @@ export async function getUserProfile(sessionToken: string): Promise<UserProfile 
   return null;
 }
 
-const USER_BOOKINGS_CACHE_TTL = 15_000;
+let bookingsCacheRevision = "";
 const userBookingsCache = new Map<string, { expiresAt: number; bookings: UserBooking[] }>();
 const userBookingsInFlight = new Map<string, Promise<UserBooking[]>>();
 
@@ -232,19 +234,26 @@ async function fetchUserBookings(sessionToken: string): Promise<UserBooking[]> {
 }
 
 export async function getUserBookings(sessionToken: string): Promise<UserBooking[]> {
+  const settings = await getSiteSettings();
+  if (bookingsCacheRevision !== settings.cache_revision) {
+    userBookingsCache.clear(); userBookingsInFlight.clear();
+    bookingsCacheRevision = settings.cache_revision;
+  }
+  const key = `${sessionToken}:${settings.cache_revision}`;
+  const ttl = settings.booking_cache_seconds * 1000;
   const now = Date.now();
-  const cached = userBookingsCache.get(sessionToken);
+  const cached = ttl > 0 ? userBookingsCache.get(key) : undefined;
   if (cached && cached.expiresAt > now) return cached.bookings;
 
-  const pending = userBookingsInFlight.get(sessionToken);
+  const pending = userBookingsInFlight.get(key);
   if (pending) return pending;
 
   const request = fetchUserBookings(sessionToken);
-  userBookingsInFlight.set(sessionToken, request);
+  userBookingsInFlight.set(key, request);
 
   try {
     const bookings = await request;
-    userBookingsCache.set(sessionToken, { expiresAt: Date.now() + USER_BOOKINGS_CACHE_TTL, bookings });
+    if (ttl > 0 && bookingsCacheRevision === settings.cache_revision) userBookingsCache.set(key, { expiresAt: Date.now() + ttl, bookings });
     if (userBookingsCache.size > 200) {
       for (const [token, entry] of userBookingsCache) {
         if (entry.expiresAt <= Date.now()) userBookingsCache.delete(token);
@@ -252,7 +261,7 @@ export async function getUserBookings(sessionToken: string): Promise<UserBooking
     }
     return bookings;
   } finally {
-    userBookingsInFlight.delete(sessionToken);
+    userBookingsInFlight.delete(key);
   }
 }
 

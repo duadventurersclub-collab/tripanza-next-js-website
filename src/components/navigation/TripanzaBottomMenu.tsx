@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import ProfileOtpLogin, { type AuthenticatedUser } from "@/components/auth/ProfileOtpLogin";
+import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
+import { readAccountCache, writeAccountCache } from "@/lib/browser-account-cache";
 
 type AccountProfile = {
   id: number;
@@ -38,6 +40,7 @@ type AccountWallet = {
 
 type AccountPayload = {
   authenticated: boolean;
+  admin?: boolean;
   profile: AccountProfile | null;
   wallet: AccountWallet;
   bookings: Array<{
@@ -61,41 +64,6 @@ const EMPTY_ACCOUNT: AccountPayload = {
   },
   bookings: [],
 };
-const ACCOUNT_CACHE_KEY = "tripanza_account_cache_v1";
-const ACCOUNT_CACHE_TTL = 55 * 60 * 1000;
-
-function readCachedAccount(): AccountPayload | null {
-  try {
-    const stored = window.sessionStorage.getItem(ACCOUNT_CACHE_KEY);
-    if (!stored) return null;
-    const cached = JSON.parse(stored) as { savedAt?: number; account?: AccountPayload };
-    if (
-      !cached.savedAt ||
-      Date.now() - cached.savedAt > ACCOUNT_CACHE_TTL ||
-      !cached.account?.authenticated ||
-      !cached.account.profile
-    ) {
-      window.sessionStorage.removeItem(ACCOUNT_CACHE_KEY);
-      return null;
-    }
-    return cached.account;
-  } catch {
-    return null;
-  }
-}
-
-function writeCachedAccount(account: AccountPayload | null) {
-  try {
-    if (!account?.authenticated || !account.profile) {
-      window.sessionStorage.removeItem(ACCOUNT_CACHE_KEY);
-      return;
-    }
-    window.sessionStorage.setItem(ACCOUNT_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), account }));
-  } catch {
-    // The live account response still works when browser storage is unavailable.
-  }
-}
-
 const DEFAULT_COVER = "https://tripanza.com/wp-content/uploads/2026/09/tripanza-default-profile-cover.png";
 const INDIAN_STATES = [
   "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh",
@@ -215,6 +183,8 @@ function WalletView({ wallet, onBack }: { wallet: AccountWallet; onBack: () => v
 }
 
 export default function TripanzaBottomMenu() {
+  const settings = useSiteSettings();
+  const writeCachedAccount = (account: AccountPayload | null) => writeAccountCache(account, settings);
   const pathname = usePathname();
   const router = useRouter();
   const pathParts = pathname.split("/").filter(Boolean);
@@ -279,7 +249,8 @@ export default function TripanzaBottomMenu() {
 
   useEffect(() => {
     let active = true;
-    const cached = readCachedAccount();
+    const cacheSettings = { cache_revision: settings.cache_revision, browser_cache_seconds: settings.browser_cache_seconds };
+    const cached = readAccountCache<AccountPayload>(cacheSettings);
     const cacheFrame = cached ? window.requestAnimationFrame(() => {
       if (!active) return;
       setAccount(cached);
@@ -300,7 +271,7 @@ export default function TripanzaBottomMenu() {
       .then((payload) => {
         if (!active) return;
         if (cacheFrame) window.cancelAnimationFrame(cacheFrame);
-        writeCachedAccount(payload.authenticated ? payload : null);
+        writeAccountCache(payload.authenticated ? payload : null, cacheSettings);
         setAccount(payload);
       })
       .catch(() => {
@@ -313,7 +284,7 @@ export default function TripanzaBottomMenu() {
       controller.abort();
       if (cacheFrame) window.cancelAnimationFrame(cacheFrame);
     };
-  }, [shouldFetchAccount]);
+  }, [shouldFetchAccount, settings.cache_revision, settings.browser_cache_seconds]);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -453,7 +424,8 @@ export default function TripanzaBottomMenu() {
           <div className="tp-profile-menu" role="list">
             {account.authenticated ? <Link role="listitem" href="/dashboard" onClick={closeProfile}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></Link> : <button type="button" role="listitem" onClick={() => requireLogin()}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></button>}
             <Link role="listitem" href="/tours" onClick={closeProfile}><span><Icon name="compass" /><strong>Explore Trips</strong><small>Find your next escape.</small></span><b>›</b></Link>
-            <Link role="listitem" href="/host" onClick={closeProfile}><span><Icon name="compass" /><strong>Become a Host</strong><small>Build your crew and earn.</small></span><b>›</b></Link>
+            {settings.host_enabled && <Link role="listitem" href="/host" onClick={closeProfile}><span><Icon name="compass" /><strong>Become a Host</strong><small>Build your crew and earn.</small></span><b>›</b></Link>}
+            {account.admin && <Link role="listitem" href="/admin/settings" onClick={closeProfile}><span><Icon name="compass" /><strong>Admin settings</strong><small>Cache and Host controls.</small></span><b>›</b></Link>}
             <button type="button" role="listitem" onClick={() => account.authenticated ? setWalletOpen(true) : requireLogin("login")}><span><Icon name="wallet" /><strong>Wallet</strong><small>Cashback &amp; rewards.</small></span><b>›</b></button>
             <Link role="listitem" href="/?tripanza_filter=saved#trips" onClick={() => { showSavedTrips(); closeProfile(); }}><span><Icon name="heart" /><strong>Favourites</strong><small>{savedCount} saved trips.</small></span><b>›</b></Link>
           </div>

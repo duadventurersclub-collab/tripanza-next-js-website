@@ -1,3 +1,5 @@
+import { publicCacheOptions } from "./site-settings";
+
 export type MetaReel = {
   id: number;
   video: string;
@@ -46,8 +48,8 @@ const number = (value: unknown) => Number.isFinite(Number(value)) ? Number(value
 export async function getMetaReels(): Promise<MetaReel[]> {
   try {
     const response = await fetch(`${WORDPRESS_URL}/wp-json/tripanza-headless/v1/meta-reels?per_page=100`, {
-      next: { revalidate: 300, tags: ["meta-reels"] },
       headers: { Accept: "application/json" },
+      ...await publicCacheOptions("reel", ["meta-reels"]),
     });
     if (!response.ok) return [];
     const payload = await response.json() as { items?: RawMetaReel[] } | RawMetaReel[];

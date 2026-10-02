@@ -47,7 +47,7 @@ function loadTS(file, replacements = {}) {
   vm.runInNewContext(output, context, { filename: file });
   return context.exports;
 }
-const studio = loadTS("src/lib/host-studio.ts", { "@/lib/session": { getSessionToken: async () => undefined } });
+const studio = loadTS("src/lib/host-studio.ts", { "@/lib/session": { getSessionToken: async () => undefined }, "./site-settings": { getSiteSettings: async () => ({ host_enabled: true }) } });
 assert.equal(studio.studioRedirect("https://evil.example/add-your-own-trip", "trips"), null);
 assert.equal(studio.studioRedirect("/wp-login.php", "trips"), null);
 assert.equal(studio.studioRedirect("/add-your-own-trip?tour_id=45&token=secret", "trips"), "/add-your-own-trip?tour_id=45");

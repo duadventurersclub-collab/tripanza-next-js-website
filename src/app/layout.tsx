@@ -3,6 +3,8 @@ import { Geist } from "next/font/google";
 import { Suspense } from "react";
 import TripanzaBottomMenu from "@/components/navigation/TripanzaBottomMenu";
 import NavigationProgress from "@/components/navigation/NavigationProgress";
+import SiteSettingsProvider from "@/components/settings/SiteSettingsProvider";
+import { getSiteSettings } from "@/lib/site-settings";
 import "./globals.css";
 import "@/components/navigation/tripanza-bottom-menu.css";
 import "@/components/info/info-pages.css";
@@ -25,13 +27,16 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const settings = await getSiteSettings();
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <Suspense fallback={null}><NavigationProgress /></Suspense>
-        {children}
-        <TripanzaBottomMenu />
+        <SiteSettingsProvider initial={settings}>
+          {children}
+          <TripanzaBottomMenu />
+        </SiteSettingsProvider>
       </body>
     </html>
   );

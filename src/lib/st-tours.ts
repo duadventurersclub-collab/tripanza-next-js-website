@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { publicCacheOptions } from "./site-settings";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -624,7 +625,7 @@ async function request(path: string, revalidate = 300, tags: string[] = []): Pro
   const url = `${WORDPRESS_URL}/${path.replace(/^\//, "")}`;
   const response = await fetch(url, {
     headers: { Accept: "application/json" },
-    next: { revalidate, tags },
+    ...await publicCacheOptions(revalidate === 60 ? "availability" : "tour", tags, revalidate === 0),
   });
   if (!response.ok) throw new Error(`WordPress ${response.status} for ${url}`);
   return response;

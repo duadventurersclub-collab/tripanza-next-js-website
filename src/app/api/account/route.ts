@@ -43,6 +43,7 @@ export async function GET() {
 
   return NextResponse.json({
     authenticated: true,
+    admin: account?.roles?.includes("administrator") || false,
     profile: {
       id: profile?.id || account?.id || 0,
       name: profile?.display_name || account?.name || "Tripanza traveller",

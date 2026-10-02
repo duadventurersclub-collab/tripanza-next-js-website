@@ -1,4 +1,5 @@
 import { getSessionToken } from "@/lib/session";
+import { getSiteSettings, publicCacheOptions } from "./site-settings";
 
 export type HostTour = {
   id: number;
@@ -66,13 +67,15 @@ export type HostPayout = { locked: boolean; method: "bank" | "upi"; account_hold
 const base = (process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
 
 export async function getPublicHostData<T>(path: string, revalidate = 60): Promise<T | null> {
+  if (!(await getSiteSettings()).host_enabled) return null;
   try {
-    const response = await fetch(`${base}/wp-json/tripanza-headless/v1/${path}`, { ...(revalidate === 0 ? { cache: "no-store" as const } : { next: { revalidate } }), headers: { Accept: "application/json" } });
+    const response = await fetch(`${base}/wp-json/tripanza-headless/v1/${path}`, { headers: { Accept: "application/json" }, ...await publicCacheOptions("host", ["hosts"], revalidate === 0) });
     return response.ok ? response.json() as Promise<T> : null;
   } catch { return null; }
 }
 
 export async function getPrivateHostData<T>(path: string): Promise<T | null> {
+  if (!(await getSiteSettings()).host_enabled) return null;
   const token = await getSessionToken();
   if (!token) return null;
   try {

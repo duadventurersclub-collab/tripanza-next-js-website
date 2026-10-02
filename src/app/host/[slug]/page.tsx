@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import { getPrivateHostData, getPublicHostData, type HostProfile, type HostReel } from "@/lib/host";
 import HostProfileView from "@/components/host/HostProfileView";
+import { getSiteSettings } from "@/lib/site-settings";
+import HostUnavailable from "@/components/host/HostUnavailable";
 import "@/components/host/host.css";
 
 export default async function HostProfilePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ confirm_host_identity?: string }> }) {
+  if (!(await getSiteSettings()).host_enabled) return <HostUnavailable />;
   const { slug } = await params;
   const { confirm_host_identity: token } = await searchParams;
   const confirmation = token

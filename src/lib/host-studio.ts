@@ -1,4 +1,5 @@
 import { getSessionToken } from "@/lib/session";
+import { getSiteSettings } from "./site-settings";
 
 export type StudioScreen = "posters" | "trips";
 export type StudioDocument = { html: string; error?: string; redirect?: string };
@@ -37,6 +38,7 @@ export function studioHTML(html: string, screen: StudioScreen, query: URLSearchP
 }
 
 export async function requestStudio(screen: StudioScreen | "tools", query: URLSearchParams, options: { method?: string; body?: FormData | string; contentType?: string } = {}) {
+  if (!(await getSiteSettings()).host_enabled) return new Response(JSON.stringify({ success: false, data: "The Host feature is currently disabled." }), { status: 503, headers: { "Content-Type": "application/json", "X-Tripanza-Studio": "1" } });
   const token = await getSessionToken();
   if (!token) return new Response(JSON.stringify({ success: false, data: "Please sign in first." }), { status: 401, headers: { "Content-Type": "application/json" } });
   const url = new URL(`${upstream}/`);
