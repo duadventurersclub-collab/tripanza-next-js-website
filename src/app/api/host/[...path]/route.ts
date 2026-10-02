@@ -6,12 +6,31 @@ const allowed = new Set([
   "bookings", "bookings/adjustment", "payout", "reels",
 ]);
 
+function validRequestOrigin(request: Request) {
+  const value = request.headers.get("origin");
+  if (!value) return true;
+  let origin: URL;
+  try { origin = new URL(value); } catch { return false; }
+  if (!["http:", "https:"].includes(origin.protocol)) return false;
+
+  // Render and other reverse proxies may expose an internal request.url while
+  // the browser sends the public site origin. Compare against the public host.
+  const publicHost = (request.headers.get("x-forwarded-host") || request.headers.get("host") || "").split(",")[0].trim();
+  const publicProto = (request.headers.get("x-forwarded-proto") || new URL(request.url).protocol.replace(":", "")).split(",")[0].trim();
+  const candidates = [new URL(request.url).origin, process.env.NEXT_PUBLIC_SITE_URL, process.env.RENDER_EXTERNAL_URL];
+  if (publicHost && (publicProto === "http" || publicProto === "https")) candidates.push(`${publicProto}://${publicHost}`);
+  if (candidates.some(candidate => { try { return candidate && new URL(candidate).origin === origin.origin; } catch { return false; } })) return true;
+
+  // Fetch Metadata is set by browsers, not page JavaScript. It covers proxies
+  // that rewrite even the forwarded host before Next.js receives the request.
+  return request.headers.get("sec-fetch-site") === "same-origin";
+}
+
 async function forward(request: Request, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
   const relative = path.join("/");
   if (!allowed.has(relative) && !/^reels\/\d+$/.test(relative)) return Response.json({ error: "Not found." }, { status: 404 });
-  const origin = request.headers.get("origin");
-  if (origin && new URL(origin).origin !== new URL(request.url).origin) return Response.json({ error: "Invalid request origin." }, { status: 403 });
+  if (!validRequestOrigin(request)) return Response.json({ error: "Invalid request origin." }, { status: 403 });
   const token = await getSessionToken();
   if (!token) return Response.json({ error: "Please sign in first." }, { status: 401 });
   const isForm = request.headers.get("content-type")?.includes("multipart/form-data") || false;
