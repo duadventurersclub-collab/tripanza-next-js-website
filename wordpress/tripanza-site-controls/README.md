@@ -32,6 +32,10 @@ Existing hosts, commissions, trips and bookings are not removed or automatically
 
 ## Verification
 
+On Windows, build installable ZIPs using `powershell -File scripts/package-site-controls.ps1 -OutputPath <new-zip-path>` from the repository root. The script uses standard forward-slash ZIP entry paths and verifies that the PHP plugin file is directly inside `tripanza-site-controls/`. Do not use `Compress-Archive` for deployment packages with Windows backslash entry paths.
+
+After activation, confirm both Settings → Tripanza Site Controls and `/wp-json/tripanza-headless/v1/settings/public` are available. If both are missing, inspect the Installed Plugins entry (exact name, version, activation state, and any recovery-mode warning) before treating it as a frontend cache problem.
+
 - `npm run build`
 - `node scripts/verify-site-controls.mjs` (mock WordPress + real Next.js production server/browser)
 - `node scripts/verify-host-studio.mjs`

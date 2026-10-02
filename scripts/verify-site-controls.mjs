@@ -76,6 +76,13 @@ const mock = http.createServer(async (req, res) => {
   const auth = req.headers.authorization?.replace("Bearer ", "");
   const send = (data, status = 200) => { res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify(data)); };
   if (relative === "settings/public") return send(settings);
+  if (relative === "tours/fixture-tour") return send({
+    id: 42, slug: "fixture-tour", title: "Fixture mountain escape", excerpt: "A test trip.",
+    currency: "INR", price: "10000", featured_image: null,
+    details: { origin: "Delhi", duration: { days: "3", nights: "2" },
+      pricing: { quad: { amount: 10000, display: "₹10,000" } },
+      itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] },
+  });
   if (relative.startsWith("admin/")) {
     if (!auth) return send({ message: "Please sign in." }, 401);
     if (auth !== "fixture-admin") return send({ message: "Administrator access required." }, 403);
@@ -116,6 +123,24 @@ try {
     if (retry === 79) throw new Error(`Next.js did not start: ${logs}`);
   }
   const headers = { Cookie: "tripanza_session=fixture-admin", Origin: origin, "Content-Type": "application/json" };
+  for (const hostEnabled of [true, false]) {
+    settings.host_enabled = hostEnabled;
+    const response = await fetch(`${origin}/tours/fixture-tour`);
+    assert.equal(response.status, 200, `Tour details must render with Host ${hostEnabled ? "on" : "off"}`);
+    const html = await response.text();
+    assert.ok(html.includes("Fixture mountain escape"));
+    assert.ok(html.includes("Meet the crew."));
+    assert.ok(!html.includes("Internal Server Error"));
+  }
+  const missingTour = await fetch(`${origin}/tours/fixture-missing`);
+  // Next's loading boundary can stream HTTP 200 before notFound() resolves.
+  assert.ok([200, 404].includes(missingTour.status));
+  const missingHtml = await missingTour.text();
+  assert.ok(missingHtml.includes("This page could not be found"));
+  assert.ok(missingHtml.includes('name="robots" content="noindex"'));
+  settings.host_enabled = true;
+  assert.ok(!logs.includes("Page changed from static to dynamic"));
+  console.log("PASS: production tour details load with Host on/off; missing tours render not-found/noindex, not static-to-dynamic 500");
   assert.equal((await fetch(`${origin}/api/admin/settings`)).status, 401);
   assert.equal((await fetch(`${origin}/api/admin/settings`, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 403);
   const denied = await fetch(`${origin}/api/admin/settings`, { method: "POST", headers: { ...headers, Origin: "https://evil.example", "Sec-Fetch-Site": "cross-site" }, body: JSON.stringify(settings) });
@@ -129,6 +154,10 @@ try {
   await context.addCookies([{ name: "tripanza_session", value: "fixture-admin", url: origin }]);
   const page = await context.newPage();
   const errors = []; page.on("pageerror", error => errors.push(error.message));
+  await page.goto(`${origin}/tours/fixture-tour`);
+  await page.getByRole("heading", { name: "Fixture mountain escape", exact: true }).waitFor();
+  await page.reload();
+  await page.getByRole("heading", { name: "Fixture mountain escape", exact: true }).waitFor();
   await page.goto(`${origin}/admin/settings`);
   await page.getByRole("heading", { name: /Your site/ }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Save settings" }).isDisabled(), true);

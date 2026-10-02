@@ -22,12 +22,10 @@ import "./tour-design.css";
 import "./tour-app.css";
 import "./tour-kanika.css";
 
-export const revalidate = 300;
-
-// New slugs are generated on first request and then retained by ISR.
-export function generateStaticParams() {
-  return [];
-}
+// Render per request: the root layout reads live Site Controls. Opting this
+// route into on-demand static generation would throw a static-to-dynamic error
+// when that uncached settings fetch runs. Tour data keeps its configured cache
+// lifetime in st-tours.ts; only the page output is rendered live.
 
 interface TourDetailPageProps {
   params: Promise<{ slug: string }>;
