@@ -30,9 +30,9 @@ export default function SiteSettingsProvider({ initial, children }: { initial: S
       .then(response => { if (!response.ok) throw new Error("Settings unavailable"); return response.json(); }).then((settings: SiteSettings) => {
         if (!active || sequence !== requestSequence.current) return;
         if (typeof settings.host_enabled !== "boolean") throw new Error("Invalid settings response");
-        const changed = previous.current.host_enabled !== settings.host_enabled;
+        const changed = previous.current.revision !== settings.revision;
         previous.current = settings;
-        setSnapshot({ pathname, settings });
+        setSnapshot({ pathname, settings: { ...DEFAULT_SETTINGS, ...settings } });
         if (changed) router.refresh();
       }).catch(() => {
         // Fail closed for Host even when the app itself loses connectivity.

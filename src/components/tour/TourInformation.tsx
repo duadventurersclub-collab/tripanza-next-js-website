@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate, formatTourDateWithOrdinal } from "@/lib/tour-date";
+import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 
 interface TourInformationProps {
   tour: TourDetail;
@@ -24,6 +25,7 @@ function getMonthLabel(dateStr: string): string {
 }
 
 export default function TourInformation({ tour, whatsappUrl }: TourInformationProps) {
+  const settings = useSiteSettings();
   const details = tour.details;
   const pricing = details.pricing;
   const formatPrice = (amount: number) => new Intl.NumberFormat("en-IN", {
@@ -299,9 +301,10 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
           type="button"
           className="tp-info-download"
           onClick={openItineraryForm}
+          disabled={!settings.pdf_downloads_enabled}
         >
           <i className="fa-solid fa-download" aria-hidden="true" />
-          Download PDF
+          {settings.pdf_downloads_enabled ? "Download PDF" : "Downloads paused"}
         </button>
       </div>
 
@@ -365,6 +368,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
         <button
           type="button"
           onClick={openBooking}
+          disabled={!settings.new_bookings_enabled}
           style={{
             display: "flex",
             width: "100%",

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { featureUnavailable } from "@/lib/feature-access";
+import { reportOperationalError } from "@/lib/error-monitoring";
 
 const WORDPRESS_URL = (
   process.env.WORDPRESS_URL ||
@@ -43,6 +45,15 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const action: ChatAction = body.action === "sync" || body.action === "clear" ? body.action : "ask";
+    // History deletion remains available when the feature is off.
+    if (action !== "clear") {
+      const unavailable = await featureUnavailable("ai_chat_enabled");
+      if (unavailable) return unavailable;
+      if (action === "ask") {
+        const bookingUnavailable = await featureUnavailable("new_bookings_enabled");
+        if (bookingUnavailable) return bookingUnavailable;
+      }
+    }
     const chatToken = body.chatToken;
     const tourId = Number(body.tourId);
 
@@ -108,6 +119,7 @@ export async function POST(request: Request) {
 
     const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
     if (!response.ok) {
+      if (response.status >= 500) await reportOperationalError("upstream_error", "chat");
       const message =
         (typeof payload.reply === "string" && payload.reply) ||
         (typeof payload.message === "string" && payload.message) ||
@@ -121,7 +133,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "AbortError";
-    console.error("Tour chat proxy failed:", error);
+    await reportOperationalError("upstream_error", "chat");
     return NextResponse.json(
       { error: timedOut ? "Kanika is taking longer than usual. Please try again." : "Could not reach Kanika right now." },
       { status: timedOut ? 504 : 502 },

@@ -5,6 +5,7 @@ import TripanzaBottomMenu from "@/components/navigation/TripanzaBottomMenu";
 import NavigationProgress from "@/components/navigation/NavigationProgress";
 import SiteSettingsProvider from "@/components/settings/SiteSettingsProvider";
 import { getSiteSettings } from "@/lib/site-settings";
+import SiteAnnouncement from "@/components/settings/SiteAnnouncement";
 import "./globals.css";
 import "@/components/navigation/tripanza-bottom-menu.css";
 import "@/components/info/info-pages.css";
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <Suspense fallback={null}><NavigationProgress /></Suspense>
         <SiteSettingsProvider initial={settings}>
+          <SiteAnnouncement />
           {children}
           <TripanzaBottomMenu />
         </SiteSettingsProvider>

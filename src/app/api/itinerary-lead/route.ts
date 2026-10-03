@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { featureUnavailable } from "@/lib/feature-access";
 
 const WORDPRESS_URL = (
   process.env.WORDPRESS_URL ||
@@ -7,6 +8,8 @@ const WORDPRESS_URL = (
 ).replace(/\/$/, "");
 
 export async function POST(request: Request) {
+  const unavailable = await featureUnavailable("pdf_downloads_enabled");
+  if (unavailable) return unavailable;
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const tourId = Number(body?.tourId);
   const email = typeof body?.email === "string" ? body.email.trim() : "";

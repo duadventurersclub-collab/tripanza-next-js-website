@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { featureUnavailable } from "@/lib/feature-access";
 import {
   BookingApiError,
   createWordPressBooking,
@@ -17,6 +18,8 @@ type CheckoutPayload = {
 };
 
 export async function POST(request: Request) {
+  const unavailable = await featureUnavailable("new_bookings_enabled");
+  if (unavailable) return unavailable;
   const cart = await getBookingCart();
   if (!cart) return NextResponse.json({ error: "Your booking cart is empty." }, { status: 409 });
 

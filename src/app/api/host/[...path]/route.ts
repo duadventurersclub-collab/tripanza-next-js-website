@@ -1,5 +1,6 @@
 import { getSessionToken } from "@/lib/session";
 import { getSiteSettings } from "@/lib/site-settings";
+import { featureUnavailable } from "@/lib/feature-access";
 
 const upstream = (process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
 const allowed = new Set([
@@ -33,6 +34,10 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   if (!allowed.has(relative) && !/^reels\/\d+$/.test(relative)) return Response.json({ error: "Not found." }, { status: 404 });
   if (!validRequestOrigin(request)) return Response.json({ error: "Invalid request origin." }, { status: 403 });
   if (!(await getSiteSettings()).host_enabled) return Response.json({ error: "The Host feature is currently disabled." }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  if (relative.startsWith("reels")) {
+    const unavailable = await featureUnavailable("reels_enabled");
+    if (unavailable) return unavailable;
+  }
   const token = await getSessionToken();
   if (!token) return Response.json({ error: "Please sign in first." }, { status: 401 });
   const isForm = request.headers.get("content-type")?.includes("multipart/form-data") || false;

@@ -26,14 +26,23 @@ assert.ok(plugin.includes("current_user_can('manage_options')"));
 assert.ok(plugin.includes("check_admin_referer('tripanza_site_controls')"));
 assert.ok(plugin.includes("'gate_rest'), 1000, 3"));
 assert.ok(plugin.includes("'gate_pages'), -200"));
+assert.ok(plugin.includes("'controls_version' => self::VERSION"));
+assert.ok(plugin.includes("unset($settings['updated_by'], $settings['alert_email'], $settings['error_alerts_enabled'])"));
+assert.ok(plugin.includes("hash_equals(hash_hmac('sha256'"));
+assert.ok(plugin.includes("array('from' => $before[$key], 'to' => $settings[$key])"));
 
 function load(file, overrides = {}, globals = {}) {
   const output = ts.transpileModule(source(file), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const context = { exports: {}, require: name => overrides[name] || require(name), process, URL, Response, AbortSignal, Date, ...globals };
+  const context = { exports: {}, require: name => overrides[name] || require(name), process, URL, Response, AbortSignal, Date, Buffer, ...globals };
   vm.runInNewContext(output, context, { filename: file });
   return context.exports;
 }
 const types = load("src/lib/site-settings-types.ts");
+let monitorRequest;
+const monitor = load("src/lib/error-monitoring.ts", {}, { process: { env: { WORDPRESS_URL: "https://fixture.test", TRIPANZA_MONITORING_SECRET: "fixture-monitoring-secret-at-least-32-characters" } }, fetch: async (url, init) => { monitorRequest = { url, init }; return Response.json({ ok: true }); } });
+await monitor.reportOperationalError("server_error", "booking");
+assert.deepEqual(JSON.parse(monitorRequest.init.body), { code: "server_error", area: "booking" });
+assert.equal(monitorRequest.init.headers["X-Tripanza-Signature"], require("node:crypto").createHmac("sha256", "fixture-monitoring-secret-at-least-32-characters").update(`${monitorRequest.init.headers["X-Tripanza-Timestamp"]}.${monitorRequest.init.body}`).digest("hex"));
 let settings = { ...types.DEFAULT_SETTINGS, host_enabled: true, revision: "fixture", cache_revision: "fixture" };
 const liveRequests = [];
 const helpers = load("src/lib/site-settings.ts", { react: { cache: fn => fn }, "./site-settings-types": types }, { fetch: async (url, options) => {
@@ -56,6 +65,8 @@ settings.public_cache_enabled = true; settings.tour_cache_seconds = 0;
 assert.equal((await helpers.publicCacheOptions("tour")).cache, "no-store");
 const offline = load("src/lib/site-settings.ts", { react: { cache: fn => fn }, "./site-settings-types": types }, { fetch: async () => { throw new Error("offline"); } });
 assert.equal((await offline.getSiteSettings()).host_enabled, false);
+const snapshotHelpers = load("src/lib/site-settings.ts", { react: { cache: fn => fn }, "./site-settings-types": types, "next/headers": { headers: async () => new Headers({ "x-tripanza-render-settings": Buffer.from(JSON.stringify(settings)).toString("base64url") }) } }, { fetch: async () => { throw new Error("Snapshot should avoid another upstream fetch"); } });
+assert.equal((await snapshotHelpers.getSiteSettings()).revision, settings.revision);
 
 const storage = new Map();
 const browserCache = load("src/lib/browser-account-cache.ts", {}, { window: { sessionStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) } } });
@@ -80,6 +91,7 @@ console.log("PASS: PHP 7.4 syntax, fail-closed flags, configurable cache options
 
 settings = { ...types.DEFAULT_SETTINGS, host_enabled: true, revision: "fixture", cache_revision: "fixture" };
 let saves = 0, purges = 0, hostRequests = 0;
+const audit = [];
 const staleSettings = { ...settings };
 const mock = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://mock");
@@ -87,7 +99,11 @@ const mock = http.createServer(async (req, res) => {
   const auth = req.headers.authorization?.replace("Bearer ", "");
   const send = (data, status = 200) => { res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify(data)); };
   // Simulate yesterday's CDN bug: fixed GET URLs keep serving Host enabled.
-  if (relative === "settings/public") return send(url.searchParams.has("_tripanza_live") ? settings : staleSettings);
+  if (relative === "settings/public") {
+    const publicSettings = { ...(url.searchParams.has("_tripanza_live") ? settings : staleSettings) };
+    delete publicSettings.alert_email; delete publicSettings.error_alerts_enabled;
+    return send(publicSettings);
+  }
   if (relative === "tours/fixture-tour") return send({
     id: 42, slug: "fixture-tour", title: "Fixture mountain escape", excerpt: "A test trip.",
     currency: "INR", price: "10000", featured_image: null,
@@ -98,16 +114,20 @@ const mock = http.createServer(async (req, res) => {
   if (relative.startsWith("admin/")) {
     if (!auth) return send({ message: "Please sign in." }, 401);
     if (auth !== "fixture-admin") return send({ message: "Administrator access required." }, 403);
-    const adminPayload = () => ({ settings, capabilities: { pdf: false, page_cache: false } });
+    const adminPayload = () => ({ settings, controls_version: "1.1.0", capabilities: { pdf: false, page_cache: false } });
+    if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.1.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
     if (req.method === "GET") return send(url.searchParams.has("_tripanza_live") ? adminPayload() : { ...adminPayload(), settings: staleSettings });
     let raw = ""; for await (const chunk of req) raw += chunk;
     const body = JSON.parse(raw);
     if (relative === "admin/settings") {
       if (body.revision !== settings.revision) return send({ message: "Settings changed in another window. Reload before saving." }, 409);
+      const changes = Object.fromEntries(Object.keys(body).filter(key => !["revision", "cache_revision", "updated_at", "updated_by"].includes(key) && body[key] !== settings[key]).map(key => [key, { from: settings[key], to: body[key] }]));
       settings = { ...body, revision: `save-${++saves}`, cache_revision: `save-${saves}`, updated_at: new Date().toISOString(), updated_by: "Fixture Admin" };
+      audit.push({ action: "settings_saved", user_id: 1, actor: "Fixture Admin", at: settings.updated_at, changes });
       return send(adminPayload());
     }
     purges++;
+    audit.push({ action: `purge_${body.scope}`, user_id: 1, actor: "Fixture Admin", at: new Date().toISOString(), changes: {} });
     if (["all", "bookings", "browser"].includes(body.scope)) settings = { ...settings, revision: `purge-${purges}`, cache_revision: `purge-${purges}` };
     return send({ ok: true, scope: body.scope });
   }
@@ -162,6 +182,21 @@ try {
   assert.equal((await fetch(`${origin}/api/admin/cache`, { method: "POST", headers, body: JSON.stringify({ scope: "unknown" }) })).status, 400);
   console.log("PASS: anonymous/non-admin access denied; cross-origin writes denied; invalid purge scopes rejected");
   browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
+  for (const session of [null, "fixture-user", "fixture-invalid"]) {
+    const visitorContext = await browser.newContext();
+    try {
+      if (session) await visitorContext.addCookies([{ name: "tripanza_session", value: session, url: origin }]);
+      const visitor = await visitorContext.newPage();
+      for (const route of ["/admin/settings", "/admin"]) {
+        await visitor.goto(origin + route);
+        await visitor.waitForURL(`${origin}/`);
+        assert.equal(await visitor.locator(".admin-settings").count(), 0, `Unauthorized ${session || "guest"} must not see settings`);
+      }
+      await visitor.reload();
+      assert.equal(new URL(visitor.url()).pathname, "/");
+    } finally { await visitorContext.close(); }
+  }
+  console.log("PASS: guests, non-admins and invalid sessions visiting admin/settings or admin redirect home; APIs still deny unauthorized access");
   const context = await browser.newContext({ viewport: { width: 1440, height: 1050 } });
   await context.addCookies([{ name: "tripanza_session", value: "fixture-admin", url: origin }]);
   const page = await context.newPage();
@@ -234,6 +269,55 @@ try {
   await page.locator(".as-purges>div").first().getByRole("button").click();
   await page.getByRole("status").filter({ hasText: "Cache refresh requested" }).waitFor();
   assert.notEqual(settings.cache_revision, beforePurge);
+  await page.getByRole("heading", { name: "Know what is running." }).waitFor();
+  await page.getByText("Setup required: private secret on both servers", { exact: true }).waitFor();
+  assert.equal((await fetch(`${origin}/api/admin/operations`)).status, 401);
+  assert.equal((await fetch(`${origin}/api/admin/operations`, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 403);
+  const operations = await (await fetch(`${origin}/api/admin/operations`, { headers })).json();
+  assert.ok(operations.health.database); assert.equal(operations.diagnostics.stale_settings, true);
+  assert.equal(operations.diagnostics.public_revision, settings.revision);
+  assert.ok(operations.audit.some(event => event.changes.host_enabled?.to === false));
+  console.log("PASS: private health/activity endpoints, old/new change history, unique live vs stale CDN revision diagnostics");
+
+  const savedBaseline = { ...settings };
+  const saveSettings = async changes => {
+    const response = await fetch(`${origin}/api/admin/settings`, { method: "POST", headers, body: JSON.stringify({ ...settings, ...changes, revision: settings.revision }) });
+    assert.equal(response.status, 200); return response.json();
+  };
+  await saveSettings({ ai_chat_enabled: false, reels_enabled: false, pdf_downloads_enabled: false, new_bookings_enabled: false, announcement_enabled: true, announcement_text: "Fixture launch announcement", announcement_link: "/tours", contact_email: "help@example.test", contact_phone: "+919876543210", whatsapp_number: "919876543210", instagram_url: "https://instagram.com/fixture", alert_email: "private-alert@example.test" });
+  await page.reload();
+  await page.getByLabel("AI trip assistant", { exact: true }).waitFor();
+  assert.equal(await page.getByLabel("AI trip assistant", { exact: true }).isChecked(), false);
+  await page.getByRole("link", { name: /Fixture launch announcement/ }).waitFor();
+  const publicConfig = await (await fetch(`${origin}/api/settings/public`)).json();
+  assert.ok(!publicConfig.alert_email, "Alert email must remain private");
+  await page.goto(`${origin}/contact`);
+  await page.getByRole("link", { name: /Email us help@example.test/ }).waitFor();
+  assert.equal(await page.getByRole("link", { name: "Chat on WhatsApp →", exact: true }).getAttribute("href"), "https://wa.me/919876543210");
+  await page.goto(`${origin}/tours/fixture-tour`);
+  assert.equal(await page.locator(".tp-tour-help-pill, .tp-mobile-booking-bar, #booking-request").count(), 0);
+  assert.ok(await page.getByRole("button", { name: "Downloads paused" }).isDisabled());
+  await page.goto(`${origin}/trips`); await page.waitForURL(`${origin}/tours`);
+  for (const [endpoint, body] of [["/api/checkout", {}], ["/api/cart", {}], ["/api/itinerary-lead", {}], ["/api/tour-chat", { action: "ask" }], ["/api/host/reels", {}]]) {
+    const response = await fetch(origin + endpoint, { method: "POST", headers, body: JSON.stringify(body) });
+    assert.equal(response.status, 503, `${endpoint} disabled before forwarding`);
+  }
+  console.log("PASS: feature switches survive reload; content/support links wired; disabled APIs reject direct requests; AI, booking and PDF controls reflect saved settings");
+
+  await saveSettings({ ...savedBaseline, maintenance_enabled: true, maintenance_message: "Fixture scheduled maintenance <script>alert(1)</script>" });
+  const maintenance = await fetch(`${origin}/tours`, { headers: { "X-Tripanza-Render-Settings": Buffer.from(JSON.stringify({ maintenance_enabled: false })).toString("base64url") } });
+  assert.equal(maintenance.status, 503); assert.equal(maintenance.headers.get("retry-after"), "300");
+  const maintenanceHtml = await maintenance.text(); assert.ok(maintenanceHtml.includes("&lt;script&gt;")); assert.ok(!maintenanceHtml.includes("<script>"));
+  assert.equal((await fetch(`${origin}/tours`, { headers })).status, 200, "Verified admin bypass");
+  assert.equal((await fetch(`${origin}/tours`, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 503, "Ordinary signed-in users cannot bypass maintenance");
+  for (const route of ["/contact", "/privacy-policy", "/login", "/api/account"]) assert.equal((await fetch(origin + route)).status, 200, `${route} remains accessible`);
+  assert.equal((await fetch(`${origin}/api/payment/payu/callback?booking_id=42&token=fixture`, { redirect: "manual" })).status, 303, "Existing payment callback still works");
+  assert.equal((await fetch(`${origin}/api/cart`, { method: "POST", headers: { ...headers, Cookie: "tripanza_session=fixture-user" }, body: "{}" })).status, 503);
+  await saveSettings(savedBaseline);
+  assert.equal((await fetch(`${origin}/tours`)).status, 200, "Site recovers after maintenance disable");
+  await page.goto(`${origin}/admin/settings`);
+  await page.getByRole("heading", { name: /Your site/ }).waitFor();
+  console.log("PASS: real 503 maintenance boundary, sanitized custom message, forged-header rejection, verified admin bypass, login/legal/account/payment recovery and maintenance-off restoration");
   assert.equal(await page.getByRole("button", { name: "Clear all generated PDF caches" }).isDisabled(), true);
   const artifact = path.join(os.tmpdir(), "tripanza-admin-settings-desktop.png");
   await page.screenshot({ path: artifact, fullPage: true });

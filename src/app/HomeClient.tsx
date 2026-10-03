@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import AutoplayReelVideo from "@/components/reels/AutoplayReelVideo";
 import { ReelsViewer } from "@/components/tour/TourReels";
 import type { TourDetail } from "@/lib/wp";
+import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 
 const LOGO = "https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png";
 const FALLBACKS = [
@@ -16,7 +17,6 @@ const FALLBACKS = [
 ];
 const FOUNDER_AKSHAY = "https://tripanza.com/wp-content/uploads/2025/11/WhatsApp-Image-2025-11-12-at-12.50.05-AM.jpeg";
 const FOUNDER_YASHIKA = "https://tripanza.com/wp-content/uploads/2026/08/1746074803319.jpg";
-const WHATSAPP = "https://wa.me/918130117254";
 const PLAYLISTS = [
   {
     title: "Rasta — The Best Hindi Travel Playlist",
@@ -120,8 +120,10 @@ function HomeImage({ src, alt, className = "" }: { src?: string | null; alt: str
 }
 
 export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; siteName: string }) {
+  const settings = useSiteSettings();
+  const WHATSAPP = `https://wa.me/${settings.whatsapp_number}`;
   const router = useRouter();
-  const heroVideo = tours.flatMap((tour) => tour.details.reels).find(Boolean) || "";
+  const heroVideo = settings.reels_enabled ? tours.flatMap((tour) => tour.details.reels).find(Boolean) || "" : "";
   const heroImage = tours.flatMap((tour) => tour.details.gallery.map((image) => image.url)).find(Boolean) || tours[0]?.featured_image || FALLBACKS[0];
   const [navScrolled, setNavScrolled] = useState(false);
   const [search, setSearch] = useState("");
@@ -182,7 +184,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
   const reviews = tours.flatMap((tour) => tour.details.reviews.map((review) => ({ ...review, tour }))).filter((review, index, all) => all.findIndex((item) => item.author_name === review.author_name && item.text === review.text) === index).slice(0, 8);
   const gallery = tours.flatMap((tour) => tour.details.gallery.slice(0, 2).map((image) => ({ ...image, tour }))).slice(0, 24);
   const stays = tours.flatMap((tour) => tour.details.stays.map((stay) => ({ ...stay, tour }))).filter((stay) => stay.images.length).slice(0, 5);
-  const reels = tours.filter((tour) => tour.details.reels.length).slice(0, 8);
+  const reels = settings.reels_enabled ? tours.filter((tour) => tour.details.reels.length).slice(0, 8) : [];
   const underTen = tours.filter((tour) => saleAmount(tour) > 0 && saleAmount(tour) <= 10000).sort((a, b) => saleAmount(a) - saleAmount(b)).slice(0, 3);
   const quickTrips = tours.filter((tour) => daysForTour(tour) > 0 && daysForTour(tour) <= 5 && !underTen.some((item) => item.id === tour.id)).slice(0, 3);
   const minAdvance = Math.min(...tours.map((tour) => tour.details.booking.deposit_percentage).filter((rate) => rate > 0 && rate < 100), 100);
@@ -301,7 +303,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
 
       {reels.length ? <section className="tph-section tph-reels-section" id="trip-drops"><div className="tph-shell tph-head"><div><div className="tph-eyebrow">No brochure energy</div><h2>Watch the vibe before you commit.</h2></div></div><div className="tph-reels">{reels.map((tour) => <button type="button" className="tph-reel" onClick={() => setReelTour(tour)} aria-label={`Watch ${tour.title} reel full screen`} key={tour.id}><AutoplayReelVideo src={tour.details.reels[0]} ariaLabel={`${tour.title} reel preview`} /><span className="tph-reel__play">▶</span><span className="tph-reel__copy"><small>{duration(tour)}</small><strong>{tour.title}</strong></span></button>)}</div></section> : null}
 
-      {reelTour && typeof document !== "undefined"
+      {settings.reels_enabled && reelTour && typeof document !== "undefined"
         ? createPortal(
             <ReelsViewer tour={reelTour} initialIndex={0} onClose={() => setReelTour(null)} primaryHref={`/tours/${reelTour.slug}`} />,
             document.body,
@@ -358,7 +360,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
 
       <section className="tph2-help"><div className="tph-shell"><div className="tph2-help__card"><div><span>💬</span><div><small>Real human. Real reply.</small><h3>Group chat stuck?</h3><p>Dates, budget ya pickup—bas ping karo. We will help you pick.</p></div></div><span>Dates?　Budget?　Pickup?</span><a href={WHATSAPP}>Ask on WhatsApp</a></div></div></section>
 
-      <section className="tph-final"><div className="tph-shell"><div className="tph-final__card"><h2>Stop reacting to reels. <span>Go make one.</span></h2><div><a href="#trips">Find my next trip</a><Link href="/trips">Watch trip drops</Link></div></div></div></section>
+      <section className="tph-final"><div className="tph-shell"><div className="tph-final__card"><h2>Stop reacting to reels. <span>Go make one.</span></h2><div><a href="#trips">Find my next trip</a>{settings.reels_enabled && <Link href="/trips">Watch trip drops</Link>}</div></div></div></section>
 
     </main>
   );

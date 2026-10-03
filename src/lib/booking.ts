@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { reportOperationalError } from "./error-monitoring";
 
 export const BOOKING_CART_COOKIE = "tripanza_booking_cart";
 
@@ -129,9 +130,10 @@ async function wordpressPost<T>(path: string, payload: unknown): Promise<T> {
     cache: "no-store",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  });
+  }).catch(async error => { await reportOperationalError("upstream_error", path.includes("payment") ? "payment" : "booking"); throw error; });
   const data = (await response.json().catch(() => null)) as { message?: string } | T | null;
   if (!response.ok) {
+    if (response.status >= 500) await reportOperationalError("upstream_error", path.includes("payment") ? "payment" : "booking");
     throw new BookingApiError(
       data && typeof data === "object" && "message" in data && data.message
         ? data.message
@@ -147,9 +149,10 @@ async function wordpressGet<T>(path: string, params: Record<string, string | num
   const response = await fetch(`${WORDPRESS_URL}/wp-json/tripanza-headless/v1/${path}?${search}`, {
     cache: "no-store",
     headers: { Accept: "application/json" },
-  });
+  }).catch(async error => { await reportOperationalError("upstream_error", "payment"); throw error; });
   const data = (await response.json().catch(() => null)) as { message?: string } | T | null;
   if (!response.ok) {
+    if (response.status >= 500) await reportOperationalError("upstream_error", "payment");
     throw new BookingApiError(
       data && typeof data === "object" && "message" in data && data.message
         ? data.message

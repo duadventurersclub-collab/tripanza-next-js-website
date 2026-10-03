@@ -67,7 +67,8 @@ export type HostPayout = { locked: boolean; method: "bank" | "upi"; account_hold
 const base = (process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
 
 export async function getPublicHostData<T>(path: string, revalidate = 60): Promise<T | null> {
-  if (!(await getSiteSettings()).host_enabled) return null;
+  const settings = await getSiteSettings();
+  if (!settings.host_enabled || (!settings.reels_enabled && /\/reels(?:\/|$)/.test(path))) return null;
   try {
     const response = await fetch(`${base}/wp-json/tripanza-headless/v1/${path}`, { headers: { Accept: "application/json" }, ...await publicCacheOptions("host", ["hosts"], revalidate === 0) });
     return response.ok ? response.json() as Promise<T> : null;
@@ -75,7 +76,8 @@ export async function getPublicHostData<T>(path: string, revalidate = 60): Promi
 }
 
 export async function getPrivateHostData<T>(path: string): Promise<T | null> {
-  if (!(await getSiteSettings()).host_enabled) return null;
+  const settings = await getSiteSettings();
+  if (!settings.host_enabled || (!settings.reels_enabled && /\/reels(?:\/|$)/.test(path))) return null;
   const token = await getSessionToken();
   if (!token) return null;
   try {

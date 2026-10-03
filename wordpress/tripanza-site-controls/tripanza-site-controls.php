@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Tripanza Site Controls
- * Description: Administrator-only cache controls and a server-side Host feature switch for Tripanza Next.js.
- * Version: 1.0.0
+ * Description: Administrator-only cache, feature, content, maintenance and operational controls for Tripanza Next.js.
+ * Version: 1.1.0
  * Requires PHP: 7.4
  */
 defined('ABSPATH') || exit;
@@ -10,9 +10,15 @@ defined('ABSPATH') || exit;
 final class Tripanza_Site_Controls {
     const OPTION = 'tripanza_site_controls_v1';
     const NS = 'tripanza-headless/v1';
+    const VERSION = '1.1.0';
 
     public static function defaults() {
         return array('host_enabled' => true, 'public_cache_enabled' => true,
+            'ai_chat_enabled' => true, 'reels_enabled' => true, 'pdf_downloads_enabled' => true, 'new_bookings_enabled' => true,
+            'maintenance_enabled' => false, 'maintenance_message' => 'We are making Tripanza even better. Please check back shortly.',
+            'announcement_enabled' => false, 'announcement_text' => '', 'announcement_link' => '', 'featured_tour_slugs' => '',
+            'contact_email' => 'hello@tripanza.com', 'contact_phone' => '+918130117254', 'contact_address' => 'Dwarka, Delhi NCR, India',
+            'whatsapp_number' => '918130117254', 'instagram_url' => '', 'facebook_url' => '', 'error_alerts_enabled' => false, 'alert_email' => '',
             'tour_cache_seconds' => 300, 'availability_cache_seconds' => 60, 'reel_cache_seconds' => 300, 'host_cache_seconds' => 60,
             'site_cache_seconds' => 3600, 'leaderboard_cache_seconds' => 600,
             'booking_cache_seconds' => 15, 'browser_cache_seconds' => 3300,
@@ -48,6 +54,8 @@ final class Tripanza_Site_Controls {
             array('methods' => 'POST', 'callback' => array(__CLASS__, 'save'), 'permission_callback' => array(__CLASS__, 'require_admin')),
         ));
         register_rest_route(self::NS, '/admin/cache', array('methods' => 'POST', 'callback' => array(__CLASS__, 'purge'), 'permission_callback' => array(__CLASS__, 'require_admin')));
+        register_rest_route(self::NS, '/admin/operations', array('methods' => 'GET', 'callback' => array(__CLASS__, 'operations'), 'permission_callback' => array(__CLASS__, 'require_admin')));
+        register_rest_route(self::NS, '/monitoring/event', array('methods' => 'POST', 'callback' => array(__CLASS__, 'monitor_event'), 'permission_callback' => array(__CLASS__, 'require_monitor')));
     }
 
     private static function response($data) {
@@ -57,12 +65,12 @@ final class Tripanza_Site_Controls {
 
     public static function public_settings() {
         $settings = self::settings();
-        unset($settings['updated_by']);
+        unset($settings['updated_by'], $settings['alert_email'], $settings['error_alerts_enabled']);
         return self::response($settings);
     }
 
     public static function admin_settings() {
-        return self::response(array('settings' => self::settings(), 'capabilities' => array(
+        return self::response(array('settings' => self::settings(), 'controls_version' => self::VERSION, 'capabilities' => array(
             'pdf' => function_exists('tripanza_clear_post_pdf_cache'),
             'page_cache' => defined('LSCWP_V') || function_exists('rocket_clean_domain') || (bool) has_action('w3tc_flush_posts'),
         )));
@@ -74,12 +82,45 @@ final class Tripanza_Site_Controls {
         $input = $request->get_json_params();
         if (!is_array($input)) return new WP_Error('tripanza_input', 'Invalid settings.', array('status' => 400));
         $settings = self::settings();
+        $before = $settings;
         $host_was_enabled = $settings['host_enabled'];
         if (($input['revision'] ?? '') !== $settings['revision']) return new WP_Error('tripanza_conflict', 'Settings changed in another window. Reload before saving.', array('status' => 409));
         foreach (array('host_enabled', 'public_cache_enabled') as $key) {
             if (!isset($input[$key]) || !is_bool($input[$key])) return new WP_Error('tripanza_input', 'Invalid toggle: ' . $key, array('status' => 400));
             $settings[$key] = $input[$key];
         }
+        foreach (array('ai_chat_enabled', 'reels_enabled', 'pdf_downloads_enabled', 'new_bookings_enabled', 'maintenance_enabled', 'announcement_enabled', 'error_alerts_enabled') as $key) {
+            if (!array_key_exists($key, $input)) continue; // Older clients preserve new settings.
+            if (!is_bool($input[$key])) return new WP_Error('tripanza_input', 'Invalid toggle: ' . $key, array('status' => 400));
+            $settings[$key] = $input[$key];
+        }
+        $lengths = array('maintenance_message' => 500, 'announcement_text' => 300, 'announcement_link' => 500, 'featured_tour_slugs' => 1200,
+            'contact_email' => 254, 'contact_phone' => 25, 'contact_address' => 300, 'whatsapp_number' => 15, 'instagram_url' => 500, 'facebook_url' => 500, 'alert_email' => 254);
+        foreach ($lengths as $key => $max) {
+            if (!array_key_exists($key, $input)) continue;
+            if (!is_string($input[$key]) || strlen($input[$key]) > $max) return new WP_Error('tripanza_input', 'Invalid or oversized field: ' . $key, array('status' => 400));
+            $value = trim(sanitize_text_field($input[$key]));
+            if (in_array($key, array('contact_email', 'alert_email'), true) && (($key === 'contact_email' && $value === '') || ($value !== '' && !is_email($value)))) return new WP_Error('tripanza_input', 'Enter a valid email: ' . $key, array('status' => 400));
+            if ($key === 'contact_phone' && !preg_match('/^\+?[1-9][0-9]{6,14}$/D', $value)) return new WP_Error('tripanza_input', 'Use a phone number with country code and no spaces.', array('status' => 400));
+            if ($key === 'whatsapp_number' && !preg_match('/^[1-9][0-9]{6,14}$/D', $value)) return new WP_Error('tripanza_input', 'Use WhatsApp digits with country code.', array('status' => 400));
+            if (in_array($key, array('announcement_link', 'instagram_url', 'facebook_url'), true) && $value !== '') {
+                $local = $key === 'announcement_link' && preg_match('#^/(?!/)[a-zA-Z0-9/_-]*$#D', $value);
+                $url = wp_parse_url($value);
+                if (!$local && (!$url || ($url['scheme'] ?? '') !== 'https' || empty($url['host']) || isset($url['user']) || isset($url['pass']))) return new WP_Error('tripanza_input', 'Links must use HTTPS (or a local path for announcements).', array('status' => 400));
+            }
+            if ($key === 'featured_tour_slugs') {
+                $slugs = array_values(array_filter(array_map('trim', explode(',', $value)), 'strlen'));
+                if (count($slugs) > 12) return new WP_Error('tripanza_input', 'Choose at most 12 featured tours.', array('status' => 400));
+                foreach ($slugs as $slug) {
+                    $tour = get_page_by_path($slug, OBJECT, 'st_tours');
+                    if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug) || !$tour || $tour->post_status !== 'publish') return new WP_Error('tripanza_input', 'Featured tour must be a published tour slug: ' . $slug, array('status' => 400));
+                }
+                $value = implode(', ', array_unique($slugs));
+            }
+            $settings[$key] = $value;
+        }
+        if ($settings['maintenance_enabled'] && $settings['maintenance_message'] === '') return new WP_Error('tripanza_input', 'Enter a maintenance message.', array('status' => 400));
+        if ($settings['announcement_enabled'] && $settings['announcement_text'] === '') return new WP_Error('tripanza_input', 'Enter announcement text.', array('status' => 400));
         $limits = array('tour_cache_seconds' => 86400, 'availability_cache_seconds' => 300, 'reel_cache_seconds' => 86400, 'host_cache_seconds' => 3600,
             'site_cache_seconds' => 86400, 'leaderboard_cache_seconds' => 3600, 'booking_cache_seconds' => 60, 'browser_cache_seconds' => 3300);
         foreach ($limits as $key => $max) {
@@ -92,15 +133,76 @@ final class Tripanza_Site_Controls {
         $settings['updated_by'] = wp_get_current_user()->display_name;
         update_option(self::OPTION, $settings, false);
         delete_transient('tripanza_headless_host_league_' . wp_date('Y-m'));
-        if ($host_was_enabled !== $settings['host_enabled']) self::purge_page_cache();
-        self::audit('settings_saved');
+        if ($host_was_enabled !== $settings['host_enabled'] || $before !== $settings) self::purge_page_cache();
+        $changes = array();
+        foreach (self::defaults() as $key => $ignored) {
+            if (in_array($key, array('revision', 'cache_revision', 'updated_at', 'updated_by'), true)) continue;
+            if ($before[$key] !== $settings[$key]) $changes[$key] = array('from' => $before[$key], 'to' => $settings[$key]);
+        }
+        self::audit('settings_saved', $changes);
         return self::admin_settings();
     }
 
-    private static function audit($action) {
+    private static function audit($action, $changes = array()) {
         $events = (array) get_option('tripanza_site_controls_audit', array());
-        $events[] = array('action' => $action, 'user_id' => get_current_user_id(), 'at' => gmdate('c'));
-        update_option('tripanza_site_controls_audit', array_slice($events, -50), false);
+        $events[] = array('action' => $action, 'user_id' => get_current_user_id(), 'actor' => wp_get_current_user()->display_name, 'at' => gmdate('c'), 'changes' => $changes);
+        update_option('tripanza_site_controls_audit', array_slice($events, -100), false);
+    }
+
+    public static function operations() {
+        $permission = self::require_admin();
+        if (is_wp_error($permission)) return $permission;
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        $plugins = array();
+        foreach (get_plugins() as $file => $info) {
+            if (stripos($info['Name'], 'Tripanza') === false) continue;
+            $plugins[] = array('name' => sanitize_text_field($info['Name']), 'version' => sanitize_text_field($info['Version']), 'active' => is_plugin_active($file) || is_plugin_active_for_network($file));
+        }
+        global $wpdb, $wp_version;
+        $events = array_values(array_filter((array) get_option('tripanza_site_controls_errors', array()), static function ($event) {
+            return isset($event['last_at']) && strtotime($event['last_at']) >= time() - 30 * DAY_IN_SECONDS;
+        }));
+        return self::response(array('checked_at' => gmdate('c'), 'health' => array('wordpress_version' => $wp_version, 'php_version' => PHP_VERSION,
+            'database' => (string) $wpdb->get_var('SELECT 1') === '1', 'plugins' => $plugins, 'monitoring_configured' => defined('TRIPANZA_MONITORING_SECRET') && strlen(TRIPANZA_MONITORING_SECRET) >= 32),
+            'audit' => array_reverse((array) get_option('tripanza_site_controls_audit', array())), 'errors' => array_reverse($events)));
+    }
+
+    public static function require_monitor($request) {
+        $secret = defined('TRIPANZA_MONITORING_SECRET') ? (string) TRIPANZA_MONITORING_SECRET : '';
+        $timestamp = $request->get_header('x-tripanza-timestamp');
+        $signature = $request->get_header('x-tripanza-signature');
+        if (strlen($secret) < 32 || !ctype_digit((string) $timestamp) || abs(time() - (int) $timestamp) > 120 || !hash_equals(hash_hmac('sha256', $timestamp . '.' . $request->get_body(), $secret), (string) $signature)) {
+            return new WP_Error('tripanza_monitor_auth', 'Monitoring signature required.', array('status' => 403));
+        }
+        return true;
+    }
+
+    public static function monitor_event($request) {
+        $permission = self::require_monitor($request);
+        if (is_wp_error($permission)) return $permission;
+        $input = $request->get_json_params();
+        // Only allow enumerated, non-personal classifications. Never accept
+        // error messages, request URLs, headers, stack traces or user details.
+        $code = is_array($input) ? ($input['code'] ?? '') : '';
+        $area = is_array($input) ? ($input['area'] ?? '') : '';
+        if (!in_array($code, array('server_error', 'upstream_error', 'payment_error'), true) || !in_array($area, array('tours', 'booking', 'payment', 'host', 'settings', 'chat', 'site'), true)) return new WP_Error('tripanza_monitor_input', 'Invalid error classification.', array('status' => 400));
+        $events = array_values(array_filter((array) get_option('tripanza_site_controls_errors', array()), static function ($event) {
+            return isset($event['last_at']) && strtotime($event['last_at']) >= time() - 30 * DAY_IN_SECONDS;
+        }));
+        $now = gmdate('c'); $index = null;
+        foreach ($events as $i => $event) if ($event['code'] === $code && $event['area'] === $area) $index = $i;
+        if ($index === null) { $events[] = array('code' => $code, 'area' => $area, 'count' => 0, 'first_at' => $now); $index = count($events) - 1; }
+        $events[$index]['count']++; $events[$index]['last_at'] = $now;
+        $settings = self::settings();
+        if ($settings['error_alerts_enabled'] && !get_transient('tripanza_error_alert_cooldown')) {
+            // A site-wide cooldown bounds alert storms to one mail / 15 minutes.
+            set_transient('tripanza_error_alert_cooldown', true, 15 * MINUTE_IN_SECONDS);
+            $recipient = $settings['alert_email'] ?: get_option('admin_email');
+            $sent = wp_mail($recipient, 'Tripanza website error alert', 'A website error was reported. Area: ' . $area . '. Category: ' . $code . '. UTC: ' . $now . '. Review /admin/settings and your hosting logs. No customer details are included.');
+            $events[$index]['mail_status'] = $sent ? 'accepted_by_mailer' : 'mailer_failed';
+        }
+        update_option('tripanza_site_controls_errors', array_slice($events, -100), false);
+        return self::response(array('ok' => true));
     }
 
     public static function purge($request) {
@@ -161,18 +263,28 @@ final class Tripanza_Site_Controls {
 
     public static function gate_rest($result, $server, $request) {
         $route = $request->get_route();
-        if (!self::settings()['host_enabled'] && preg_match('#^/tripanza-headless/v1/host(?:/|$)#', $route)) return new WP_Error('tripanza_host_disabled', 'The Host feature is currently disabled.', array('status' => 503));
+        $s = self::settings();
+        if (!$s['host_enabled'] && preg_match('#^/tripanza-headless/v1/host(?:/|$)#', $route)) return new WP_Error('tripanza_host_disabled', 'The Host feature is currently disabled.', array('status' => 503));
+        if (!$s['ai_chat_enabled'] && preg_match('#^/tripanza-ai/v1/(ask|sync-history)$#', $route)) return new WP_Error('tripanza_feature_disabled', 'AI chat is currently unavailable.', array('status' => 503));
+        if (!$s['reels_enabled'] && preg_match('#^/tripanza-headless/v1/(meta-reels|host/(?:.*/)?reels)(?:/|$)#', $route)) return new WP_Error('tripanza_feature_disabled', 'Reels are currently unavailable.', array('status' => 503));
+        if (!$s['pdf_downloads_enabled'] && $route === '/tripanza-headless/v1/itinerary-lead') return new WP_Error('tripanza_feature_disabled', 'Itinerary downloads are currently unavailable.', array('status' => 503));
+        // Payment initiation/verification and existing order reads are not gated.
+        if ((!$s['new_bookings_enabled'] || ($s['maintenance_enabled'] && !current_user_can('manage_options'))) && in_array($route, array('/tripanza-headless/v1/booking', '/tripanza-headless/v1/booking/quote', '/tripanza-ai/v1/ask'), true)) return new WP_Error('tripanza_feature_disabled', 'New bookings are temporarily paused.', array('status' => 503));
         return $result;
     }
 
     public static function private_headers($response, $server, $request) {
-        if (preg_match('#^/tripanza-headless/v1/(?:settings/|admin/|host(?:/|$))#', $request->get_route())) {
+        if (preg_match('#^/tripanza-headless/v1/(?:settings/|admin/|monitoring/|host(?:/|$))#', $request->get_route())) {
             $response->header('Cache-Control', 'private, no-store, max-age=0');
         }
         return $response;
     }
 
     public static function gate_pages() {
+        if (isset($_GET['generate_pdf']) && !self::settings()['pdf_downloads_enabled']) {
+            nocache_headers();
+            wp_die('Itinerary downloads are currently unavailable.', 'Tripanza', array('response' => 503));
+        }
         $path = trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
         $pages = array('host', 'host-register', 'host-dashboard', 'admin-host-trips', 'poster-download', 'add-your-own-trip', 'host-reels', 'host-customer-booking-history', 'host-payout-details', 'host-wallet');
         $is_host = isset($_GET['tripanza_host_studio']) || get_query_var('partner_reels') || get_query_var('partner_slug') || get_query_var('partner_user') || in_array($path, $pages, true) || strpos($path, 'host/') === 0;
@@ -188,9 +300,10 @@ final class Tripanza_Site_Controls {
     }
 
     public static function gate_ajax() {
-        if (!wp_doing_ajax() || self::settings()['host_enabled']) return;
+        if (!wp_doing_ajax()) return;
         $action = sanitize_key(wp_unslash($_REQUEST['action'] ?? ''));
-        if (in_array($action, array('tripanza_host_reel_publish', 'tripanza_host_reel_delete'), true)) wp_send_json_error('The Host feature is currently disabled.', 503);
+        $s = self::settings();
+        if ((!$s['host_enabled'] || !$s['reels_enabled']) && in_array($action, array('tripanza_host_reel_publish', 'tripanza_host_reel_delete'), true)) wp_send_json_error('The Host feature is currently disabled.', 503);
     }
 
     public static function admin_menu() {
@@ -203,7 +316,13 @@ final class Tripanza_Site_Controls {
         echo '<div class="wrap"><h1>Tripanza Site Controls</h1><p>These settings also power the Next.js /admin/settings page. Disabling Host blocks public and private Host routes without deleting data.</p><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field('tripanza_site_controls');
         echo '<input type="hidden" name="action" value="tripanza_site_controls"><input type="hidden" name="revision" value="' . esc_attr($s['revision']) . '"><table class="form-table">';
-        foreach (array('host_enabled' => 'Host feature enabled', 'public_cache_enabled' => 'Public API caching enabled') as $key => $label) echo '<tr><th>' . esc_html($label) . '</th><td><input type="checkbox" name="' . esc_attr($key) . '" value="1" ' . checked($s[$key], true, false) . '></td></tr>';
+        foreach (self::defaults() as $key => $default) {
+            if (!is_bool($default)) continue;
+            echo '<tr><th>' . esc_html(ucwords(str_replace('_', ' ', $key))) . '</th><td><input type="checkbox" name="' . esc_attr($key) . '" value="1" ' . checked($s[$key], true, false) . '></td></tr>';
+        }
+        foreach (array('maintenance_message', 'announcement_text', 'announcement_link', 'featured_tour_slugs', 'contact_email', 'contact_phone', 'contact_address', 'whatsapp_number', 'instagram_url', 'facebook_url', 'alert_email') as $key) {
+            echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html(ucwords(str_replace('_', ' ', $key))) . '</label></th><td><input class="regular-text" id="' . esc_attr($key) . '" name="' . esc_attr($key) . '" value="' . esc_attr($s[$key]) . '"></td></tr>';
+        }
         foreach (self::defaults() as $key => $value) {
             if (substr($key, -8) !== '_seconds') continue;
             echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html(ucwords(str_replace('_', ' ', $key))) . '</label></th><td><input id="' . esc_attr($key) . '" type="number" min="0" name="' . esc_attr($key) . '" value="' . esc_attr($s[$key]) . '"> seconds (0 disables this cache)</td></tr>';
@@ -216,9 +335,13 @@ final class Tripanza_Site_Controls {
     public static function admin_save() {
         if (!current_user_can('manage_options')) wp_die('Administrator access required.', '', array('response' => 403));
         check_admin_referer('tripanza_site_controls');
-        $input = array();
+        $input = self::settings(); // Preserve advanced settings not shown by the fallback form.
         foreach (self::defaults() as $key => $value) {
             if (substr($key, -8) === '_seconds') $input[$key] = (int) ($_POST[$key] ?? -1);
+            if (is_bool($value)) $input[$key] = isset($_POST[$key]);
+        }
+        foreach (array('maintenance_message', 'announcement_text', 'announcement_link', 'featured_tour_slugs', 'contact_email', 'contact_phone', 'contact_address', 'whatsapp_number', 'instagram_url', 'facebook_url', 'alert_email') as $key) {
+            if (isset($_POST[$key]) && is_string($_POST[$key])) $input[$key] = wp_unslash($_POST[$key]);
         }
         $input['host_enabled'] = isset($_POST['host_enabled']);
         $input['public_cache_enabled'] = isset($_POST['public_cache_enabled']);

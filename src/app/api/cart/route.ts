@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { featureUnavailable } from "@/lib/feature-access";
 import {
   BookingApiError,
   clearBookingCart,
@@ -44,6 +45,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unavailable = await featureUnavailable("new_bookings_enabled");
+  if (unavailable) return unavailable;
   try {
     const submitted = (await request.json()) as BookingSelection;
     const selection = { ...submitted, date: normalizeBookingDate(submitted.date || "") };

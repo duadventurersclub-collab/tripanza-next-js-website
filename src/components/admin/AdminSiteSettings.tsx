@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminSettings, CacheScope, SiteSettings } from "@/lib/site-settings-types";
+import { DEFAULT_SETTINGS } from "@/lib/site-settings-types";
+import AdminAdvancedControls from "./AdminAdvancedControls";
+import AdminOperations from "./AdminOperations";
 
 const fields: { key: keyof SiteSettings; label: string; note: string; max: number }[] = [
   { key: "tour_cache_seconds", label: "Tour listings & details", note: "Public trip data and gallery lookups.", max: 86400 },
@@ -33,8 +36,8 @@ async function api(path: string, body?: unknown) {
 
 export default function AdminSiteSettings({ initial }: { initial: AdminSettings }) {
   const router = useRouter();
-  const [current, setCurrent] = useState(initial);
-  const [draft, setDraft] = useState(initial.settings);
+  const [current, setCurrent] = useState({ ...initial, settings: { ...DEFAULT_SETTINGS, ...initial.settings } });
+  const [draft, setDraft] = useState({ ...DEFAULT_SETTINGS, ...initial.settings });
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
   const [tourId, setTourId] = useState("");
@@ -44,15 +47,18 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
 
   async function reload() {
     const next: AdminSettings = await api("/api/admin/settings");
+    next.settings = { ...DEFAULT_SETTINGS, ...next.settings };
     setCurrent(next); setDraft(next.settings); return next;
   }
   async function save() {
     if (!draft.host_enabled && current.settings.host_enabled && !window.confirm("Turn off the Host feature completely? Registration, public profiles, dashboards, APIs and studios will be blocked. Existing data is preserved.")) return;
+    if (draft.maintenance_enabled && !current.settings.maintenance_enabled && !window.confirm("Enable maintenance mode? Non-admin visitors will see a temporary unavailable page. Account, payment, contact and admin recovery access remain available.")) return;
     setBusy("save"); setNotice(null);
     try {
       const next: AdminSettings = await api("/api/admin/settings", draft);
+      next.settings = { ...DEFAULT_SETTINGS, ...next.settings };
       setCurrent(next); setDraft(next.settings); changed();
-      setNotice({ text: "Settings saved. Host access is enforced by WordPress immediately; open app tabs update within 30 seconds or on navigation/focus." });
+      setNotice({ text: "Settings saved. Feature and cache policies are enforced server-side; open app tabs update within 30 seconds or on navigation/focus." });
     } catch (error) { setNotice({ text: error instanceof Error ? error.message : "Could not save.", error: true }); }
     finally { setBusy(""); }
   }
@@ -80,6 +86,7 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
   return <main className="admin-settings">
     <header className="as-header"><div><p className="as-eyebrow">TRIPANZA / ADMIN CONTROLS</p><h1>Your site.<br /><em>Your controls.</em></h1><p>Manage speed, freshness and Host access in one place.</p></div><span className={`as-status ${current.settings.host_enabled ? "on" : ""}`}>{current.settings.host_enabled ? "Host enabled" : "Host disabled"}</span></header>
     <section className="as-card as-host"><div><p className="as-eyebrow">FEATURE CONTROL</p><h2>Host system</h2><p>One switch for registration, public Host profiles, reels, dashboards, CRM, payouts and poster/trip studios. Turning it off preserves all existing data and keeps traveller bookings available.</p><small>Server-side enforcement · No administrator bypass for Host tools · Admin settings stay accessible</small></div><label className="as-toggle"><input type="checkbox" checked={draft.host_enabled} disabled={!!busy} onChange={e => update("host_enabled", e.target.checked)} /><span /><b>{draft.host_enabled ? "Enabled" : "Disabled"}</b></label></section>
+    <AdminAdvancedControls draft={draft} update={update} disabled={!!busy} supported={current.controls_version === "1.1.0"} />
     <section className="as-card"><div className="as-section-head"><div><p className="as-eyebrow">CACHE POLICY</p><h2>Fast, without going stale.</h2><p>All values are in seconds. Set a lifetime to 0 to disable that cache.</p></div><label className="as-toggle"><input type="checkbox" checked={draft.public_cache_enabled} disabled={!!busy} onChange={e => update("public_cache_enabled", e.target.checked)} /><span /><b>Public data cache</b></label></div>
       <div className="as-fields">{fields.map(field => <label className="as-field" key={field.key}><span><strong>{field.label}</strong><small>{field.note}</small></span><div><input type="number" min={0} max={field.max} step={1} value={Number(draft[field.key])} disabled={!!busy} onChange={e => update(field.key, Number(e.target.value))} aria-label={`${field.label} seconds`} /><small>0–{field.max}s</small></div></label>)}</div>
       <p className="as-hint">The public-cache switch covers tours, reels, Host landing data, site metadata and the Host leaderboard. Authentication, payments, checkout and private Host requests always remain uncached. Browser previews always refresh from the server.</p>
@@ -88,5 +95,6 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
     {notice && <p className={`as-notice ${notice.error ? "error" : ""}`} role={notice.error ? "alert" : "status"}>{notice.text}</p>}
     <section className="as-card"><p className="as-eyebrow">REFRESH ON DEMAND</p><h2>Clear the right cache.</h2><p>Save any pending settings before clearing caches. Content is rebuilt lazily, not all at once.</p><div className="as-purges">{purges.map(item => <div key={item.scope}><strong>{item.label}</strong><p>{item.note}</p><button onClick={() => purge(item.scope)} disabled={!!busy || dirty}>{busy === item.scope ? "Refreshing…" : "Refresh →"}</button></div>)}</div></section>
     <section className="as-card"><p className="as-eyebrow">WORDPRESS MODULES</p><h2>Generated files & page cache.</h2><div className="as-modules"><div><h3>Generated itinerary PDFs</h3><p>{current.capabilities.pdf ? "Uses the installed Tripanza PDF module. All-tour clearing runs in small batches." : "Unavailable: install the Tripanza PDF cache module to enable these actions."}</p><label>Tour ID<input type="number" min="1" step="1" value={tourId} disabled={!!busy} onChange={e => setTourId(e.target.value)} /></label><button disabled={!!busy || dirty || !current.capabilities.pdf || !Number.isInteger(Number(tourId)) || Number(tourId) <= 0} onClick={() => purge("pdf")}>{busy === "pdf" ? "Clearing…" : "Clear this tour PDF cache"}</button><button disabled={!!busy || dirty || !current.capabilities.pdf} onClick={() => purge("pdf_all")}>{busy === "pdf_all" ? "Clearing in batches…" : "Clear all generated PDF caches"}</button></div><div><h3>WordPress page cache</h3><p>{current.capabilities.page_cache ? "A supported WordPress page-cache plugin was detected (LiteSpeed, WP Rocket or W3 Total Cache)." : "No supported page-cache plugin detected."}</p><button disabled={!!busy || dirty || !current.capabilities.page_cache} onClick={() => purge("page_cache")}>{busy === "page_cache" ? "Requesting purge…" : "Purge WordPress page cache"}</button><p className="as-hint">External CDN caches, browser HTTP caches and third-party plugin settings must be managed in their own dashboards. This page never flushes all WordPress objects or authentication transients.</p></div></div></section>
+    <AdminOperations />
   </main>;
 }

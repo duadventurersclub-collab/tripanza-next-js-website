@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyPayUPayment } from "@/lib/booking";
+import { reportOperationalError } from "@/lib/error-monitoring";
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
   try {
     const result = await verifyPayUPayment({ booking_id: bookingId, token, payload });
     state = result.success ? "success" : "failed";
+    if (!result.success) await reportOperationalError("payment_error", "payment");
   } catch {
     state = "failed";
   }

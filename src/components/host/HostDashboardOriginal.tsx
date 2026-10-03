@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { HostDashboard, HostProfile } from "@/lib/host";
+import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 import "./dashboard-original.css";
 
 const confirmed = ["complete", "fully_paid"];
@@ -18,6 +19,7 @@ const shortMoney = (value: number) => {
 const statusLabel = (status: string) => ({ fully_paid: "Fully paid", complete: "Complete", partially_paid: "Part paid", on_hold: "On hold", cancelled: "Cancelled", canceled: "Cancelled", refunded: "Refunded", pending: "Pending" })[status as "fully_paid"] || status.replaceAll("_", " ");
 
 export default function HostDashboardOriginal({ profile, data, setup }: { profile: HostProfile; data: HostDashboard; setup?: string }) {
+  const settings = useSiteSettings();
   const [metric, setMetric] = useState<"revenue" | "earnings">("revenue");
   const league = useMemo(() => [...(data.leaderboard || [])].sort((left, right) => (right[metric] - left[metric]) || (right[metric === "revenue" ? "earnings" : "revenue"] - left[metric === "revenue" ? "earnings" : "revenue"])), [data.leaderboard, metric]);
   const rank = league.findIndex(host => host.id === profile.id) + 1;
@@ -28,7 +30,7 @@ export default function HostDashboardOriginal({ profile, data, setup }: { profil
     ["Wallet now", data.wallet_balance || 0, "Available for the next payout."],
     ["Paid to bank", data.bank_paid || 0, "Completed host payouts recorded."],
   ] as const;
-  const actions = [["✈", "Build trips", "Pick or create a departure", "/admin-host-trips"], ["▶", "Drop a reel", "Turn moments into bookings", "/host-reels"], ["₹", "Open wallet", "Track every money move", "/host-wallet"], ["☻", "Meet the crew", "View traveller bookings", "/host-customer-booking-history"]] as const;
+  const actions = ([["✈", "Build trips", "Pick or create a departure", "/admin-host-trips"], ["▶", "Drop a reel", "Turn moments into bookings", "/host-reels"], ["₹", "Open wallet", "Track every money move", "/host-wallet"], ["☻", "Meet the crew", "View traveller bookings", "/host-customer-booking-history"]] as const).filter(([, , , href]) => settings.reels_enabled || href !== "/host-reels");
 
   return <div className="hd-page"><main className="hd-shell">
     <header className="hd-top"><Link className="hd-brand" href="/"><i className="hd-mark">T</i><span><small>TRIPANZA HOST MODE</small><strong>{profile.name}</strong></span></Link><Link className="hd-profile" href={`/host/${profile.slug}`}><span>View public profile{profile.verified ? " ✓" : ""}</span><i className="hd-avatar">{profile.logo ? <img src={profile.logo} alt="" /> : profile.name.slice(0, 1).toUpperCase()}</i></Link></header>

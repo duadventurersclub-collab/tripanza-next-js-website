@@ -1,5 +1,32 @@
 # Tripanza Site Controls
 
+## Version 1.1.0 upgrade
+
+Replace the existing Site Controls plugin using `tripanza-site-controls-1.1.0.zip`. Saved settings and Host state are preserved; new features default on, maintenance/announcements/email alerts default off. The frontend disables new editing controls until WordPress reports version 1.1.0. Nothing is enabled merely by opening the admin page. No footer is added.
+
+New admin sections cover feature switches, maintenance, announcements, featured homepage tours, contact/WhatsApp/social links, health diagnostics, the last 100 admin actions (old/new settings), and grouped operational errors. Save applies all drafts together; changing a toggle alone does not persist it. Concurrent-edit revision conflicts require reload.
+
+Feature switches are enforced at Next.js APIs and the related WordPress REST/PDF entry points. Reels includes discovery, trip videos and Host reel APIs. AI history deletion/privacy export remains accessible. Pausing new bookings also pauses AI asks because the assistant can create bookings. Existing orders, accounts, payment initiation and PayU/UPI verification are preserved. These controls do not claim to cover unrelated third-party booking plugins or their legacy endpoints.
+
+Maintenance sends a sanitized custom HTTP 503 response with Retry-After on nonessential Next.js pages. The bypass is verified using WordPress manage_options, never a browser-supplied role. Admin, login/auth, accounts, existing booking/payment support, contact and legal routes stay accessible. New booking APIs pause for non-admins. Recovery is also available in WordPress Settings → Tripanza Site Controls. Maintenance is for the Next.js site, not the entire WordPress back office. Configuration-fetch outages preserve the existing traveller-site fallback, so maintenance is not an emergency security lockdown.
+
+Content uses plain text, validated email/international numbers, HTTPS links (announcements also allow local paths), and up to 12 published tour slugs. Featured tours are placed first in the homepage collection in saved order. Social links appear on Contact. Default empty social URLs add no links. These settings don't rewrite legal policy text or third-party embedded studios.
+
+Health is an on-demand check, not continuous monitoring: WP/PHP/Next versions, Tripanza plugin activation/versions, database SELECT 1, round-trip response latency, reported CDN cache status/age, and comparison of fixed/public/live/saved revisions. No cache hit ratios or entry counts are fabricated. Audit history is private to manage_options users, not a tamper-proof compliance archive. Legacy audit entries may not have field details.
+
+### Optional private error monitoring setup
+
+Configure the **same randomly generated secret of at least 32 characters** in both places:
+
+- Next.js hosting environment: `TRIPANZA_MONITORING_SECRET` (server-only; never NEXT_PUBLIC).
+- WordPress wp-config.php: `define('TRIPANZA_MONITORING_SECRET', 'the-same-private-secret');`.
+
+Don't paste real secrets into commits, screenshots or support logs. Restart the Next.js service after changing its environment. Health reports presence only; matching must be verified on staging by inducing a known controlled error.
+
+The HMAC-signed ingestion endpoint accepts only category + subsystem enums, with a 120-second timestamp window. No raw error text, stack, URL, header, IP, phone/email, booking token or customer input is stored. The server instrumentation reports uncaught server errors; critical booking/payment/chat/settings upstream failures are explicitly reported. Client-only JavaScript errors, every third-party plugin exception, and exact uptime are not covered. Error groups expire from views after 30 days and storage is pruned on ingestion (at most 100 groups); totals are operational best-effort, not accounting records. Email alerts default off, use the configured recipient or WP admin email, and are throttled site-wide to one attempt per 15 minutes. Mailer acceptance is not guaranteed inbox delivery; configure/test WordPress mail transport separately. Enabling alerts without the shared secret cannot collect Next.js errors.
+
+Exclude `/wp-json/tripanza-headless/v1/monitoring/*` from CDN caching as well as the existing admin/settings/Host/auth/payment exclusions. Don't expose the monitoring secret through a public configuration route. No external monitoring account/provider is required.
+
 Install this plugin **before deploying the new Next.js frontend**. Upload `tripanza-site-controls.zip` through WordPress → Plugins → Add New → Upload Plugin and activate it alongside the existing Tripanza Headless Core and Original Host Studio Bridge.
 
 ## Admin access

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import MetaReelsFeed from "@/components/reels/MetaReelsFeed";
 import { getMetaReels } from "@/lib/meta-reels";
+import { getSiteSettings } from "@/lib/site-settings";
+import { redirect } from "next/navigation";
 import "./meta-reels.css";
 
 export const revalidate = 300;
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TripsPage({ searchParams }: { searchParams: Promise<{ reel?: string }> }) {
+  if (!(await getSiteSettings()).reels_enabled) redirect("/tours");
   const [items, params] = await Promise.all([getMetaReels(), searchParams]);
   const requestedId = Number(params.reel) || 0;
   const requestedIndex = requestedId ? items.findIndex((item) => item.id === requestedId) : 0;

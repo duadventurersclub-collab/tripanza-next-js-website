@@ -1,4 +1,4 @@
-import { publicCacheOptions } from "./site-settings";
+import { getSiteSettings, publicCacheOptions } from "./site-settings";
 
 export type MetaReel = {
   id: number;
@@ -46,6 +46,7 @@ const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const number = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) : 0;
 
 export async function getMetaReels(): Promise<MetaReel[]> {
+  if (!(await getSiteSettings()).reels_enabled) return [];
   try {
     const response = await fetch(`${WORDPRESS_URL}/wp-json/tripanza-headless/v1/meta-reels?per_page=100`, {
       headers: { Accept: "application/json" },

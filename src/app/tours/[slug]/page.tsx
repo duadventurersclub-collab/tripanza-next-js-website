@@ -16,6 +16,8 @@ import TourMobileBooking from "@/components/tour/TourMobileBooking";
 import TourAiChat from "@/components/tour/TourAiChat";
 import TourReviews from "@/components/tour/TourReviews";
 import TourSectionNav from "@/components/tour/TourSectionNav";
+import FeatureGate from "@/components/settings/FeatureGate";
+import { getSiteSettings } from "@/lib/site-settings";
 
 // Scoped design CSS from PHP templates
 import "./tour-design.css";
@@ -61,11 +63,12 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
   const whatsappMsg = encodeURIComponent(
     `Hey Tripanza Team! I am interested in the ${tour.title} (${tour.details.duration.days}D/${tour.details.duration.nights}N). Could you please share the next departure batch dates and availability?`
   );
-  const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, "");
+  const settings = await getSiteSettings();
+  const whatsappNumber = settings.whatsapp_number;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMsg}`;
   const sections = [
     { id: "tp-trip-overview", label: "Overview" },
-    ...(tour.details.reels.length ? [{ id: "reels", label: "Vibes" }] : []),
+    ...(settings.reels_enabled && tour.details.reels.length ? [{ id: "reels", label: "Vibes" }] : []),
     ...(tour.details.itinerary.length ? [{ id: "tp-trip-days", label: "Itinerary" }] : []),
     ...(tour.details.highlights.length ? [{ id: "tp-trip-highlights", label: "Highlights" }] : []),
     ...(tour.details.stays.length ? [{ id: "tp-trip-stays", label: "Stays" }] : []),
@@ -93,13 +96,14 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
         <div className="tp-tour-layout">
           <div className="tp-tour-main">
             <TourOverview tour={tour} />
-            <TourReels tour={tour} />
+            <FeatureGate feature="reels_enabled"><TourReels tour={tour} /></FeatureGate>
             <TourItinerary tour={tour} />
             <TourInformation key={tour.id} tour={tour} whatsappUrl={whatsappUrl} />
             <TourAboutDiscounts tour={tour} />
             <TourReviews reviews={tour.details.reviews} />
           </div>
-          <TourBookingPanel tour={tour} />
+          <FeatureGate feature="new_bookings_enabled"><TourBookingPanel tour={tour} /></FeatureGate>
+          {!settings.new_bookings_enabled && <p>Online bookings are temporarily paused. Existing bookings remain accessible from your account.</p>}
         </div>
 
         {/* Spacer for mobile sticky bottom bar */}
@@ -107,8 +111,8 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
         <div className="tp-app-bottom-space" aria-hidden="true" />
       </main>
 
-      <TourMobileBooking tour={tour} whatsappUrl={whatsappUrl} />
-      <TourAiChat tour={tour} whatsappUrl={whatsappUrl} />
+      <FeatureGate feature="new_bookings_enabled"><TourMobileBooking tour={tour} whatsappUrl={whatsappUrl} /></FeatureGate>
+      <FeatureGate feature="ai_chat_enabled"><TourAiChat tour={tour} whatsappUrl={whatsappUrl} /></FeatureGate>
 
       {/* Scroll progress script */}
       <script
