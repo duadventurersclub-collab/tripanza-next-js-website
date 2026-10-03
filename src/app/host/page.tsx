@@ -3,13 +3,13 @@ import { getPrivateHostData, getPublicHostData, type HostProfile, type HostSumma
 import { getUserProfile } from "@/lib/wp";
 import HostLanding from "@/components/host/HostLanding";
 import { getSiteSettings } from "@/lib/site-settings";
-import HostUnavailable from "@/components/host/HostUnavailable";
+import { redirect } from "next/navigation";
 import "@/components/host/host.css";
 
 export const metadata = { title: "Become a Host | Tripanza" };
 
 export default async function HostPage({ searchParams }: { searchParams: Promise<{ register?: string }> }) {
-  if (!(await getSiteSettings()).host_enabled) return <HostUnavailable />;
+  if (!(await getSiteSettings()).host_enabled) redirect("/tours");
   const token = await getSessionToken();
   const [landing, profile, account, params] = await Promise.all([
     getPublicHostData<{ trips: HostTour[]; hosts: HostSummary[]; leaderboard: { id: number; name: string; slug: string; revenue: number; earnings: number; bookings: number }[] }>("host"),
