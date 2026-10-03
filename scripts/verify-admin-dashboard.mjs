@@ -171,7 +171,7 @@ try {
   await page.setViewportSize({ width: 1440, height: 1100 }); await page.screenshot({ path: path.join(os.tmpdir(), 'tripanza-native-admin-desktop.png'), fullPage: true });
   await page.reload(); await expect(page.locator('#future-trip-list h4').filter({ hasText: 'Native two-date plan' })).toHaveCount(2);
   missingPlugin = true; await page.reload(); await page.getByRole('heading', { name: 'Dashboard is unavailable.' }).waitFor();
-  await expect(page.getByText('Install or update Tripanza Native Admin API', { exact: false })).toBeVisible();
+  await expect(page.getByRole('main').getByText('Install or update Tripanza Native Admin API', { exact: false })).toBeVisible();
   assert.deepEqual(errors, []);
   console.log('PASS: native SSR, JSON permissions/cache/origin, local analytics/search/calendar, all nine presets, AJAX task/plan/email, optimistic rollback, retry keys, persistence, menu, mobile, missing plugin');
 } finally { await browser?.close(); app.kill(); await new Promise(resolve => mock.close(resolve)); }

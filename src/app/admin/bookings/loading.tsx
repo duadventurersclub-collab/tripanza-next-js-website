@@ -1,0 +1,1 @@
+export default function BookingHistoryLoading() { return <main className="admin-settings" role="status" aria-live="polite"><p className="as-eyebrow">TRIPANZA / BOOKINGS</p><h1>Loading booking history…</h1><p>Preparing your live operations workspace.</p></main>; }

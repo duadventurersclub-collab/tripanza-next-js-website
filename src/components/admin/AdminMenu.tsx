@@ -7,13 +7,13 @@ import "./admin-menu-original.css";
 
 const sections = [
   { label: "Overview", items: [["/admin", "fa-gauge-high", "Main Dashboard"], ["/crm/", "fa-address-book", "CRM / Leads"], ["/web-chatbot-dashboard/", "fa-inbox", "AI Inbox"]] },
-  { label: "Bookings", items: [["/global-booking-history-for-admins/", "fa-clipboard-list", "Booking History"], ["/create-edit-bookings-for-admins/", "fa-calendar-plus", "Create Booking"]] },
+  { label: "Bookings", items: [["/admin/bookings", "fa-clipboard-list", "Booking History"], ["/create-edit-bookings-for-admins/", "fa-calendar-plus", "Create Booking"]] },
   { label: "Tours & Content", items: [["/add-your-own-trip", "fa-route", "Add / Edit Trips"], ["/tripwise-costing/", "fa-calculator", "Tripwise Costing"], ["/poster-download", "fa-image", "Poster Download"]] },
   { label: "Hosts & Sales", items: [["/list-of-hosts-for-admin/", "fa-user-group", "List of Hosts"], ["/tripanza-global-host-commission-by-admin/", "fa-hand-holding-dollar", "Host Commission"], ["/admin-sales-campaign-cashback/", "fa-tags", "Sale Campaigns"]] },
   { label: "Tripanza Finance", items: [["/tripanza-financials/", "fa-wallet", "Inflow/Outflow/Profits"]] },
   { label: "System", items: [["/admin-activity-logs/", "fa-clock-rotate-left", "Activity Logs"], ["/admin/settings", "fa-sliders", "Site Settings"]] },
 ];
-const appPages = new Set(["/admin", "/admin/settings", "/add-your-own-trip", "/poster-download"]);
+const appPages = new Set(["/admin", "/admin/bookings", "/admin/settings", "/add-your-own-trip", "/poster-download"]);
 export default function AdminMenu({ name, wordpressOrigin }: { name: string; wordpressOrigin: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);

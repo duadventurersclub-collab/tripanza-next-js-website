@@ -1,4 +1,4 @@
-# Tripanza Native Admin API v2.0.0
+# Tripanza Native Admin API v2.1.0
 
 The `/admin` dashboard and menu are React/Next.js components. This plugin provides
 protected JSON data/actions only. No iframe, remote PHP page, theme rendering,
@@ -8,7 +8,7 @@ are preserved. Calendar and revenue chart are native React components.
 
 ## Install/update
 
-Install `tripanza-headless-admin-2.0.0.zip` in WordPress, replacing v1.0.0 of the
+Install `tripanza-headless-admin-2.1.0.zip` in WordPress, replacing v2.0.0 (or v1.0.0) of the
 Original Admin Dashboard Bridge if installed. The plugin directory is unchanged,
 so WordPress can upgrade it. Activate alongside Headless Core and Site Controls.
 Nothing is migrated or deleted: existing `tripanza_admin_todos`,
@@ -35,10 +35,41 @@ Keep Traveler and the existing Tripanza itinerary/PDF modules active.
   PDF downloads still use the installed WordPress PDF generator in a new tab.
 - Font Awesome retains the reference menu/dashboard icons. Chart/calendar need
   no external scripts. Dashboard is independent of the Host feature switch.
-- Scope is dashboard/menu only. Separate CRM, bookings, finance, sales and Host
+- Scope includes the dashboard/menu and native global booking history at
+  `/admin/bookings`. `/global-booking-history-for-admins` redirects there.
+  Separate CRM, finance, sales and Host
   management pages remain WordPress links and may need WordPress login.
   Add Trips/Poster Download point to their existing Next.js routes/studios; those
   separate pages are not rebuilt by this change.
+
+## Native booking history
+
+- All four original presentation layers are scoped to the booking page. Charts
+  use bundled Chart.js, not a CDN. PDF exports use lazy-loaded jsPDF/AutoTable;
+  private records are not sent to an external export service.
+- Protected `/admin/bookings` GET/POST REST endpoints supply JSON only. The
+  existing identity/workspace API contract remains v2.0.0 for compatibility.
+- Only administrators can see the page; guests and non-admins redirect home.
+  POST additionally requires a user-bound booking nonce and allowlisted action.
+- Local source/status/trip/customer/departure filters, columns, keyboard/pointer
+  resize, selection, totals, two-year revenue/gender charts, native details drawer,
+  PDF notes, and explicit coordinator WhatsApp drafts are supported. Only column
+  widths/visibility are stored locally, never traveller records or phone numbers.
+- Each page loads up to the original 1,000 records, with visible pagination.
+  Filters, analytics and reports cover the loaded page, not an undisclosed full
+  database scan. Archived orders have independent page totals.
+- Status changes retain the original explicit status/mail behavior. Resend never
+  auto-retries. An email warning is shown if the booking saved but mailing failed.
+  Traveler's tax/coupon/deposit/booking-fee/adjustment formula is preserved.
+- Per-booking write locks and revision checks reject stale status/adjustment writes.
+  Archive keeps records. Restore brings them back. Permanent deletion requires
+  typing `DELETE PERMANENTLY` and the backend verifies the booking is archived.
+  The old seven-click UI unlock is replaced by visible admin-only controls and
+  explicit confirmation, not treated as a security boundary.
+- Existing `st_order` normal bookings are writable. Legacy WooCommerce rows are
+  read-only here: use the existing full editor to preserve their lifecycle.
+  The separate full booking editor and invoice generator remain ordinary links;
+  neither is embedded. WordPress login may be needed for those separate tools.
 
 Exclude `/wp-json/tripanza-headless/v1/admin/*` from CDN cache rules that ignore
 Cache-Control. Requests include a fresh cache-busting identifier. Do not deploy
@@ -55,6 +86,12 @@ permissions and PHP 7.4 syntax. They do not execute WordPress or send live mail/
 After updating the plugin, smoke-test actual Traveler figures, a temporary task
 and plan, PDF download, mail to your own inbox, and one AI preset. Confirm existing
 data remains visible. Actual production modules/configuration need this final check.
+
+Also run `node scripts/verify-admin-bookings.mjs`. These fixture checks do not
+execute a real WordPress database or send production emails/WhatsApp messages.
+After installing v2.1.0, compare a known booking's amounts with the original page
+and smoke-test status/email/adjustment on a temporary booking. Do not test purge
+on a real customer record. Existing order metadata is reused without migration.
 
 Package: `powershell -NoProfile -ExecutionPolicy Bypass -File
 scripts/package-admin-dashboard.ps1 -OutputPath <new-path.zip>`.
