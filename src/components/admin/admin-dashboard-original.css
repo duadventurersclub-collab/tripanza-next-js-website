@@ -1,0 +1,573 @@
+/* Original dashboard declarations, scoped to the native React page. */
+
+        .native-admin-dashboard {
+            --tp-bg: #f0f4f8;
+            --tp-surface: #ffffff;
+            --tp-surface-soft: #f8fafc;
+            --tp-border: #e2e8f0;
+            --tp-text: #0f172a;
+            --tp-muted: #64748b;
+            --tp-primary: #2563eb;
+            --tp-primary-dark: #1d4ed8;
+            --tp-primary-soft: #eff6ff;
+            --tp-success: #059669;
+            --tp-success-soft: #ecfdf5;
+            --tp-warning: #d97706;
+            --tp-danger: #dc2626;
+            --tp-danger-soft: #fef2f2;
+            --tp-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            --tp-shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.06);
+            --tp-radius: 16px;
+            --tp-radius-sm: 10px;
+        }
+
+        .native-admin-dashboard {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+                radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 24%),
+                var(--tp-bg);
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--tp-text);
+            min-height: 100vh;
+        }
+
+        .native-admin-dashboard .tripanza-admin-dashboard {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 68px 20px 48px;
+            box-sizing: border-box;
+        }
+
+        .native-admin-dashboard .tripanza-admin-dashboard * { box-sizing: border-box; }
+
+        .native-admin-dashboard .tp-dashboard-hero {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .native-admin-dashboard .tp-welcome-logo {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: var(--tp-shadow-sm);
+            flex-shrink: 0;
+        }
+
+        .native-admin-dashboard .tp-dashboard-hero__content { flex: 1; min-width: 260px; }
+
+        .native-admin-dashboard .tp-dashboard-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--tp-primary-dark);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .native-admin-dashboard .tp-dashboard-title {
+            margin: 0 0 8px;
+            font-size: clamp(28px, 4vw, 36px);
+            line-height: 1.15;
+            font-weight: 800;
+            color: var(--tp-text);
+        }
+
+        .native-admin-dashboard .tp-dashboard-subtitle { margin: 0; color: var(--tp-muted); font-size: 15px; line-height: 1.6; }
+        .native-admin-dashboard .tp-dashboard-intro { margin-top: 12px; color: var(--tp-muted); font-size: 14px; line-height: 1.6; }
+
+        .native-admin-dashboard .tp-panel {
+            background: var(--tp-surface);
+            border: 1px solid var(--tp-border);
+            border-radius: var(--tp-radius);
+            box-shadow: var(--tp-shadow);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .native-admin-dashboard .tp-panel__header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--tp-border);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .native-admin-dashboard .tp-panel__header h2 { margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .native-admin-dashboard .tp-panel__header h2 i { color: var(--tp-primary); }
+        .native-admin-dashboard .tp-panel__header p { margin: 4px 0 0; font-size: 13px; color: var(--tp-muted); }
+        .native-admin-dashboard .tp-panel__body { padding: 24px; }
+
+        .native-admin-dashboard .tp-analytics-data-source { display: none !important; }
+
+        .native-admin-dashboard .nav-links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .native-admin-dashboard .nav-card {
+            background: var(--tp-surface);
+            border-radius: 14px;
+            padding: 20px 14px;
+            text-align: center;
+            text-decoration: none;
+            color: #334155;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: var(--tp-shadow-sm);
+            border: 1px solid var(--tp-border);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .native-admin-dashboard .nav-card i { font-size: 1.6rem; color: var(--tp-primary); transition: transform 0.2s ease; }
+        .native-admin-dashboard .nav-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+            border-color: #bfdbfe;
+            color: var(--tp-primary-dark);
+        }
+        .native-admin-dashboard .nav-card:hover i { transform: scale(1.08); }
+        .native-admin-dashboard .nav-card.nav-danger { color: var(--tp-danger); }
+        .native-admin-dashboard .nav-card.nav-danger i { color: var(--tp-danger); }
+        .native-admin-dashboard .nav-card.nav-danger:hover { border-color: #fecaca; background: var(--tp-danger-soft); }
+        .native-admin-dashboard .nav-card.nav-outline { background: var(--tp-surface-soft); border-style: dashed; }
+
+        .native-admin-dashboard .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+            text-align: left;
+        }
+
+        .native-admin-dashboard .widget-card {
+            background: var(--tp-surface);
+            border-radius: var(--tp-radius);
+            padding: 22px;
+            box-shadow: var(--tp-shadow-sm);
+            border: 1px solid var(--tp-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .native-admin-dashboard .widget-card h3 {
+            margin: 0 0 18px;
+            color: var(--tp-text);
+            font-size: 16px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--tp-border);
+            padding-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .native-admin-dashboard .widget-card h3 i { color: var(--tp-primary); }
+
+        .native-admin-dashboard .widget-card.widget-full-width { grid-column: 1 / -1; }
+
+        .native-admin-dashboard .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+        .native-admin-dashboard .filter-pill {
+            padding: 8px 14px;
+            background: var(--tp-surface-soft);
+            color: var(--tp-muted);
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid var(--tp-border);
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .native-admin-dashboard .filter-pill:hover { background: #e2e8f0; color: var(--tp-text); }
+        .native-admin-dashboard .filter-pill.active {
+            background: linear-gradient(135deg, var(--tp-primary) 0%, #1d4ed8 100%);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+        }
+
+        .native-admin-dashboard .ai-preset-pills-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding: 14px;
+            background: var(--tp-surface-soft);
+            border: 1px solid var(--tp-border);
+            border-radius: var(--tp-radius-sm);
+        }
+
+        .native-admin-dashboard .ai-preset-pills-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .native-admin-dashboard .ai-preset-pills-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--tp-primary-dark);
+        }
+
+        .native-admin-dashboard .tp-btn-clear-holidays {
+            padding: 6px 12px;
+            background: var(--tp-danger-soft);
+            color: var(--tp-danger);
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .native-admin-dashboard .ai-preset-pill {
+            padding: 6px 12px;
+            background: var(--tp-primary-soft);
+            color: var(--tp-primary-dark);
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        .native-admin-dashboard .ai-preset-pill:hover { background: var(--tp-primary); color: #fff; border-color: var(--tp-primary); }
+        .native-admin-dashboard .ai-preset-pill:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .native-admin-dashboard .scrollable-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 380px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .native-admin-dashboard .scrollable-list::-webkit-scrollbar { width: 6px; }
+        .native-admin-dashboard .scrollable-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .native-admin-dashboard .empty-state {
+            display: none;
+            padding: 18px;
+            color: var(--tp-muted);
+            font-size: 13px;
+            text-align: center;
+            background: var(--tp-surface-soft);
+            border-radius: var(--tp-radius-sm);
+            border: 1px dashed #cbd5e1;
+        }
+        .native-admin-dashboard .empty-state.is-visible { display: block; }
+
+        .native-admin-dashboard .weekend-item {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            margin-bottom: 10px;
+            background: #fff;
+            border: 1px solid var(--tp-border);
+            border-left: 4px solid #f97316;
+            border-radius: var(--tp-radius-sm);
+            transition: all 0.2s ease;
+        }
+        .native-admin-dashboard .weekend-item:last-child { margin-bottom: 0; }
+        .native-admin-dashboard .weekend-item:hover { box-shadow: var(--tp-shadow-sm); border-color: #fdba74; }
+
+        .native-admin-dashboard .date-badge {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: #fff;
+            font-weight: 700;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            text-align: center;
+            min-width: 76px;
+            margin-right: 14px;
+            line-height: 1.3;
+            flex-shrink: 0;
+        }
+
+        .native-admin-dashboard .date-badge.trip-month {
+            background: linear-gradient(135deg, var(--tp-primary) 0%, #1d4ed8 100%);
+        }
+
+        .native-admin-dashboard .weekend-info { flex: 1; min-width: 0; }
+        .native-admin-dashboard .weekend-info h4 { margin: 0 0 4px; color: var(--tp-text); font-size: 14px; font-weight: 700; }
+        .native-admin-dashboard .weekend-info p { margin: 0; color: var(--tp-muted); font-size: 13px; }
+        .native-admin-dashboard .trip-author-note { font-size: 12px; color: #94a3b8; margin-left: 6px; }
+
+        .native-admin-dashboard .todo-form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+        .native-admin-dashboard .todo-form input[type="text"],
+        .native-admin-dashboard .todo-form input[type="date"],
+        .native-admin-dashboard #trip_dates_picker {
+            flex: 1;
+            min-width: 140px;
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--tp-radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--tp-text);
+            background: #fff;
+        }
+        .native-admin-dashboard .todo-form input:focus, .native-admin-dashboard #trip_dates_picker:focus {
+            outline: none;
+            border-color: var(--tp-primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+        .native-admin-dashboard .todo-form button,
+        .native-admin-dashboard #send_tour_email_btn,
+        .native-admin-dashboard .pdf-itinerary {
+            padding: 11px 20px;
+            background: linear-gradient(135deg, var(--tp-primary) 0%, #1d4ed8 100%);
+            color: #fff;
+            border: none;
+            border-radius: var(--tp-radius-sm);
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);
+        }
+        .native-admin-dashboard .todo-form button:hover,
+        .native-admin-dashboard #send_tour_email_btn:hover,
+        .native-admin-dashboard .pdf-itinerary:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(37, 99, 235, 0.28); }
+        .native-admin-dashboard .todo-form button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .native-admin-dashboard .todo-item {
+            display: flex;
+            align-items: flex-start;
+            background: #fff;
+            border: 1px solid var(--tp-border);
+            border-left: 4px solid var(--tp-primary);
+            padding: 14px;
+            margin-bottom: 10px;
+            border-radius: var(--tp-radius-sm);
+            transition: all 0.2s ease;
+        }
+        .native-admin-dashboard .todo-content { flex: 1; padding: 0 10px; }
+        .native-admin-dashboard .todo-item p { margin: 0 0 6px !important; color: var(--tp-text) !important; font-size: 14px !important; font-weight: 600; line-height: 1.4; }
+        .native-admin-dashboard .todo-meta { font-size: 12px !important; color: var(--tp-muted) !important; }
+        .native-admin-dashboard .todo-completed { opacity: 0.65; border-left-color: var(--tp-success); background: var(--tp-success-soft); }
+        .native-admin-dashboard .todo-completed p { text-decoration: line-through; color: var(--tp-muted) !important; }
+        .native-admin-dashboard .todo-completed .check-icon { color: var(--tp-success); }
+        .native-admin-dashboard .todo-overdue:not(.todo-completed) { border-left-color: var(--tp-danger); background: var(--tp-danger-soft); }
+        .native-admin-dashboard .todo-overdue:not(.todo-completed) .todo-meta strong { color: var(--tp-danger); }
+        .native-admin-dashboard .todo-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #94a3b8;
+            padding: 4px;
+            transition: 0.2s;
+        }
+        .native-admin-dashboard .todo-action-btn.check:hover i { color: var(--tp-success); }
+        .native-admin-dashboard .todo-action-btn.delete, .native-admin-dashboard .delete-trip { color: var(--tp-danger); opacity: 0.65; margin-left: auto; }
+        .native-admin-dashboard .todo-action-btn.delete:hover, .native-admin-dashboard .delete-trip:hover { opacity: 1; }
+
+        .native-admin-dashboard .tp-tool-section-title {
+            margin: 0 0 14px;
+            color: var(--tp-text);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .native-admin-dashboard .tp-search-wrap { position: relative; margin-bottom: 14px; }
+        .native-admin-dashboard .tp-search-wrap input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--tp-radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .native-admin-dashboard #tour_search_results {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border: 1px solid var(--tp-border);
+            border-radius: var(--tp-radius-sm);
+            max-height: 220px;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            z-index: 20;
+            box-shadow: var(--tp-shadow);
+        }
+        .native-admin-dashboard .tour-option {
+            padding: 12px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+            transition: background 0.15s ease;
+        }
+        .native-admin-dashboard .tour-option:hover { background: var(--tp-primary-soft); color: var(--tp-primary-dark); }
+        .native-admin-dashboard .pdf-itinerary { display: block; width: 100%; text-align: center; margin-top: 4px; }
+
+        .native-admin-dashboard .tp-email-box {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid var(--tp-border);
+            border-radius: var(--tp-radius-sm);
+            background: var(--tp-surface-soft);
+        }
+        .native-admin-dashboard .tp-email-box h4 {
+            font-size: 15px;
+            margin: 0 0 14px;
+            font-weight: 700;
+            color: var(--tp-text);
+        }
+        .native-admin-dashboard .tp-email-box input {
+            width: 100%;
+            padding: 11px 14px;
+            margin-bottom: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--tp-radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .native-admin-dashboard #send_status { margin-top: 10px; font-size: 13px; text-align: center; color: var(--tp-muted); }
+
+        /* Analytics */
+        .native-admin-dashboard .tz-analytics-section { margin-bottom: 0; }
+    .native-admin-dashboard .tz-analytics-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+            gap: 14px;
+        margin-bottom: 18px;
+    }
+    .native-admin-dashboard .tz-analytics-title {
+            font-size: 17px;
+        font-weight: 700;
+            color: var(--tp-text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+        .native-admin-dashboard .tz-analytics-title i { color: var(--tp-primary); }
+        .native-admin-dashboard .tz-analytics-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+    .native-admin-dashboard .tz-analytics-select {
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--tp-radius-sm);
+            font-size: 13px;
+        font-family: inherit;
+            color: var(--tp-text);
+            background: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .native-admin-dashboard .tz-analytics-select:focus {
+        outline: none;
+            border-color: var(--tp-primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+    .native-admin-dashboard .tz-cards-grid {
+        display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+    }
+    .native-admin-dashboard .tz-card {
+            background: #fff;
+            padding: 18px;
+        border-radius: 14px;
+            border: 1px solid var(--tp-border);
+            box-shadow: var(--tp-shadow-sm);
+        display: flex;
+        align-items: center;
+            gap: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+        .native-admin-dashboard .tz-card:hover { transform: translateY(-2px); box-shadow: var(--tp-shadow); }
+    .native-admin-dashboard .tz-card-icon {
+            width: 52px;
+            height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+            font-size: 1.35rem;
+        flex-shrink: 0;
+    }
+        .native-admin-dashboard .tz-icon-confirmed { background: var(--tp-success-soft); color: var(--tp-success); }
+        .native-admin-dashboard .tz-icon-revenue { background: var(--tp-primary-soft); color: var(--tp-primary); }
+        .native-admin-dashboard .tz-icon-persons { background: #f3e8ff; color: #7c3aed; }
+    .native-admin-dashboard .tz-card-label {
+            font-size: 11px;
+            color: var(--tp-muted);
+            font-weight: 700;
+        text-transform: uppercase;
+            letter-spacing: 0.04em;
+        margin-bottom: 4px;
+    }
+        .native-admin-dashboard .tz-card-value { font-size: 1.5rem; font-weight: 800; color: var(--tp-text); line-height: 1.2; }
+    .native-admin-dashboard .tz-chart-wrapper {
+            background: #fff;
+            padding: 20px;
+        border-radius: 14px;
+            border: 1px solid var(--tp-border);
+            box-shadow: var(--tp-shadow-sm);
+    }
+    .native-admin-dashboard .tz-chart-header {
+            font-size: 14px;
+        font-weight: 700;
+            color: var(--tp-text);
+            margin-bottom: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .native-admin-dashboard .tz-chart-header i { color: var(--tp-primary); margin-right: 6px; }
+        .native-admin-dashboard .tz-chart-note { font-size: 12px; color: var(--tp-muted); font-weight: 600; }
+        .native-admin-dashboard .tz-chart-canvas-container { position: relative; height: 300px; width: 100%; }
+
+    @media (max-width: 768px) {
+            .native-admin-dashboard .tripanza-admin-dashboard { padding: 60px 14px 36px; }
+            .native-admin-dashboard .tp-dashboard-hero { flex-direction: column; text-align: center; }
+            .native-admin-dashboard .dashboard-grid { grid-template-columns: 1fr; }
+            .native-admin-dashboard .nav-links-grid { grid-template-columns: repeat(2, 1fr); }
+            .native-admin-dashboard .todo-form { flex-direction: column; }
+            .native-admin-dashboard .todo-form input, .native-admin-dashboard .todo-form button, .native-admin-dashboard #trip_dates_picker { width: 100%; flex: unset !important; }
+        .native-admin-dashboard .tz-cards-grid { grid-template-columns: 1fr; }
+        .native-admin-dashboard .tz-analytics-filters { width: 100%; }
+        .native-admin-dashboard .tz-analytics-select { flex: 1; }
+    }
+    

@@ -8,6 +8,7 @@ import http from "node:http";
 import vm from "node:vm";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
+import { adminDashboardFixture } from "./admin-dashboard-fixture.mjs";
 
 const root = process.cwd();
 const require = createRequire(import.meta.url);
@@ -114,6 +115,8 @@ const mock = http.createServer(async (req, res) => {
   if (relative.startsWith("admin/")) {
     if (!auth) return send({ message: "Please sign in." }, 401);
     if (auth !== "fixture-admin") return send({ message: "Administrator access required." }, 403);
+    if (relative === "admin/identity") return send({ id: 1, name: "Fixture Admin", api_version: "2.0.0" });
+    if (relative === "admin/workspace") return send(adminDashboardFixture());
     const adminPayload = () => ({ settings, controls_version: "1.1.0", capabilities: { pdf: false, page_cache: false } });
     if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.1.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
     if (req.method === "GET") return send(url.searchParams.has("_tripanza_live") ? adminPayload() : { ...adminPayload(), settings: staleSettings });
@@ -201,6 +204,23 @@ try {
   await context.addCookies([{ name: "tripanza_session", value: "fixture-admin", url: origin }]);
   const page = await context.newPage();
   const errors = []; page.on("pageerror", error => errors.push(`${page.url()}: ${error.message}`));
+  assert.equal((await fetch(`${origin}/api/admin/dashboard`)).status, 401);
+  assert.equal((await fetch(`${origin}/api/admin/dashboard`, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 403);
+  const deniedDashboard = await fetch(`${origin}/api/admin/dashboard`, { method: "POST", headers: { Cookie: "tripanza_session=fixture-admin", Origin: "https://evil.example", "Sec-Fetch-Site": "cross-site", "Content-Type": "application/json" }, body: JSON.stringify({ action: "toggle_todo" }) });
+  assert.equal(deniedDashboard.status, 403);
+  await page.goto(`${origin}/admin`);
+  await page.getByRole("heading", { name: "Welcome to Tripanza Dashboard" }).waitFor();
+  assert.equal(await page.locator("iframe").count(), 0);
+  assert.equal(await page.locator(".tp-bottom-menu").count(), 0);
+  await page.getByRole("button", { name: "Open admin menu" }).click();
+  await page.getByRole("link", { name: "Site Settings", exact: true }).click();
+  await page.waitForURL(`${origin}/admin/settings`);
+  await page.getByRole("button", { name: "Open admin menu" }).click();
+  await page.locator("#adminMenu.is-active").waitFor();
+  assert.equal(await page.locator('.tp-admin-menu-user__meta strong').innerText(), "Fixture Admin");
+  assert.equal(await page.getByRole("link", { name: "Site Settings", exact: true }).getAttribute("aria-current"), "page");
+  await page.keyboard.press("Escape");
+  console.log("PASS: native Next.js admin dashboard (no iframe), settings navigation, original drawer, guest/non-admin rejection and cross-origin write denial");
   await page.goto(`${origin}/tours/fixture-tour`);
   await page.getByRole("heading", { name: "Fixture mountain escape", exact: true }).waitFor();
   await page.reload();
@@ -288,10 +308,11 @@ try {
   await page.reload();
   await page.getByLabel("AI trip assistant", { exact: true }).waitFor();
   assert.equal(await page.getByLabel("AI trip assistant", { exact: true }).isChecked(), false);
-  await page.getByRole("link", { name: /Fixture launch announcement/ }).waitFor();
+  assert.equal(await page.getByRole("link", { name: /Fixture launch announcement/ }).count(), 0, "Public announcements must not change the original admin layout");
   const publicConfig = await (await fetch(`${origin}/api/settings/public`)).json();
   assert.ok(!publicConfig.alert_email, "Alert email must remain private");
   await page.goto(`${origin}/contact`);
+  await page.getByRole("link", { name: /Fixture launch announcement/ }).waitFor();
   await page.getByRole("link", { name: /Email us help@example.test/ }).waitFor();
   assert.equal(await page.getByRole("link", { name: "Chat on WhatsApp →", exact: true }).getAttribute("href"), "https://wa.me/919876543210");
   await page.goto(`${origin}/tours/fixture-tour`);

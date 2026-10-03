@@ -1,0 +1,33 @@
+.native-admin-dashboard { font-size: 16px; line-height: normal; }
+.native-admin-dashboard button, .native-admin-dashboard input, .native-admin-dashboard select { font-family: inherit; }
+.native-admin-dashboard button:disabled { opacity: .6; cursor: not-allowed; }
+.native-admin-dashboard button:focus-visible, .native-admin-dashboard a:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+.native-admin-dashboard .native-admin-notice { padding: 10px 14px; margin: 0 0 14px; border-radius: 10px; color: #1d4ed8; background: #eff6ff; font-size: 13px; line-height: 1.5; }
+.native-admin-dashboard .native-admin-notice.is-error { color: #b91c1c; background: #fef2f2; }
+.native-admin-dashboard .native-date-field { flex: 1; min-width: 140px; position: relative; }
+.native-admin-dashboard .native-date-field input { width: 100%; cursor: pointer; }
+.native-admin-dashboard .native-date-calendar { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: 308px; max-width: calc(100vw - 54px); padding: 12px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px #0f172a26; }
+.native-admin-dashboard .native-date-calendar button { padding: 0; border: 0; box-shadow: none; background: transparent; color: #334155; min-width: 0; width: auto; font-size: 14px; }
+.native-admin-dashboard .native-date-month, .native-admin-dashboard .native-date-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.native-admin-dashboard .native-date-month button { width: 30px; height: 30px; font-size: 26px; }
+.native-admin-dashboard .native-date-month select { width: 112px; border: 0; background: transparent; font-size: 13px; font-weight: 700; }
+.native-admin-dashboard .native-date-month input[type="number"] { width: 68px; min-width: 0; flex: unset; padding: 3px; border: 0; font-size: 13px; font-weight: 700; }
+.native-admin-dashboard .native-date-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin: 10px 0; }
+.native-admin-dashboard .native-date-grid span { color: #64748b; text-align: center; font-size: 11px; }
+.native-admin-dashboard .native-date-grid button { height: 34px; width: 100%; border-radius: 50%; font-size: 13px; }
+.native-admin-dashboard .native-date-grid button:hover { background: #eff6ff; }
+.native-admin-dashboard .native-date-grid .is-selected { background: #2563eb; color: white; }
+.native-admin-dashboard .native-date-grid .is-today { border: 1px solid #2563eb; }
+.native-admin-dashboard .native-date-footer { font-size: 12px; color: #64748b; }
+.native-admin-dashboard .native-date-footer button { color: #2563eb; padding: 4px 8px; }
+.native-admin-dashboard .native-revenue-chart { width: 100%; height: 100%; position: relative; }
+.native-admin-dashboard .native-revenue-chart svg { width: 100%; height: calc(100% - 26px); }
+.native-admin-dashboard .native-chart-legend { display: flex; justify-content: center; gap: 24px; font-size: 12px; color: #2b3674; font-weight: 600; }
+.native-admin-dashboard .native-chart-legend button { display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 0; color: inherit; font-size: inherit; font-weight: inherit; cursor: pointer; }
+.native-admin-dashboard .native-chart-legend button[aria-pressed="false"] { text-decoration: line-through; opacity: .6; }
+.native-admin-dashboard .native-chart-legend b { width: 35px; height: 10px; display: inline-block; }
+.native-admin-dashboard .native-chart-tooltip { position: absolute; top: 35px; right: 12px; display: grid; gap: 4px; padding: 10px 14px; color: white; background: #0f172ae6; border-radius: 8px; font-size: 12px; pointer-events: none; }
+.native-admin-dashboard #tour_search_results .tour-option { padding: 0; }
+.native-admin-dashboard #tour_search_results button { display: block; text-align: left; width: 100%; padding: 12px; background: transparent; color: inherit; border: 0; font-size: inherit; cursor: pointer; }
+@media (max-width: 768px) { .native-admin-dashboard .native-date-field { width: 100%; flex: unset; } }
+@media (prefers-reduced-motion: reduce) { .native-admin-dashboard *, .tp-admin-menu-drawer, .tp-admin-menu-overlay { transition: none !important; } }

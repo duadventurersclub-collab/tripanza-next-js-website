@@ -190,7 +190,7 @@ export default function TripanzaBottomMenu() {
   const pathParts = pathname.split("/").filter(Boolean);
   const hiddenOnTourDetail = pathParts[0] === "tours" && pathParts.length > 1;
   const hiddenOnReels = pathParts[0] === "trips";
-  const hiddenOnHost = pathParts[0] === "host" || ["host-dashboard", "admin-host-trips", "add-your-own-trip", "poster-download", "host-reels", "host-customer-booking-history", "host-payout-details", "host-wallet", "crm"].includes(pathParts[0]);
+  const hiddenOnHost = pathParts[0] === "host" || pathParts[0] === "admin" || ["host-dashboard", "admin-host-trips", "add-your-own-trip", "poster-download", "host-reels", "host-customer-booking-history", "host-payout-details", "host-wallet", "crm"].includes(pathParts[0]);
   const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels || hiddenOnHost;
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -425,7 +425,7 @@ export default function TripanzaBottomMenu() {
             {account.authenticated ? <Link role="listitem" href="/dashboard" onClick={closeProfile}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></Link> : <button type="button" role="listitem" onClick={() => requireLogin()}><span><Icon name="ticket" /><strong>Your Bookings</strong><small>Dates, details &amp; plans.</small></span><b>›</b></button>}
             <Link role="listitem" href="/tours" onClick={closeProfile}><span><Icon name="compass" /><strong>Explore Trips</strong><small>Find your next escape.</small></span><b>›</b></Link>
             {settings.host_enabled && <Link role="listitem" href="/host" onClick={closeProfile}><span><Icon name="compass" /><strong>Become a Host</strong><small>Build your crew and earn.</small></span><b>›</b></Link>}
-            {account.admin && <Link role="listitem" href="/admin/settings" onClick={closeProfile}><span><Icon name="compass" /><strong>Admin settings</strong><small>Cache and Host controls.</small></span><b>›</b></Link>}
+            {account.admin && <Link role="listitem" href="/admin" onClick={closeProfile}><span><Icon name="compass" /><strong>Admin dashboard</strong><small>Analytics, planning, tasks and settings.</small></span><b>›</b></Link>}
             <button type="button" role="listitem" onClick={() => account.authenticated ? setWalletOpen(true) : requireLogin("login")}><span><Icon name="wallet" /><strong>Wallet</strong><small>Cashback &amp; rewards.</small></span><b>›</b></button>
             <Link role="listitem" href="/?tripanza_filter=saved#trips" onClick={() => { showSavedTrips(); closeProfile(); }}><span><Icon name="heart" /><strong>Favourites</strong><small>{savedCount} saved trips.</small></span><b>›</b></Link>
           </div>

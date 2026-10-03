@@ -1,4 +1,11 @@
 @import "tailwindcss";
+/* Original admin navigation is isolated from the public bottom menu. */
+.admin-menu-logout{width:100%;border:0;background:transparent;text-align:left;cursor:pointer;font-family:inherit}
+.admin-share-status{position:fixed;right:16px;top:65px;z-index:10005;background:#fff;padding:12px 16px;border:1px solid #e2e8f0;border-radius:12px;color:#0f172a}
+.admin-loading{display:grid;place-content:center;justify-items:center;gap:16px;min-height:100dvh;background:#f0f4f8;color:#64748b}
+.admin-loading-spinner{height:32px;width:32px;border:3px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;animation:admin-loading-spin .8s linear infinite}
+@keyframes admin-loading-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.admin-loading-spinner{animation:none}}
 
 :root {
   --background: #fbf8f3;
