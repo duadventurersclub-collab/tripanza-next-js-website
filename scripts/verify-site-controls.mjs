@@ -116,9 +116,12 @@ const mock = http.createServer(async (req, res) => {
     if (!auth) return send({ message: "Please sign in." }, 401);
     if (auth !== "fixture-admin") return send({ message: "Administrator access required." }, 403);
     if (relative === "admin/identity") return send({ id: 1, name: "Fixture Admin", api_version: "2.0.0" });
+    const access = { "admin/workspace": "admin_dashboard_enabled", "admin/bookings": "admin_booking_history_enabled", "admin/bookings/create": "admin_booking_create_enabled" };
+    const accessFlag = access[relative] || (/^admin\/bookings\/[1-9][0-9]*\/editor$/.test(relative) ? "admin_booking_editor_enabled" : "");
+    if (accessFlag && !settings[accessFlag]) return send({ message: "This admin page is disabled in Site Settings." }, 503);
     if (relative === "admin/workspace") return send(adminDashboardFixture());
-    const adminPayload = () => ({ settings, controls_version: "1.1.0", capabilities: { pdf: false, page_cache: false } });
-    if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.1.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
+    const adminPayload = () => ({ settings, controls_version: "1.2.0", capabilities: { pdf: false, page_cache: false } });
+    if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.2.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
     if (req.method === "GET") return send(url.searchParams.has("_tripanza_live") ? adminPayload() : { ...adminPayload(), settings: staleSettings });
     let raw = ""; for await (const chunk of req) raw += chunk;
     const body = JSON.parse(raw);
@@ -228,6 +231,38 @@ try {
   await page.goto(`${origin}/admin/settings`);
   await page.getByRole("heading", { name: /Your site/ }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Save settings" }).isDisabled(), true);
+  const openAdminTab = await context.newPage();
+  await openAdminTab.goto(`${origin}/admin`);
+  await openAdminTab.getByRole("heading", { name: "Welcome to Tripanza Dashboard" }).waitFor();
+  for (const label of ["Admin dashboard", "Booking history", "Create bookings", "Booking editor"]) {
+    const toggle = page.getByLabel(label, { exact: true });
+    await toggle.locator("..").locator("span").click();
+    assert.equal(await toggle.isChecked(), false);
+  }
+  await page.getByRole("button", { name: "Save page access" }).click();
+  await page.getByRole("status").filter({ hasText: "Settings saved" }).waitFor();
+  await openAdminTab.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await openAdminTab.waitForURL(`${origin}/admin/settings`);
+  await openAdminTab.close();
+  const disabledPage = await context.newPage();
+  for (const route of ["/admin", "/admin/bookings", "/admin/bookings/create", "/admin/bookings/42/edit"]) {
+    await disabledPage.goto(origin + route);
+    await disabledPage.waitForURL(`${origin}/admin/settings`);
+  }
+  await disabledPage.close();
+  for (const endpoint of ["/api/admin/dashboard", "/api/admin/bookings", "/api/admin/bookings/create", "/api/admin/bookings/42/editor"]) {
+    assert.equal((await fetch(origin + endpoint, { headers })).status, 503, endpoint);
+  }
+  assert.equal((await fetch(`${origin}/api/admin/settings`, { headers })).status, 200, "Admin settings must remain available");
+  await page.reload();
+  for (const label of ["Admin dashboard", "Booking history", "Create bookings", "Booking editor"]) {
+    const toggle = page.getByLabel(label, { exact: true });
+    await toggle.locator("..").locator("span").click();
+    assert.equal(await toggle.isChecked(), true);
+  }
+  await page.getByRole("button", { name: "Save page access" }).click();
+  await page.getByRole("status").filter({ hasText: "Settings saved" }).waitFor();
+  console.log("PASS: all native admin pages can be disabled and restored; their APIs are gated while settings remain accessible");
   const hostTab = await context.newPage(); await hostTab.goto(`${origin}/host`);
   const menuTab = await context.newPage();
   await menuTab.goto(`${origin}/tours`);

@@ -23,6 +23,13 @@ export default function SiteSettingsProvider({ initial, children }: { initial: S
     if (hostEntryPage && !live.host_enabled) router.replace("/tours");
   }, [hostEntryPage, live.host_enabled, router]);
   useEffect(() => {
+    const disabled = pathname === "/admin" ? !live.admin_dashboard_enabled
+      : pathname === "/admin/bookings" ? !live.admin_booking_history_enabled
+      : pathname === "/admin/bookings/create" ? !live.admin_booking_create_enabled
+      : /^\/admin\/bookings\/[1-9][0-9]*\/edit$/.test(pathname) && !live.admin_booking_editor_enabled;
+    if (disabled) router.replace("/admin/settings");
+  }, [pathname, live.admin_dashboard_enabled, live.admin_booking_history_enabled, live.admin_booking_create_enabled, live.admin_booking_editor_enabled, router]);
+  useEffect(() => {
     let active = true;
     const refresh = () => {
       const sequence = ++requestSequence.current;

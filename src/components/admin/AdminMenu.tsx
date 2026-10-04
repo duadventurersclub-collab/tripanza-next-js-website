@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { clearAdminSnapshots } from "./useAdminSnapshot";
+import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 import "./admin-menu-original.css";
 
 const sections = [
@@ -16,6 +17,8 @@ const sections = [
 ];
 const appPages = new Set(["/admin", "/admin/bookings", "/admin/bookings/create", "/admin/settings", "/add-your-own-trip", "/poster-download"]);
 export default function AdminMenu({ name, wordpressOrigin }: { name: string; wordpressOrigin: string }) {
+  const settings = useSiteSettings();
+  const visible = (path: string) => path === "/admin" ? settings.admin_dashboard_enabled : path === "/admin/bookings" ? settings.admin_booking_history_enabled : path === "/admin/bookings/create" ? settings.admin_booking_create_enabled : true;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
@@ -75,7 +78,7 @@ export default function AdminMenu({ name, wordpressOrigin }: { name: string; wor
     <nav ref={menu} id="adminMenu" className={`tp-admin-menu-drawer${open ? " is-active" : ""}`} aria-label="Tripanza admin navigation" inert={!open}>
       <div className="tp-admin-menu-header"><div className="tp-admin-menu-brand"><img className="tp-admin-menu-logo" src="https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png" alt="Tripanza" /><div><strong className="tp-admin-menu-title">Tripanza Admin</strong><span className="tp-admin-menu-role">Administrator Menu</span></div></div><button ref={closeButton} type="button" className="tp-admin-menu-close" aria-label="Close menu" onClick={() => setOpen(false)}><i aria-hidden="true" className="fa-solid fa-xmark" /></button></div>
       <div className="tp-admin-menu-user"><div className="tp-admin-menu-user__avatar"><i aria-hidden="true" className="fa-solid fa-user-shield" /></div><div className="tp-admin-menu-user__meta"><span className="tp-admin-menu-user__greeting">Signed in as</span><strong>{name}</strong></div></div>
-      <div className="tp-admin-menu-links">{sections.map(section => <div className="tp-admin-menu-section" key={section.label}><span className="tp-admin-menu-section__label">{section.label}</span>{section.items.map(([path, icon, label]) => {
+      <div className="tp-admin-menu-links">{sections.map(section => <div className="tp-admin-menu-section" key={section.label}><span className="tp-admin-menu-section__label">{section.label}</span>{section.items.filter(([path]) => visible(path)).map(([path, icon, label]) => {
         const active = pathname === path;
         const content = <><span className="tp-admin-menu-link__icon"><i aria-hidden="true" className={`fa-solid ${icon}`} /></span><span className="tp-admin-menu-link__text">{label}</span>{active && <i className="fa-solid fa-chevron-right tp-admin-menu-link__active-mark" aria-hidden="true" />}</>;
         return appPages.has(path) ? <Link key={path} href={path} className={`tp-admin-menu-link${active ? " is-active" : ""}`} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)}>{content}</Link> : <a key={path} href={wordpressOrigin + path} className="tp-admin-menu-link">{content}</a>;

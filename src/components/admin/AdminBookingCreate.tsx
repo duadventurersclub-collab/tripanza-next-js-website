@@ -3,11 +3,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import AdminMenu from "./AdminMenu";
 import AdminBookingEditorModal from "./AdminBookingEditorModal";
+import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 import { customBookingTotal, emptyCreateFields, type BookingCreateData, type BookingCreateFields, type BookingMode } from "@/lib/admin-booking-create-types";
 import "./booking-manager-original.css";
 import "./booking-manager-native.css";
 const Icon = ({ name }: { name: string }) => <i aria-hidden="true" className={`fas ${name}`} />;
 export default function AdminBookingCreate({ initial, initialMode, wordpressOrigin }: { initial: BookingCreateData; initialMode: BookingMode; wordpressOrigin: string }) {
+  const settings = useSiteSettings();
   const [mode, setMode] = useState(initialMode), [drafts, setDrafts] = useState({ standard: emptyCreateFields("standard"), custom: emptyCreateFields("custom") });
   const [busy, setBusy] = useState(false), [uncertain, setUncertain] = useState(false), [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
   const [created, setCreated] = useState<number | null>(null), [overlay, setOverlay] = useState(false), [editor, setEditor] = useState<number | null>(null), [searchOpen, setSearchOpen] = useState(false), [query, setQuery] = useState("");
@@ -69,7 +71,7 @@ export default function AdminBookingCreate({ initial, initialMode, wordpressOrig
   const section = (title: string, icon: string, children: ReactNode) => <div className="tp-form-section"><h4 className="tp-form-section__title"><Icon name={icon} /> {title}</h4>{children}</div>;
   const contact = <>{row(input("first_name", "First Name", "text", { required: true }), input("last_name", "Last Name"))}{row(input("email", "Email", "email", { required: true }), input("phone", "Phone", "text", { required: true, placeholder: "+91 98765 43210" }))}</>;
   const tours = initial.tours.filter(tour => tour.name.toLowerCase().includes(query.trim().toLowerCase()));
-  return <div className="native-booking-manager"><AdminMenu name={initial.user.name} wordpressOrigin={wordpressOrigin} />
+  return <div className="native-booking-manager" data-history-enabled={settings.admin_booking_history_enabled} data-editor-enabled={settings.admin_booking_editor_enabled}><AdminMenu name={initial.user.name} wordpressOrigin={wordpressOrigin} />
     <div id="bm_success_overlay" className={overlay ? "active" : ""} aria-hidden={!overlay} role="status"><div className="success-checkmark"><div className="check-icon"><span className="icon-line line-tip" /><span className="icon-line line-long" /></div></div><h2 id="bm_overlay_text">Booking Generated Successfully!</h2></div>
     <main className="tripanza-booking-dashboard"><div className="tp-dashboard-hero"><div className="tp-dashboard-hero__content"><span className="tp-dashboard-badge"><Icon name="fa-calendar-check" /> Booking Manager</span><h1 className="tp-dashboard-title">Create &amp; Manage Bookings</h1><p className="tp-dashboard-subtitle">Generate standard tour bookings or customized packages with automatic invoice delivery to customers.</p></div><Link className="bm-history-link" href="/admin/bookings">← Booking History</Link></div>
       <nav className="tp-dashboard-tabs" aria-label="Booking type">{(["standard", "custom"] as const).map(value => <button key={value} type="button" className={`tp-dashboard-tab${mode === value ? " is-active" : ""}`} aria-pressed={mode === value} disabled={locked} onClick={() => tab(value)}><Icon name={value === "standard" ? "fa-box" : "fa-wrench"} /> {value === "standard" ? "Standard Tour" : "Custom Package"}</button>)}</nav>
@@ -90,6 +92,6 @@ export default function AdminBookingCreate({ initial, initialMode, wordpressOrig
         {uncertain && <div className="bm-native-notice is-error"><p>Creation has not been confirmed. Your form is locked to prevent a duplicate booking. Retry checks the same request.</p><button type="button" className="btn-green" disabled={busy} onClick={() => void generate(true)}>{busy ? "Checking…" : "Retry same request"}</button><Link href="/admin/bookings" target="_blank">Check booking history in a new tab ↗</Link></div>}
         {created && <div ref={result} tabIndex={-1} className="bm-created-booking-actions" id="bm_created_booking_actions"><p><Icon name="fa-check-circle" /> Booking #{created} created successfully. What would you like to do next?</p><div><button type="button" id="bm_edit_created_booking" onClick={() => setEditor(created)}><Icon name="fa-edit" /> Edit Booking</button><button type="button" id="bm_create_new_booking" onClick={reset}><Icon name="fa-plus" /> Create New Booking</button><Link href="/admin/bookings">Booking History</Link></div></div>}
       </div></div>
-    </main>{editor && <AdminBookingEditorModal key={editor} id={editor} wordpressOrigin={wordpressOrigin} close={closeEditor} changed={editorChanged} />}
+    </main>{editor && settings.admin_booking_editor_enabled && <AdminBookingEditorModal key={editor} id={editor} wordpressOrigin={wordpressOrigin} close={closeEditor} changed={editorChanged} />}
   </div>;
 }

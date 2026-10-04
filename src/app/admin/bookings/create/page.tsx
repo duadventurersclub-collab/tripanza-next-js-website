@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { requestBookingCreate } from "@/lib/admin-booking-create";
 import { getAdminIdentity } from "@/lib/admin-dashboard";
-import { wordpressOrigin } from "@/lib/site-settings";
+import { getSiteSettings, wordpressOrigin } from "@/lib/site-settings";
 import AdminMenu from "@/components/admin/AdminMenu";
 import AdminBookingCreate from "@/components/admin/AdminBookingCreate";
 export const metadata = { title: "Create & Manage Bookings | Tripanza Admin", robots: { index: false, follow: false } };
 export default async function BookingCreatePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  if (!(await getSiteSettings()).admin_booking_create_enabled) redirect("/admin/settings");
   const response = await requestBookingCreate();
   if ([401, 403].includes(response.status)) redirect("/");
   const data = await response.json().catch(() => null);

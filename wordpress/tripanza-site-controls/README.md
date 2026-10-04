@@ -1,8 +1,12 @@
 # Tripanza Site Controls
 
-## Version 1.1.0 upgrade
+## Version 1.2.0 upgrade
 
-Replace the existing Site Controls plugin using `tripanza-site-controls-1.1.0.zip`. Saved settings and Host state are preserved; new features default on, maintenance/announcements/email alerts default off. The frontend disables new editing controls until WordPress reports version 1.1.0. Nothing is enabled merely by opening the admin page. No footer is added.
+Four independent switches now control the native Next.js dashboard, booking history, booking creation and booking editor. They default on to preserve access. Turning one off hides its navigation/actions, redirects its page to `/admin/settings`, and blocks the matching WordPress REST endpoint. Site Settings, identity checks, WordPress-linked admin tools and Host-shared pages remain accessible. Save settings to apply changes; merely toggling does not persist. Upload and activate `tripanza-site-controls-1.2.0.zip` before deploying the matching Next.js frontend.
+
+## Previous 1.1.0 controls
+
+Replace the existing Site Controls plugin using `tripanza-site-controls-1.2.0.zip`. Saved settings and Host state are preserved; new features default on, maintenance/announcements/email alerts default off. The frontend disables controls unsupported by the installed WordPress plugin version. Nothing is enabled merely by opening the admin page. No footer is added.
 
 New admin sections cover feature switches, maintenance, announcements, featured homepage tours, contact/WhatsApp/social links, health diagnostics, the last 100 admin actions (old/new settings), and grouped operational errors. Save applies all drafts together; changing a toggle alone does not persist it. Concurrent-edit revision conflicts require reload.
 
@@ -31,7 +35,7 @@ Install this plugin **before deploying the new Next.js frontend**. Upload `tripa
 
 ## Admin access
 
-- Next.js: `/admin/settings` (`/admin` redirects here). Sign in using an account with WordPress `manage_options` capability.
+- Next.js: `/admin/settings` stays accessible to WordPress administrators with `manage_options`, even when every native admin page switch is off. The `/admin` dashboard redirects here only when its switch is off.
 - WordPress fallback: Settings → Tripanza Site Controls. The same saved settings are used by both interfaces. This remains accessible with Host turned off.
 - Next.js forwards the HTTP-only session token server-side; it does not expose credentials to browser code.
 - REST writes require administrator permission. Next.js writes also verify request origin; the WordPress form verifies a nonce.

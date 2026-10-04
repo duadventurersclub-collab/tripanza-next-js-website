@@ -27,6 +27,13 @@ const purges: { scope: CacheScope; label: string; note: string }[] = [
   { scope: "browser", label: "Browser previews", note: "Rotates the cache generation. Open tabs pick it up within 30 seconds or on focus/navigation." },
 ];
 
+const adminPages: { key: "admin_dashboard_enabled" | "admin_booking_history_enabled" | "admin_booking_create_enabled" | "admin_booking_editor_enabled"; label: string; note: string }[] = [
+  { key: "admin_dashboard_enabled", label: "Admin dashboard", note: "Hide /admin and block its workspace API." },
+  { key: "admin_booking_history_enabled", label: "Booking history", note: "Hide /admin/bookings and block history reads and actions." },
+  { key: "admin_booking_create_enabled", label: "Create bookings", note: "Hide /admin/bookings/create and block booking creation." },
+  { key: "admin_booking_editor_enabled", label: "Booking editor", note: "Hide editor actions and block the editor API and direct page." },
+];
+
 async function api(path: string, body?: unknown) {
   const response = await fetch(path, { method: body === undefined ? "GET" : "POST", cache: "no-store", headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
   const data = await response.json().catch(() => null);
@@ -42,6 +49,8 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
   const [tourId, setTourId] = useState("");
   const dirty = JSON.stringify(draft) !== JSON.stringify(current.settings);
+  const [controlsMajor, controlsMinor] = (current.controls_version || "0.0").split(".").map(Number);
+  const supportsAdminPages = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 2);
   const update = <K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) => setDraft(s => ({ ...s, [key]: value }));
   const changed = () => { window.dispatchEvent(new Event("tripanza:settings-changed")); router.refresh(); };
 
@@ -86,7 +95,12 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
   return <main className="admin-settings">
     <header className="as-header"><div><p className="as-eyebrow">TRIPANZA / ADMIN CONTROLS</p><h1>Your site.<br /><em>Your controls.</em></h1><p>Manage speed, freshness and Host access in one place.</p></div><span className={`as-status ${current.settings.host_enabled ? "on" : ""}`}>{current.settings.host_enabled ? "Host enabled" : "Host disabled"}</span></header>
     <section className="as-card as-host"><div><p className="as-eyebrow">FEATURE CONTROL</p><h2>Host system</h2><p>One switch for registration, public Host profiles, reels, dashboards, CRM, payouts and poster/trip studios. Turning it off preserves all existing data and keeps traveller bookings available.</p><small>Server-side enforcement · No administrator bypass for Host tools · Admin settings stay accessible</small></div><label className="as-toggle"><input type="checkbox" checked={draft.host_enabled} disabled={!!busy} onChange={e => update("host_enabled", e.target.checked)} /><span /><b>{draft.host_enabled ? "Enabled" : "Disabled"}</b></label></section>
-    <AdminAdvancedControls draft={draft} update={update} disabled={!!busy} supported={current.controls_version === "1.1.0"} />
+    <section className="as-card"><p className="as-eyebrow">ADMIN PAGE ACCESS</p><h2>Native admin pages</h2><p>Turn off individual Next.js admin pages without changing WordPress tools or Host-shared pages. Disabled pages redirect to Site Settings; their WordPress APIs are blocked. This settings page always stays available.</p>
+      {!supportsAdminPages && <p className="as-notice error">Update the Tripanza Site Controls WordPress plugin to v1.2.0 before changing these switches.</p>}
+      <div className="as-admin-pages">{adminPages.map(page => <div className="as-field" key={page.key}><span><strong>{page.label}</strong><small>{page.note}</small></span><label className="as-toggle"><input type="checkbox" checked={draft[page.key]} disabled={!!busy || !supportsAdminPages} onChange={e => update(page.key, e.target.checked)} aria-label={page.label} /><span /><b>{draft[page.key] ? "Enabled" : "Disabled"}</b></label></div>)}</div>
+      <div className="as-save"><button className="as-primary" onClick={save} disabled={!!busy || !dirty}>{busy === "save" ? "Saving…" : "Save page access →"}</button><small>Switches take effect only after saving.</small></div>
+    </section>
+    <AdminAdvancedControls draft={draft} update={update} disabled={!!busy} supported={controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 1)} />
     <section className="as-card"><div className="as-section-head"><div><p className="as-eyebrow">CACHE POLICY</p><h2>Fast, without going stale.</h2><p>All values are in seconds. Set a lifetime to 0 to disable that cache.</p></div><label className="as-toggle"><input type="checkbox" checked={draft.public_cache_enabled} disabled={!!busy} onChange={e => update("public_cache_enabled", e.target.checked)} /><span /><b>Public data cache</b></label></div>
       <div className="as-fields">{fields.map(field => <label className="as-field" key={field.key}><span><strong>{field.label}</strong><small>{field.note}</small></span><div><input type="number" min={0} max={field.max} step={1} value={Number(draft[field.key])} disabled={!!busy} onChange={e => update(field.key, Number(e.target.value))} aria-label={`${field.label} seconds`} /><small>0–{field.max}s</small></div></label>)}</div>
       <p className="as-hint">The public-cache switch covers tours, reels, Host landing data, site metadata and the Host leaderboard. Authentication, payments, checkout and private Host requests always remain uncached. Browser previews always refresh from the server.</p>

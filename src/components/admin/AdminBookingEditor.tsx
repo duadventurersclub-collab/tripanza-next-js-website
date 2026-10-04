@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import AdminMenu from "./AdminMenu";
+import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 import { money } from "@/lib/admin-bookings-types";
 import { editorPreview, editorSale, editorGroup, emptyManual, type BookingEditorData, type EditorFields, type EditorManual } from "@/lib/admin-booking-editor-types";
 import "./booking-editor-original.css";
@@ -9,6 +10,7 @@ import "./booking-editor-native.css";
 const fieldCopy = (data: BookingEditorData): EditorFields => structuredClone({ ...data.fields, guests: data.fields.guests.length ? data.fields.guests : [{ name: "", title: "", age: 0 }] });
 export type BookingEditorModalControls = { close: () => void; setDismissHandler: (handler: () => void) => void };
 export default function AdminBookingEditor({ initial, wordpressOrigin, modal, onChange }: { initial: BookingEditorData; wordpressOrigin: string; modal?: BookingEditorModalControls; onChange?: (data: BookingEditorData) => void }) {
+  const settings = useSiteSettings();
   const [data, setData] = useState(initial), [fields, setFields] = useState(() => fieldCopy(initial)), [manual, setManual] = useState<EditorManual>(emptyManual);
   const [busy, setBusy] = useState(""), [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
   const [phone, setPhone] = useState(initial.country_code + initial.fields.st_phone), [query, setQuery] = useState("");
@@ -84,7 +86,7 @@ export default function AdminBookingEditor({ initial, wordpressOrigin, modal, on
   const fmt = (value: number) => money(value, data.booking.currency);
   const Content = modal ? "div" : "main";
   return <div className="native-booking-editor">{!modal && <AdminMenu name={data.user.name} wordpressOrigin={wordpressOrigin} />}<Content id="content">
-    <div className="editor-topbar"><div className="editor-brand"><span className="editor-brand__mark" aria-hidden="true">T</span><div>Tripanza<small>Booking operations</small></div></div>{modal ? <button type="button" onClick={requestClose}>← Back to booking history</button> : <Link href="/admin/bookings" prefetch={false}>← Booking history</Link>}</div>
+    <div className="editor-topbar"><div className="editor-brand"><span className="editor-brand__mark" aria-hidden="true">T</span><div>Tripanza<small>Booking operations</small></div></div>{modal ? <button type="button" onClick={requestClose}>← Close editor</button> : <Link href={settings.admin_booking_history_enabled ? "/admin/bookings" : "/admin/settings"} prefetch={false}>← {settings.admin_booking_history_enabled ? "Booking history" : "Site Settings"}</Link>}</div>
     {notice && <div className={`editor-toast is-visible be-notice${notice.error ? " is-error" : ""}`} role={notice.error ? "alert" : "status"}>{notice.text}<button type="button" aria-label="Dismiss notification" onClick={() => setNotice(null)}>×</button></div>}
     <header className="editor-hero"><span className="editor-hero__eyebrow">Booking workspace</span><h1 ref={heading}>Edit booking #{id}</h1><div className="editor-hero__host"><span>Host</span><strong>{data.host_name}</strong></div><p>Review the saved trip record, update traveller and payment information, then publish every change in one secure action.</p><div className="editor-hero__meta"><span>{data.fields.selected_tour_name}</span><span className={`booking-source ${data.booking.poster === "host" ? "is-host" : "is-direct"}`}>{data.booking.source}</span><span>{data.created}</span><span>{data.status_label}</span></div></header>
     <div className="be-toolbar"><span>{dirty ? "Unsaved changes — the booking details below still show the saved record." : "All displayed booking details are saved."}</span><button type="button" onClick={refresh} disabled={Boolean(busy)}>{busy === "refresh" ? "Refreshing…" : "Refresh saved booking"}</button></div>

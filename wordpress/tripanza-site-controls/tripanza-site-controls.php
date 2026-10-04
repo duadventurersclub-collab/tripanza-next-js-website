@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Site Controls
  * Description: Administrator-only cache, feature, content, maintenance and operational controls for Tripanza Next.js.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires PHP: 7.4
  */
 defined('ABSPATH') || exit;
@@ -10,11 +10,13 @@ defined('ABSPATH') || exit;
 final class Tripanza_Site_Controls {
     const OPTION = 'tripanza_site_controls_v1';
     const NS = 'tripanza-headless/v1';
-    const VERSION = '1.1.0';
+    const VERSION = '1.2.0';
 
     public static function defaults() {
         return array('host_enabled' => true, 'public_cache_enabled' => true,
             'ai_chat_enabled' => true, 'reels_enabled' => true, 'pdf_downloads_enabled' => true, 'new_bookings_enabled' => true,
+            'admin_dashboard_enabled' => true, 'admin_booking_history_enabled' => true,
+            'admin_booking_create_enabled' => true, 'admin_booking_editor_enabled' => true,
             'maintenance_enabled' => false, 'maintenance_message' => 'We are making Tripanza even better. Please check back shortly.',
             'announcement_enabled' => false, 'announcement_text' => '', 'announcement_link' => '', 'featured_tour_slugs' => '',
             'contact_email' => 'hello@tripanza.com', 'contact_phone' => '+918130117254', 'contact_address' => 'Dwarka, Delhi NCR, India',
@@ -89,7 +91,7 @@ final class Tripanza_Site_Controls {
             if (!isset($input[$key]) || !is_bool($input[$key])) return new WP_Error('tripanza_input', 'Invalid toggle: ' . $key, array('status' => 400));
             $settings[$key] = $input[$key];
         }
-        foreach (array('ai_chat_enabled', 'reels_enabled', 'pdf_downloads_enabled', 'new_bookings_enabled', 'maintenance_enabled', 'announcement_enabled', 'error_alerts_enabled') as $key) {
+        foreach (array('ai_chat_enabled', 'reels_enabled', 'pdf_downloads_enabled', 'new_bookings_enabled', 'maintenance_enabled', 'announcement_enabled', 'error_alerts_enabled', 'admin_dashboard_enabled', 'admin_booking_history_enabled', 'admin_booking_create_enabled', 'admin_booking_editor_enabled') as $key) {
             if (!array_key_exists($key, $input)) continue; // Older clients preserve new settings.
             if (!is_bool($input[$key])) return new WP_Error('tripanza_input', 'Invalid toggle: ' . $key, array('status' => 400));
             $settings[$key] = $input[$key];
@@ -264,6 +266,13 @@ final class Tripanza_Site_Controls {
     public static function gate_rest($result, $server, $request) {
         $route = $request->get_route();
         $s = self::settings();
+        $admin_pages = array(
+            '/tripanza-headless/v1/admin/workspace' => 'admin_dashboard_enabled',
+            '/tripanza-headless/v1/admin/bookings' => 'admin_booking_history_enabled',
+            '/tripanza-headless/v1/admin/bookings/create' => 'admin_booking_create_enabled',
+        );
+        $admin_flag = $admin_pages[$route] ?? (preg_match('#^/tripanza-headless/v1/admin/bookings/[1-9][0-9]*/editor$#D', $route) ? 'admin_booking_editor_enabled' : '');
+        if ($admin_flag !== '' && !$s[$admin_flag]) return new WP_Error('tripanza_admin_page_disabled', 'This admin page is disabled in Site Settings.', array('status' => 503));
         if (!$s['host_enabled'] && preg_match('#^/tripanza-headless/v1/host(?:/|$)#', $route)) return new WP_Error('tripanza_host_disabled', 'The Host feature is currently disabled.', array('status' => 503));
         if (!$s['ai_chat_enabled'] && preg_match('#^/tripanza-ai/v1/(ask|sync-history)$#', $route)) return new WP_Error('tripanza_feature_disabled', 'AI chat is currently unavailable.', array('status' => 503));
         if (!$s['reels_enabled'] && preg_match('#^/tripanza-headless/v1/(meta-reels|host/(?:.*/)?reels)(?:/|$)#', $route)) return new WP_Error('tripanza_feature_disabled', 'Reels are currently unavailable.', array('status' => 503));

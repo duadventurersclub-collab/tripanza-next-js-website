@@ -4,6 +4,10 @@ export type SiteSettings = {
   reels_enabled: boolean;
   pdf_downloads_enabled: boolean;
   new_bookings_enabled: boolean;
+  admin_dashboard_enabled: boolean;
+  admin_booking_history_enabled: boolean;
+  admin_booking_create_enabled: boolean;
+  admin_booking_editor_enabled: boolean;
   maintenance_enabled: boolean;
   maintenance_message: string;
   announcement_enabled: boolean;
@@ -44,6 +48,7 @@ export type CacheScope = "all" | "tours" | "reels" | "hosts" | "site" | "booking
 export const DEFAULT_SETTINGS: SiteSettings = {
   host_enabled: false, public_cache_enabled: true, tour_cache_seconds: 300, availability_cache_seconds: 60,
   ai_chat_enabled: true, reels_enabled: true, pdf_downloads_enabled: true, new_bookings_enabled: true,
+  admin_dashboard_enabled: true, admin_booking_history_enabled: true, admin_booking_create_enabled: true, admin_booking_editor_enabled: true,
   maintenance_enabled: false, maintenance_message: "We are making Tripanza even better. Please check back shortly.",
   announcement_enabled: false, announcement_text: "", announcement_link: "", featured_tour_slugs: "",
   contact_email: "hello@tripanza.com", contact_phone: "+918130117254", contact_address: "Dwarka, Delhi NCR, India",
