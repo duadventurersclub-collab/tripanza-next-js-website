@@ -20,12 +20,17 @@ export default function AdminWhatsApp() {
       if (document.visibilityState === "hidden") return;
       try {
         const response = await fetch("/api/whatsapp/status", { cache: "no-store", signal: AbortSignal.timeout(10_000) });
-        const data = await response.json();
+        const data: Status & { error?: string } = await response.json();
         if (!active) return;
         setStatus(data);
         setError(response.ok ? "" : data.message || data.error || "Bot status is unavailable.");
         setQrVersion(Date.now());
-      } catch { if (active) setError("Could not reach the integrated bot server."); }
+      } catch {
+        if (active) {
+          setStatus(null);
+          setError("Bot status could not be read. The integrated service may not be deployed or is temporarily unavailable.");
+        }
+      }
     }
     void refresh();
     const timer = window.setInterval(() => void refresh(), 8000);
@@ -45,8 +50,8 @@ export default function AdminWhatsApp() {
           return <section className="wa-admin__card" key={kind}>
             <span className="wa-admin__icon" aria-hidden="true">{kind === "crm" ? "✦" : "↗"}</span>
             <div><small>{kind === "crm" ? "INBOUND + OUTBOUND" : "OUTBOUND ONLY"}</small><h2>{names[kind]}</h2><p>{kind === "crm" ? "Replies, trip media and human-response logging." : "Booking notices, verification codes and updates."}</p></div>
-            <strong className={bot?.connected ? "wa-admin__online" : "wa-admin__offline"}>{bot?.connected ? "Connected" : bot?.state === "scan_qr" ? "Scan QR to connect" : bot?.state === "reconnecting" ? "Reconnecting" : bot?.state === "logged_out" ? "Logged out" : "Offline"}</strong>
-            <button type="button" disabled={!bot?.qr_available} onClick={() => setSelected(kind)}>{bot?.qr_available ? "View pairing QR" : bot?.connected ? "Already paired" : "QR not ready"}</button>
+            <strong className={bot?.connected ? "wa-admin__online" : "wa-admin__offline"}>{status?.enabled === false ? "Not activated here" : !status ? "Status unavailable" : bot?.connected ? "Connected" : bot?.state === "scan_qr" ? "Scan QR to connect" : bot?.state === "reconnecting" ? "Reconnecting" : bot?.state === "logged_out" ? "Logged out" : "Offline"}</strong>
+            <button type="button" disabled={!bot?.qr_available} onClick={() => setSelected(kind)}>{status?.enabled === false ? "Pairing unavailable" : bot?.qr_available ? "View pairing QR" : bot?.connected ? "Already paired" : "QR not ready"}</button>
           </section>;
         })}
       </div>
