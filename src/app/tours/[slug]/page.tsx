@@ -18,6 +18,7 @@ import TourReviews from "@/components/tour/TourReviews";
 import TourSectionNav from "@/components/tour/TourSectionNav";
 import FeatureGate from "@/components/settings/FeatureGate";
 import { getSiteSettings } from "@/lib/site-settings";
+import { publicOrigin, publicUrl, safeJsonLd } from "@/lib/search-discovery";
 
 // Scoped design CSS from PHP templates
 import "./tour-design.css";
@@ -37,18 +38,23 @@ export async function generateMetadata({ params }: TourDetailPageProps): Promise
   const { slug } = await params;
   try {
     const tour = await getTourBySlug(slug);
-    if (!tour) return { title: "Tour Not Found" };
+    if (!tour) return { title: "Tour Not Found", robots: { index: false } };
+    const origin = publicOrigin((await getSiteSettings()).seo_site_url);
+    const url = origin ? publicUrl(origin, `/tours/${encodeURIComponent(tour.slug)}`) : undefined;
     return {
-      title: `${tour.title} | Tripanza`,
+      title: tour.title,
+      alternates: url ? { canonical: url } : undefined,
       description: tour.excerpt || `Join the ${tour.title} trip with Tripanza — ${tour.details.duration.days} Days / ${tour.details.duration.nights} Nights from ${tour.details.origin}.`,
       openGraph: {
         title: tour.title,
         description: tour.excerpt,
+        url,
         images: tour.featured_image ? [{ url: tour.featured_image }] : [],
       },
+      twitter: { card: tour.featured_image ? "summary_large_image" : "summary", title: tour.title, description: tour.excerpt, images: tour.featured_image ? [tour.featured_image] : undefined },
     };
   } catch {
-    return { title: "Tripanza Tour" };
+    return { title: "Tripanza Tour", robots: { index: false } };
   }
 }
 
@@ -64,6 +70,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
     `Hey Tripanza Team! I am interested in the ${tour.title} (${tour.details.duration.days}D/${tour.details.duration.nights}N). Could you please share the next departure batch dates and availability?`
   );
   const settings = await getSiteSettings();
+  const origin = publicOrigin(settings.seo_site_url);
   const whatsappNumber = settings.whatsapp_number;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMsg}`;
   const sections = [
@@ -79,6 +86,14 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
 
   return (
     <div className="tripanza-single-tour-app tp-app-v2">
+      {origin && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
+        "@context": "https://schema.org", "@type": "TouristTrip",
+        name: tour.title, description: tour.excerpt || undefined,
+        url: publicUrl(origin, `/tours/${encodeURIComponent(tour.slug)}`),
+        image: tour.featured_image || undefined,
+        itinerary: tour.details.itinerary.length ? { "@type": "ItemList", itemListElement: tour.details.itinerary.map(day => ({ "@type": "ListItem", position: day.day, name: day.title, description: day.description.replace(/<[^>]*>/g, " ").trim() || undefined })) } : undefined,
+        provider: { "@type": "Organization", "@id": `${origin}/#organization` },
+      }) }} />}
       {/* Scroll Progress (purely visual, client-side) */}
       <div className="tripanza-tour-scroll" aria-hidden="true">
         <span id="tp-scroll-bar" />

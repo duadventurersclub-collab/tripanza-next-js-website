@@ -1,6 +1,7 @@
 import Link from "next/link";
 import InfoHeader from "./InfoHeader";
 import snapshot from "@/content/legal-policy-snapshot.json";
+import CookiePreferencesButton from "@/components/settings/CookiePreferencesButton";
 
 type PolicyKey = keyof typeof snapshot;
 
@@ -52,6 +53,8 @@ export default function LegalPage({ policy }: { policy: PolicyKey }) {
           <article className="tp-legal-content">
             {info.notice && <div className="tp-legal-notice">{info.notice}</div>}
             {sections.map((section) => <section id={section.id} key={section.id} dangerouslySetInnerHTML={{ __html: section.html }} />)}
+            {policy === "privacy" && <section><h2>Optional analytics and advertising measurement</h2><p>Updated 4 October 2026. If configured, Google Analytics 4 may receive a public page URL, browser/device information and cookie identifiers after you accept analytics. Meta Pixel may receive similar information after you accept marketing. We do not intentionally send booking tokens, form entries or private account URLs to these tools. You can change or withdraw these choices in our <Link href="/cookies-policy">Cookie Policy</Link>. Each provider may process data under its own terms; please review those before opting in.</p></section>}
+            {policy === "cookies" && <section><h2>Your optional tracking choices</h2><p>If Google Analytics or Meta Pixel is configured, neither loads before you opt in. You can change or withdraw your choice here at any time. Withdrawal stops future tracking on this site; it cannot recall data already received by a provider.</p><CookiePreferencesButton /></section>}
             <div className="tp-legal-help"><div><span>Still have a question?</span><h2>We’re here to help.</h2><p>Talk to a real person before you book or make changes to a trip.</p></div><Link href="/contact">Contact Tripanza <span aria-hidden="true">→</span></Link></div>
           </article>
         </div>

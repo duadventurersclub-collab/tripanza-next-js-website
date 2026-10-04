@@ -2,6 +2,9 @@ import { getAppTours, getSiteConfig, getTourBySlug, type SiteConfig, type TourDe
 import HomeClient from "./HomeClient";
 import "./home.css";
 import { getSiteSettings } from "@/lib/site-settings";
+import { publicPageMetadata, publicOrigin, publicUrl, safeJsonLd } from "@/lib/search-discovery";
+
+export const generateMetadata = () => publicPageMetadata("/", "Tripanza | Curated Group Trips in India", "Discover curated group trips, upcoming departures and real travel experiences with Tripanza.");
 
 export const revalidate = 300;
 
@@ -29,6 +32,15 @@ export default async function Home() {
   const [siteResult, toursResult] = await Promise.allSettled([getSiteConfig(), getHomepageTours()]);
   const site = siteResult.status === "fulfilled" ? siteResult.value : fallbackSite;
   const tours = toursResult.status === "fulfilled" ? toursResult.value : [];
+  const origin = publicOrigin((await getSiteSettings()).seo_site_url);
 
-  return <HomeClient siteName={site.name} tours={tours} />;
+  return <>
+    {origin && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
+      "@context": "https://schema.org", "@graph": [
+        { "@type": "Organization", "@id": `${origin}/#organization`, name: "Tripanza", url: origin },
+        { "@type": "WebSite", "@id": `${origin}/#website`, name: "Tripanza", url: publicUrl(origin, "/"), publisher: { "@id": `${origin}/#organization` } },
+      ],
+    }) }} />}
+    <HomeClient siteName={site.name} tours={tours} />
+  </>;
 }

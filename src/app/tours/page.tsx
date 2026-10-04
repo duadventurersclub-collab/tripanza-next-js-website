@@ -1,5 +1,8 @@
 import { getAppTours } from "@/lib/wp";
 import ToursClient, { type TourCardData } from "./ToursClient";
+import { publicPageMetadata } from "@/lib/search-discovery";
+
+export const generateMetadata = () => publicPageMetadata("/tours", "Group Tours & Upcoming Trips", "Browse Tripanza group tours, destinations, itineraries and upcoming departures.");
 
 export const revalidate = 300;
 

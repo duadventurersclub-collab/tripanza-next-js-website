@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import InfoHeader from "@/components/info/InfoHeader";
+import { publicPageMetadata } from "@/lib/search-discovery";
 
-export const metadata: Metadata = { title: "About Us | Tripanza", description: "Meet the people and purpose behind Tripanza's community-led group trips." };
+export const generateMetadata = (): Promise<Metadata> => publicPageMetadata("/about", "About Us", "Meet the people and purpose behind Tripanza's community-led group trips.");
 
 export default function AboutPage() {
   return (

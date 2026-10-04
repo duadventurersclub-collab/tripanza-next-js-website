@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Site Controls
  * Description: Administrator-only cache, feature, content, maintenance and operational controls for Tripanza Next.js.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Requires PHP: 7.4
  */
 defined('ABSPATH') || exit;
@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 final class Tripanza_Site_Controls {
     const OPTION = 'tripanza_site_controls_v1';
     const NS = 'tripanza-headless/v1';
-    const VERSION = '1.2.0';
+    const VERSION = '1.3.0';
 
     public static function defaults() {
         return array('host_enabled' => true, 'public_cache_enabled' => true,
@@ -21,6 +21,7 @@ final class Tripanza_Site_Controls {
             'announcement_enabled' => false, 'announcement_text' => '', 'announcement_link' => '', 'featured_tour_slugs' => '',
             'contact_email' => 'hello@tripanza.com', 'contact_phone' => '+918130117254', 'contact_address' => 'Dwarka, Delhi NCR, India',
             'whatsapp_number' => '918130117254', 'instagram_url' => '', 'facebook_url' => '', 'error_alerts_enabled' => false, 'alert_email' => '',
+            'seo_site_url' => '', 'ga4_measurement_id' => '', 'meta_pixel_id' => '', 'google_site_verification' => '',
             'tour_cache_seconds' => 300, 'availability_cache_seconds' => 60, 'reel_cache_seconds' => 300, 'host_cache_seconds' => 60,
             'site_cache_seconds' => 3600, 'leaderboard_cache_seconds' => 600,
             'booking_cache_seconds' => 15, 'browser_cache_seconds' => 3300,
@@ -97,7 +98,8 @@ final class Tripanza_Site_Controls {
             $settings[$key] = $input[$key];
         }
         $lengths = array('maintenance_message' => 500, 'announcement_text' => 300, 'announcement_link' => 500, 'featured_tour_slugs' => 1200,
-            'contact_email' => 254, 'contact_phone' => 25, 'contact_address' => 300, 'whatsapp_number' => 15, 'instagram_url' => 500, 'facebook_url' => 500, 'alert_email' => 254);
+            'contact_email' => 254, 'contact_phone' => 25, 'contact_address' => 300, 'whatsapp_number' => 15, 'instagram_url' => 500, 'facebook_url' => 500, 'alert_email' => 254,
+            'seo_site_url' => 255, 'ga4_measurement_id' => 24, 'meta_pixel_id' => 30, 'google_site_verification' => 180);
         foreach ($lengths as $key => $max) {
             if (!array_key_exists($key, $input)) continue;
             if (!is_string($input[$key]) || strlen($input[$key]) > $max) return new WP_Error('tripanza_input', 'Invalid or oversized field: ' . $key, array('status' => 400));
@@ -105,6 +107,14 @@ final class Tripanza_Site_Controls {
             if (in_array($key, array('contact_email', 'alert_email'), true) && (($key === 'contact_email' && $value === '') || ($value !== '' && !is_email($value)))) return new WP_Error('tripanza_input', 'Enter a valid email: ' . $key, array('status' => 400));
             if ($key === 'contact_phone' && !preg_match('/^\+?[1-9][0-9]{6,14}$/D', $value)) return new WP_Error('tripanza_input', 'Use a phone number with country code and no spaces.', array('status' => 400));
             if ($key === 'whatsapp_number' && !preg_match('/^[1-9][0-9]{6,14}$/D', $value)) return new WP_Error('tripanza_input', 'Use WhatsApp digits with country code.', array('status' => 400));
+            if ($key === 'seo_site_url' && $value !== '') {
+                $origin = wp_parse_url($value);
+                if (!$origin || ($origin['scheme'] ?? '') !== 'https' || empty($origin['host']) || isset($origin['user']) || isset($origin['pass']) || !empty($origin['query']) || !empty($origin['fragment']) || !in_array($origin['path'] ?? '', array('', '/'), true)) return new WP_Error('tripanza_input', 'Canonical site URL must be an HTTPS origin without a path, query or fragment.', array('status' => 400));
+                $value = untrailingslashit(esc_url_raw($value, array('https')));
+            }
+            if ($key === 'ga4_measurement_id' && $value !== '' && !preg_match('/^G-[A-Z0-9]{4,20}$/D', $value)) return new WP_Error('tripanza_input', 'Enter a valid GA4 Measurement ID beginning G-.', array('status' => 400));
+            if ($key === 'meta_pixel_id' && $value !== '' && !preg_match('/^[0-9]{5,30}$/D', $value)) return new WP_Error('tripanza_input', 'Enter a valid numeric Meta Pixel ID.', array('status' => 400));
+            if ($key === 'google_site_verification' && $value !== '' && !preg_match('/^[A-Za-z0-9_-]{10,180}$/D', $value)) return new WP_Error('tripanza_input', 'Enter only the Google verification content token, not the full HTML tag.', array('status' => 400));
             if (in_array($key, array('announcement_link', 'instagram_url', 'facebook_url'), true) && $value !== '') {
                 $local = $key === 'announcement_link' && preg_match('#^/(?!/)[a-zA-Z0-9/_-]*$#D', $value);
                 $url = wp_parse_url($value);
@@ -329,7 +339,7 @@ final class Tripanza_Site_Controls {
             if (!is_bool($default)) continue;
             echo '<tr><th>' . esc_html(ucwords(str_replace('_', ' ', $key))) . '</th><td><input type="checkbox" name="' . esc_attr($key) . '" value="1" ' . checked($s[$key], true, false) . '></td></tr>';
         }
-        foreach (array('maintenance_message', 'announcement_text', 'announcement_link', 'featured_tour_slugs', 'contact_email', 'contact_phone', 'contact_address', 'whatsapp_number', 'instagram_url', 'facebook_url', 'alert_email') as $key) {
+        foreach (array('maintenance_message', 'announcement_text', 'announcement_link', 'featured_tour_slugs', 'contact_email', 'contact_phone', 'contact_address', 'whatsapp_number', 'instagram_url', 'facebook_url', 'alert_email', 'seo_site_url', 'ga4_measurement_id', 'meta_pixel_id', 'google_site_verification') as $key) {
             echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html(ucwords(str_replace('_', ' ', $key))) . '</label></th><td><input class="regular-text" id="' . esc_attr($key) . '" name="' . esc_attr($key) . '" value="' . esc_attr($s[$key]) . '"></td></tr>';
         }
         foreach (self::defaults() as $key => $value) {
@@ -349,7 +359,7 @@ final class Tripanza_Site_Controls {
             if (substr($key, -8) === '_seconds') $input[$key] = (int) ($_POST[$key] ?? -1);
             if (is_bool($value)) $input[$key] = isset($_POST[$key]);
         }
-        foreach (array('maintenance_message', 'announcement_text', 'announcement_link', 'featured_tour_slugs', 'contact_email', 'contact_phone', 'contact_address', 'whatsapp_number', 'instagram_url', 'facebook_url', 'alert_email') as $key) {
+        foreach (array('maintenance_message', 'announcement_text', 'announcement_link', 'featured_tour_slugs', 'contact_email', 'contact_phone', 'contact_address', 'whatsapp_number', 'instagram_url', 'facebook_url', 'alert_email', 'seo_site_url', 'ga4_measurement_id', 'meta_pixel_id', 'google_site_verification') as $key) {
             if (isset($_POST[$key]) && is_string($_POST[$key])) $input[$key] = wp_unslash($_POST[$key]);
         }
         $input['host_enabled'] = isset($_POST['host_enabled']);

@@ -6,6 +6,8 @@ import NavigationProgress from "@/components/navigation/NavigationProgress";
 import SiteSettingsProvider from "@/components/settings/SiteSettingsProvider";
 import { getSiteSettings } from "@/lib/site-settings";
 import SiteAnnouncement from "@/components/settings/SiteAnnouncement";
+import CookieConsent from "@/components/settings/CookieConsent";
+import { publicOrigin } from "@/lib/search-discovery";
 import "./globals.css";
 import "@/components/navigation/tripanza-bottom-menu.css";
 import "@/components/info/info-pages.css";
@@ -15,10 +17,17 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Tripanza",
-  description: "Ultra-fast travel website powered by WordPress backend and Next.js frontend",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const origin = publicOrigin(settings.seo_site_url);
+  return {
+    metadataBase: origin ? new URL(origin) : undefined,
+    title: { default: "Tripanza | Curated Group Trips in India", template: "%s | Tripanza" },
+    description: "Explore curated group trips, itineraries, upcoming departures and travel experiences with Tripanza.",
+    applicationName: "Tripanza",
+    verification: settings.google_site_verification ? { google: settings.google_site_verification } : undefined,
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -38,6 +47,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <SiteAnnouncement />
           {children}
           <TripanzaBottomMenu />
+          <CookieConsent />
         </SiteSettingsProvider>
       </body>
     </html>

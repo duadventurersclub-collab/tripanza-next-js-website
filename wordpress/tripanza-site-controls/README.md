@@ -1,5 +1,9 @@
 # Tripanza Site Controls
 
+## Version 1.3.0 upgrade
+
+Search & Measurement settings add an optional canonical Next.js HTTPS origin, GA4 Measurement ID, Meta Pixel ID and Google Search Console HTML-tag verification token. All default blank. The origin must be a domain actually serving the Next.js site; leaving it blank prevents the sitemap and canonical tags from claiming an unverified WordPress domain. Analytics and Pixel scripts are gated by separate visitor choices. Installing this plugin does not create Analytics/Meta/Search Console accounts, verify ownership, submit a sitemap or guarantee search/AI placement. Upload `tripanza-site-controls-1.3.0.zip` before using the new admin fields.
+
 ## Version 1.2.0 upgrade
 
 Four independent switches now control the native Next.js dashboard, booking history, booking creation and booking editor. They default on to preserve access. Turning one off hides its navigation/actions, redirects its page to `/admin/settings`, and blocks the matching WordPress REST endpoint. Site Settings, identity checks, WordPress-linked admin tools and Host-shared pages remain accessible. Save settings to apply changes; merely toggling does not persist. Upload and activate `tripanza-site-controls-1.2.0.zip` before deploying the matching Next.js frontend.

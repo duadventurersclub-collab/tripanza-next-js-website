@@ -20,6 +20,10 @@ export type SiteSettings = {
   whatsapp_number: string;
   instagram_url: string;
   facebook_url: string;
+  seo_site_url: string;
+  ga4_measurement_id: string;
+  meta_pixel_id: string;
+  google_site_verification: string;
   error_alerts_enabled: boolean;
   alert_email: string;
   public_cache_enabled: boolean;
@@ -53,6 +57,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   announcement_enabled: false, announcement_text: "", announcement_link: "", featured_tour_slugs: "",
   contact_email: "hello@tripanza.com", contact_phone: "+918130117254", contact_address: "Dwarka, Delhi NCR, India",
   whatsapp_number: "918130117254", instagram_url: "", facebook_url: "", error_alerts_enabled: false, alert_email: "",
+  seo_site_url: "", ga4_measurement_id: "", meta_pixel_id: "", google_site_verification: "",
   reel_cache_seconds: 300, host_cache_seconds: 60, site_cache_seconds: 3600,
   leaderboard_cache_seconds: 600, booking_cache_seconds: 15, browser_cache_seconds: 3300,
   cache_revision: "initial", revision: "initial", updated_at: "",

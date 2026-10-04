@@ -4,19 +4,11 @@ import { getMetaReels } from "@/lib/meta-reels";
 import { getSiteSettings } from "@/lib/site-settings";
 import { redirect } from "next/navigation";
 import "./meta-reels.css";
+import { publicPageMetadata } from "@/lib/search-discovery";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Trip Drops | Tripanza",
-  description: "Watch real group-trip moments and find your next escape.",
-  alternates: { canonical: "/trips" },
-  openGraph: {
-    title: "Tripanza trip drops",
-    description: "Watch real group-trip moments and find your next escape.",
-    type: "video.other",
-  },
-};
+export const generateMetadata = (): Promise<Metadata> => publicPageMetadata("/trips", "Trip Drops", "Watch real group-trip moments and find your next escape.");
 
 export default async function TripsPage({ searchParams }: { searchParams: Promise<{ reel?: string }> }) {
   if (!(await getSiteSettings()).reels_enabled) redirect("/tours");

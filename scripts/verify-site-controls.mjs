@@ -120,8 +120,8 @@ const mock = http.createServer(async (req, res) => {
     const accessFlag = access[relative] || (/^admin\/bookings\/[1-9][0-9]*\/editor$/.test(relative) ? "admin_booking_editor_enabled" : "");
     if (accessFlag && !settings[accessFlag]) return send({ message: "This admin page is disabled in Site Settings." }, 503);
     if (relative === "admin/workspace") return send(adminDashboardFixture());
-    const adminPayload = () => ({ settings, controls_version: "1.2.0", capabilities: { pdf: false, page_cache: false } });
-    if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.2.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
+    const adminPayload = () => ({ settings, controls_version: "1.3.0", capabilities: { pdf: false, page_cache: false } });
+    if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.3.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
     if (req.method === "GET") return send(url.searchParams.has("_tripanza_live") ? adminPayload() : { ...adminPayload(), settings: staleSettings });
     let raw = ""; for await (const chunk of req) raw += chunk;
     const body = JSON.parse(raw);

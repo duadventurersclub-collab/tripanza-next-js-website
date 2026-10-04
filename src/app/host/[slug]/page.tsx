@@ -4,6 +4,15 @@ import HostProfileView from "@/components/host/HostProfileView";
 import { getSiteSettings } from "@/lib/site-settings";
 import HostUnavailable from "@/components/host/HostUnavailable";
 import "@/components/host/host.css";
+import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/search-discovery";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const profile = await getPublicHostData<HostProfile>(`host/profile/${encodeURIComponent(slug)}`);
+  if (!profile) return { title: "Host not found", robots: { index: false } };
+  return publicPageMetadata(`/host/${encodeURIComponent(slug)}`, `${profile.name} - Tripanza Host`, profile.tagline || `Explore group trips hosted by ${profile.name} on Tripanza.`, profile.cover || profile.logo || undefined);
+}
 
 export default async function HostProfilePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ confirm_host_identity?: string }> }) {
   if (!(await getSiteSettings()).host_enabled) return <HostUnavailable />;

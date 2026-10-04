@@ -5,8 +5,9 @@ import HostLanding from "@/components/host/HostLanding";
 import { getSiteSettings } from "@/lib/site-settings";
 import { redirect } from "next/navigation";
 import "@/components/host/host.css";
+import { publicPageMetadata } from "@/lib/search-discovery";
 
-export const metadata = { title: "Become a Host | Tripanza" };
+export const generateMetadata = () => publicPageMetadata("/host", "Become a Host", "Explore Tripanza's Host community and learn how to lead your own group trip.");
 
 export default async function HostPage({ searchParams }: { searchParams: Promise<{ register?: string }> }) {
   if (!(await getSiteSettings()).host_enabled) redirect("/tours");
