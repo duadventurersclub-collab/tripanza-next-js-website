@@ -47,4 +47,13 @@ check_create(!is_wp_error($response) && $response['warning'] !== '', 'Order capt
 $calls_before = count($std_calls); create_request($mail_error_request); check_create(count($std_calls) === $calls_before, 'Email failure cannot recreate standard order');
 $permission_denied = true; check_create(is_wp_error(create_request(create_input())), 'Only admins create'); $permission_denied = false;
 $bad_nonce = create_input(); $bad_nonce['nonce'] = 'wrong'; check_create(is_wp_error(create_request($bad_nonce)), 'Nonce required');
-echo "PASS native creation PHP: protected validation, custom prices/zero/blank advance, private clone, timezone dates, real editor/history parity, atomic rollback, guest copies, existing standard function delegation, durable retry/recovery and hooks/mail once\n";
+$posts[27807]['post_type'] = 'page';
+$readiness = tripanza_native_create_get(); check_create($readiness['custom_available'] && $readiness['custom_prerequisites']['template_exists'], 'Existing non-tour source post is accepted as in original manager');
+$non_tour = create_request(create_input()); $non_tour_shadow = $meta[$non_tour['order_id']]['item_id'];
+check_create(get_post_type($non_tour_shadow) === 'st_tours' && $meta[$non_tour_shadow]['template_list'] === array('one', 'two'), 'Non-tour metadata source creates private tour clone');
+unset($posts[27807]);
+$readiness = tripanza_native_create_get(); check_create(!$readiness['custom_available'] && !$readiness['custom_prerequisites']['template_exists'] && $readiness['custom_prerequisites']['traveler_table_available'], 'Missing source is diagnosed separately');
+check_create(is_wp_error(create_request(create_input())), 'Missing source blocks booking');
+$creation_storage = false; $readiness = tripanza_native_create_get();
+check_create(!$readiness['custom_prerequisites']['traveler_table_available'] && !$readiness['standard_available'], 'Missing Traveler table is diagnosed separately');
+echo "PASS native creation PHP: protected validation, any-post metadata source/missing-source diagnostics, custom prices/zero/blank advance, private clone, timezone dates, real editor/history parity, atomic rollback, guest copies, existing standard function delegation, durable retry/recovery and hooks/mail once\n";

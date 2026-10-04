@@ -1,4 +1,4 @@
-# Tripanza Native Admin API v2.3.0
+# Tripanza Native Admin API v2.3.1
 
 The `/admin` dashboard and menu are React/Next.js components. This plugin provides
 protected JSON data/actions only. No iframe, remote PHP page, theme rendering,
@@ -8,7 +8,7 @@ are preserved. Calendar and revenue chart are native React components.
 
 ## Install/update
 
-Install `tripanza-headless-admin-2.3.0.zip` in WordPress, replacing the older version of the
+Install `tripanza-headless-admin-2.3.1.zip` in WordPress, replacing the older version of the
 Original Admin Dashboard Bridge if installed. The plugin directory is unchanged,
 so WordPress can upgrade it. Activate alongside Headless Core and Site Controls.
 Nothing is migrated or deleted: existing `tripanza_admin_todos`,
@@ -135,9 +135,10 @@ the obsolete v1.0.0 bridge package with this native frontend.
   function and may precede that traveller-name update; use the editor's explicit
   Resend Email action if an updated invoice is needed.
 - Custom creation retains the reference private shadow-tour/invoice design and
-  final entered package-price snapshot. Default template ID is **27807**, overridable
-  with `tripanza_native_custom_booking_template_id`. Missing template/storage blocks
-  creation instead of silently writing against a shared tour. Private metadata is
+  final entered package-price snapshot. Default metadata source ID is **27807**, overridable
+  with `tripanza_native_custom_booking_template_id`. The source can be any existing
+  WordPress post type, as in the original PHP manager. Missing source or Traveler
+  storage is reported separately and blocks creation. Private tour metadata is
   copied with decoded values, not double-serialized. ISO dates use the WP timezone.
   Customer/order/Traveler item data are registered, then existing hooks/email run.
 - Blank custom advance retains the full-total default; explicit **0** remains zero.
@@ -161,7 +162,7 @@ tests. Browser tests use mock JSON; PHP tests execute real adapters with stub WP
 They cover CSS declaration parity, both forms, preview/zero advance, keyboard search,
 mobile, validation, private clone, metadata copies, rollback, durable retry/recovery,
 standard delegation and hook/mail-once. These are not production database/mail tests.
-After installing v2.3.0, use a temporary admin booking and an email you control to
+After installing v2.3.1, use a temporary admin booking and an email you control to
 verify the installed standard function, template #27807, database engines, history/
 editor amounts, private invoice title, traveller names and actual invoice delivery.
 

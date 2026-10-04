@@ -13,6 +13,12 @@ export default function AdminBookingCreate({ initial, initialMode, wordpressOrig
   const [created, setCreated] = useState<number | null>(null), [overlay, setOverlay] = useState(false), [editor, setEditor] = useState<number | null>(null), [searchOpen, setSearchOpen] = useState(false), [query, setQuery] = useState("");
   const pending = useRef(false), attempt = useRef<{ signature: string; payload: Record<string, unknown> } | null>(null), result = useRef<HTMLDivElement>(null);
   const fields = drafts[mode], total = customBookingTotal(fields), available = mode === "standard" ? initial.standard_available : initial.custom_available;
+  const prerequisites = initial.custom_prerequisites;
+  const missing = prerequisites ? [
+    !prerequisites.template_exists && `Source post #${initial.custom_template_id} is missing in WordPress.`,
+    !prerequisites.order_type_available && "Traveler order post type is unavailable.",
+    !prerequisites.traveler_table_available && "Traveler order item table is unavailable.",
+  ].filter(Boolean).join(" ") : "Update the Tripanza Native Admin API plugin to v2.3.1 to see which booking prerequisite is missing.";
   const locked = busy || uncertain || Boolean(created), dirty = JSON.stringify(drafts.standard) !== JSON.stringify(emptyCreateFields("standard")) || JSON.stringify(drafts.custom) !== JSON.stringify(emptyCreateFields("custom"));
   const closeEditor = useCallback(() => setEditor(null), []);
   const editorChanged = useCallback(() => { try { sessionStorage.setItem("tripanza-admin-bookings-changed", "1"); } catch {} }, []);
@@ -69,7 +75,7 @@ export default function AdminBookingCreate({ initial, initialMode, wordpressOrig
     <main className="tripanza-booking-dashboard"><div className="tp-dashboard-hero"><div className="tp-dashboard-hero__content"><span className="tp-dashboard-badge"><Icon name="fa-calendar-check" /> Booking Manager</span><h1 className="tp-dashboard-title">Create &amp; Manage Bookings</h1><p className="tp-dashboard-subtitle">Generate standard tour bookings or customized packages with automatic invoice delivery to customers.</p></div><Link className="bm-history-link" href="/admin/bookings">← Booking History</Link></div>
       <nav className="tp-dashboard-tabs" aria-label="Booking type">{(["standard", "custom"] as const).map(value => <button key={value} type="button" className={`tp-dashboard-tab${mode === value ? " is-active" : ""}`} aria-pressed={mode === value} disabled={locked} onClick={() => tab(value)}><Icon name={value === "standard" ? "fa-box" : "fa-wrench"} /> {value === "standard" ? "Standard Tour" : "Custom Package"}</button>)}</nav>
       <div className="tp-panel"><div className="tp-panel__header"><div><h2>{mode === "standard" ? "Book Standard Tour" : "Book Custom Package"}</h2><p>{mode === "standard" ? "Search an admin tour, pick a departure date, and create a booking instantly." : "Build a tailored itinerary with custom pricing and send the invoice automatically."}</p></div></div><div className="tp-panel__body">
-        {!available && <p className="bm-native-notice is-error" role="alert">{mode === "standard" ? "The existing tripanza_create_tour_booking function is unavailable. Activate its booking module in WordPress." : `The custom template tour #${initial.custom_template_id} or Traveler storage is unavailable. No custom booking can be created yet.`}</p>}
+        {!available && <p className="bm-native-notice is-error" role="alert">{mode === "standard" ? prerequisites && (!prerequisites.order_type_available || !prerequisites.traveler_table_available) ? "Traveler order storage is unavailable. Check that Traveler is active and its order item table exists." : "The existing tripanza_create_tour_booking function is unavailable. Activate its booking module in WordPress." : missing}</p>}
         {!initial.mail_available && <p className="bm-native-notice" role="status">Traveler email delivery is unavailable. Creation will not confirm invoice delivery.</p>}
         {notice && <p className={`bm-native-notice${notice.error ? " is-error" : ""}`} role={notice.error ? "alert" : "status"}>{notice.text}</p>}
         <form id={mode === "standard" ? "bm_standard_form" : "bm_custom_form"} className="bm-form" onSubmit={event => { event.preventDefault(); void generate(); }}><fieldset disabled={locked || !available} className="bm-native-fields">

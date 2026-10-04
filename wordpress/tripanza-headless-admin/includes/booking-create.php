@@ -4,6 +4,7 @@
 defined('ABSPATH') || exit;
 
 function tripanza_native_create_template_id() { return absint(apply_filters('tripanza_native_custom_booking_template_id', 27807)); }
+function tripanza_native_create_template_exists() { return (bool) get_post(tripanza_native_create_template_id()); }
 function tripanza_native_create_tours() {
     $authors = get_users(array('role__in' => array('administrator'), 'fields' => 'ID'));
     return get_posts(array('post_type' => 'st_tours', 'post_status' => array('publish', 'private'), 'posts_per_page' => -1, 'author__in' => $authors ?: array(1), 'orderby' => 'title', 'order' => 'ASC'));
@@ -12,10 +13,17 @@ function tripanza_native_create_storage_ready() {
     global $wpdb; $table = $wpdb->prefix . 'st_order_item_meta';
     return post_type_exists('st_order') && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table))) === $table;
 }
+function tripanza_native_create_prerequisites() {
+    global $wpdb; $table = $wpdb->prefix . 'st_order_item_meta';
+    return array('template_exists' => tripanza_native_create_template_exists(), 'order_type_available' => post_type_exists('st_order'),
+        'traveler_table_available' => $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table))) === $table);
+}
 function tripanza_native_create_get() {
+    $prerequisites = tripanza_native_create_prerequisites();
     return tripanza_native_admin_response(array('create_api_version' => '1.0.0', 'user' => array('name' => wp_get_current_user()->display_name), 'nonce' => wp_create_nonce('tripanza_native_booking_create'), 'today' => current_time('Y-m-d'),
         'tours' => array_map(function ($tour) { return array('id' => (int) $tour->ID, 'name' => html_entity_decode(get_the_title($tour->ID), ENT_QUOTES, 'UTF-8')); }, tripanza_native_create_tours()),
-        'standard_available' => tripanza_native_create_storage_ready() && function_exists('tripanza_create_tour_booking'), 'custom_available' => tripanza_native_create_storage_ready() && get_post_type(tripanza_native_create_template_id()) === 'st_tours',
+        'standard_available' => $prerequisites['order_type_available'] && $prerequisites['traveler_table_available'] && function_exists('tripanza_create_tour_booking'),
+        'custom_available' => !in_array(false, $prerequisites, true), 'custom_prerequisites' => $prerequisites,
         'custom_template_id' => tripanza_native_create_template_id(), 'mail_available' => is_callable(array('STCart', 'send_mail_after_booking'))));
 }
 function tripanza_native_create_validate($data) {
@@ -50,7 +58,9 @@ function tripanza_native_create_validate($data) {
         if (!in_array($fields['selected_tour_id'], $allowed, true)) return tripanza_native_admin_error('Select an available admin tour.', 422);
         if (!function_exists('tripanza_create_tour_booking')) return tripanza_native_admin_error('The existing tripanza_create_tour_booking function is unavailable.', 503);
     } else {
-        if (get_post_type(tripanza_native_create_template_id()) !== 'st_tours') return tripanza_native_admin_error('The custom booking template tour is unavailable.', 503);
+        // The original manager copies metadata from post #27807 without
+        // requiring that source post to be a tour. The new post is the tour.
+        if (!tripanza_native_create_template_exists()) return tripanza_native_admin_error('The custom booking metadata source post is unavailable.', 503);
         foreach (array('quad_price', 'triple_price', 'twin_price') as $key) { $fields[$key] = tripanza_native_editor_money_input($input[$key] ?? null); if ($fields[$key] === false) return tripanza_native_admin_error('Enter valid sharing prices with at most two decimal places.', 422); }
         $fields['custom_total'] = round($fields['adults'] * $fields['quad_price'] + $fields['children'] * $fields['triple_price'] + $fields['infants'] * $fields['twin_price'], 2);
         if ($fields['custom_total'] <= 0 || $fields['custom_total'] > 100000000) return tripanza_native_admin_error('Enter a positive package total below 100,000,000.', 422);
