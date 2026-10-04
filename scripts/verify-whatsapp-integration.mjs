@@ -16,8 +16,9 @@ const runtime = {
   qr: kind => kind === "crm" ? "test-qr-code" : "",
   send: async (...args) => { calls.push(args); return { success: true, message: "Message sent" }; },
 };
+let active = true;
 const app = createServer(async (req, res) => {
-  if (!await handleWhatsAppHttp(req, res, { runtime, apiKey: "secret-test-key", wordpressOrigin: wpOrigin, enabled: true })) {
+  if (!await handleWhatsAppHttp(req, res, { runtime: active ? runtime : null, apiKey: "secret-test-key", wordpressOrigin: wpOrigin, enabled: active, startupError: active ? "" : "Set TRIPANZA_WHATSAPP_API_KEY and WP_WEBHOOK_SECRET." })) {
     res.writeHead(404); res.end("Not found");
   }
 });
@@ -45,7 +46,11 @@ try {
   assert.deepEqual(calls, [["crm", "9876543210", "Hello"]]);
   assert.equal((await fetch(`${base}/api/send`, { method: "POST", body: "x".repeat(65_537) })).status, 413);
   assert.equal((await fetch(`${base}/qr-crm`, { redirect: "manual" })).headers.get("location"), "/admin/whatsapp");
-  console.log("PASS: private QR/status, API-key send, request size, legacy QR redirects and phone normalization");
+  active = false;
+  const disabled = await fetch(`${base}/api/whatsapp/status`, { headers: adminHeaders });
+  assert.equal(disabled.status, 503);
+  assert.match((await disabled.json()).message, /WP_WEBHOOK_SECRET/);
+  console.log("PASS: private QR/status, API-key send, fail-closed setup, request size, legacy QR redirects and phone normalization");
 } finally {
   await new Promise(resolve => app.close(resolve));
   await new Promise(resolve => wp.close(resolve));

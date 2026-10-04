@@ -46,7 +46,7 @@ async function readJson(req, limit = 65_536) {
   catch { throw new Error("invalid_json"); }
 }
 
-export async function handleWhatsAppHttp(req, res, { runtime, apiKey, wordpressOrigin, enabled }) {
+export async function handleWhatsAppHttp(req, res, { runtime, apiKey, wordpressOrigin, enabled, startupError = "" }) {
   const url = new URL(req.url || "/", "http://localhost");
   const path = url.pathname;
   if (path === "/qr-notifications" || path === "/qr-crm") {
@@ -71,7 +71,7 @@ export async function handleWhatsAppHttp(req, res, { runtime, apiKey, wordpressO
   if (path !== "/api/whatsapp/status" && path !== "/api/whatsapp/qr") return false;
   if (req.method !== "GET") { json(res, 405, { error: "Method not allowed" }); return true; }
   if (!await adminAllowed(req, wordpressOrigin)) { json(res, 403, { error: "Administrator access required" }); return true; }
-  if (!enabled || !runtime) { json(res, 503, { enabled: false, message: "Integrated WhatsApp engine is not enabled on this server." }); return true; }
+  if (!enabled || !runtime) { json(res, 503, { enabled: false, message: startupError || "Integrated WhatsApp engine is not enabled on this server." }); return true; }
   if (path === "/api/whatsapp/status") { json(res, 200, { enabled: true, bots: runtime.status() }); return true; }
   const kind = url.searchParams.get("bot");
   if (kind !== "crm" && kind !== "notifications") { json(res, 400, { error: "Choose a bot" }); return true; }
