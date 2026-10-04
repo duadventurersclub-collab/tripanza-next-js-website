@@ -1,4 +1,4 @@
-# Tripanza Native Admin API v2.2.0
+# Tripanza Native Admin API v2.3.0
 
 The `/admin` dashboard and menu are React/Next.js components. This plugin provides
 protected JSON data/actions only. No iframe, remote PHP page, theme rendering,
@@ -8,7 +8,7 @@ are preserved. Calendar and revenue chart are native React components.
 
 ## Install/update
 
-Install `tripanza-headless-admin-2.2.0.zip` in WordPress, replacing the older version of the
+Install `tripanza-headless-admin-2.3.0.zip` in WordPress, replacing the older version of the
 Original Admin Dashboard Bridge if installed. The plugin directory is unchanged,
 so WordPress can upgrade it. Activate alongside Headless Core and Site Controls.
 Nothing is migrated or deleted: existing `tripanza_admin_todos`,
@@ -87,6 +87,13 @@ Keep Traveler and the existing Tripanza itinerary/PDF modules active.
   produce automatic deltas; explicit charges/credits have a reason and append-only
   ledger. GST applies to deltas. Booking history uses this same total calculation.
   Saved zero payments remain zero; stale edits fail without discarding the draft.
+- v2.2.1 fixes an incorrect zero-balance override for `complete`/`completed`.
+  The PayU advance callback can set `complete` without collecting the full trip
+  amount. Both history and editor now retain total minus recorded advance for
+  these statuses (for example, 20,000 total minus 5,000 received = 15,000 balance).
+  The reference editor's explicit `fully_paid`/cancelled/refunded handling remains
+  unchanged. This is a read calculation fix: saved payments, checkout snapshots,
+  statuses and existing payment endpoints are not modified or migrated.
 - All booking metadata copies and Traveler item dates/tour references synchronize.
   Locations belong to the order, not the shared tour. Tour changes retain saved
   unit prices; this admin editor is not a fresh quote or inventory reservation.
@@ -108,7 +115,57 @@ Exclude `/wp-json/tripanza-headless/v1/admin/*` from CDN cache rules that ignore
 Cache-Control. Requests include a fresh cache-busting identifier. Do not deploy
 the obsolete v1.0.0 bridge package with this native frontend.
 
-## Verification
+## Native booking creation (v2.3.0)
+
+- `/admin/bookings/create` rebuilds `tripanza-create-edit-new-booking.php` as React
+  with its scoped original stylesheet, standard/custom tabs, tour search, traveller
+  rows, all contact/schedule/occupancy/pricing/advance/due-days fields, live custom
+  total, success animation and next-action controls. No iframe, page include or jQuery.
+  `/create-edit-bookings-for-admins` forwards to it (custom tab supported); an
+  `order_id` forwards to the protected existing editor. Dashboard/menu/history links
+  now stay in Next.js. The newly created booking opens in the native editor modal.
+- Protected no-store JSON GET/POST `/admin/bookings/create`: server-held session,
+  administrator capability, same-origin frontend POST, user-bound nonce, strict
+  validation and bounded request sizes. Guests/non-admins redirect home.
+- Standard creation delegates unchanged to the installed
+  `tripanza_create_tour_booking` function for prices, deposits, availability,
+  hooks and automatic invoice email. That module must remain installed. The manager
+  then synchronizes supplied traveller names in order/raw/item/cart metadata, as
+  the reference does. Its automatic first email is still owned by the original
+  function and may precede that traveller-name update; use the editor's explicit
+  Resend Email action if an updated invoice is needed.
+- Custom creation retains the reference private shadow-tour/invoice design and
+  final entered package-price snapshot. Default template ID is **27807**, overridable
+  with `tripanza_native_custom_booking_template_id`. Missing template/storage blocks
+  creation instead of silently writing against a shared tour. Private metadata is
+  copied with decoded values, not double-serialized. ISO dates use the WP timezone.
+  Customer/order/Traveler item data are registered, then existing hooks/email run.
+- Blank custom advance retains the full-total default; explicit **0** remains zero.
+  Amounts/dates/counts are validated server-side. InnoDB transactions protect custom
+  order/shadow/item/meta writes; a failed insert rolls back before notification hooks.
+  No public checkout/payment/availability function is replaced.
+- Durable per-admin request receipts and per-order recovery markers protect repeated
+  clicks/lost responses. Retrying the same payload returns the created order and
+  does not repeat invoice/commission hooks. An uncertain request locks the form and
+  exposes only same-request retry or read-only history checking; never create a new
+  booking until an unresolved original request has been checked. In-process/crashed
+  standard requests without a captured order remain blocked for manual verification.
+  Standard function internals are not made transactional by this adapter.
+- No creation payload or contact data is stored in browser storage. The only browser
+  storage write is the existing history-refresh boolean. Server request receipts
+  contain a payload hash/result, not a duplicate copy of customer form data.
+
+Run `node scripts/verify-booking-create.mjs` and
+`node scripts/verify-booking-create-php.mjs` alongside the existing history/editor
+tests. Browser tests use mock JSON; PHP tests execute real adapters with stub WP/DB.
+They cover CSS declaration parity, both forms, preview/zero advance, keyboard search,
+mobile, validation, private clone, metadata copies, rollback, durable retry/recovery,
+standard delegation and hook/mail-once. These are not production database/mail tests.
+After installing v2.3.0, use a temporary admin booking and an email you control to
+verify the installed standard function, template #27807, database engines, history/
+editor amounts, private invoice title, traveller names and actual invoice delivery.
+
+## Verification (existing dashboard/history/editor)
 
 Run `npm run build`, `node scripts/verify-admin-dashboard.mjs`, and
 `node scripts/verify-site-controls.mjs`. Test tooling uses the optional temporary
@@ -133,7 +190,9 @@ functions, not a real database. Optional temporary test tooling additionally nee
 `@php-wasm/universal` and `@php-wasm/node-8-3`. Nothing is added to app dependencies.
 Tests cover CSS parity, native navigation, forms, preview/save math, duplicate retry,
 stale writes, injected rollback, zero payments, permissions, mobile and wallet-once.
-After installing v2.2.0, use a temporary booking to smoke-test actual database
+After installing v2.2.1, compare a known advance-paid `complete` booking's total,
+received amount and remaining balance in history and editor, without saving it.
+Then use a temporary booking to smoke-test actual database
 engines, source totals, guest/add-on save, email/WhatsApp delivery and wallet ledger.
 These live integrations cannot be certified by the isolated fixture tests.
 

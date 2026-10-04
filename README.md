@@ -61,14 +61,20 @@ Routes:
 - `/tours/[slug]` – complete tour detail
 - `/booking?tour={id}` – booking flow
 - `/admin/bookings` – native admin booking history
+- `/admin/bookings/create` – native standard/custom booking manager (admin only)
 - `/admin/bookings/{id}/edit` – native full booking editor (admin only)
 
 Booking-history Edit buttons open the editor in a modal without changing the URL
 or resetting filters, selection or scroll. Direct editor URLs still work.
 
-The booking editor requires Tripanza Native Admin API **v2.2.0** in WordPress.
-Replace the older plugin using `tripanza-headless-admin-2.2.0.zip`; details and
+The booking manager/editor requires Tripanza Native Admin API **v2.3.0** in WordPress.
+Replace the older plugin using `tripanza-headless-admin-2.3.0.zip`; details and
 live-integration smoke tests are in `wordpress/tripanza-headless-admin/README.md`.
+Version 2.2.1 corrects history/editor balances for `complete`/`completed` orders
+where only the advance was received. No booking metadata migration is needed.
+Version 2.3.0 includes that balance fix and the native creation manager. Standard
+creation calls the existing `tripanza_create_tour_booking` function; custom creation
+uses private invoice tours copied from template tour #27807. No embedded pages.
 
 ## Validation
 

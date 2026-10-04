@@ -8,7 +8,7 @@ const { PHP, loadPHPRuntime } = optional('@php-wasm/universal');
 const { getPHPLoaderModule } = optional('@php-wasm/node-8-3');
 const php = new PHP(await loadPHPRuntime(await getPHPLoaderModule()));
 try {
-  for (const file of ['booking-editor.php', 'booking-editor-calculations.php']) await php.writeFile('/' + file, fs.readFileSync('wordpress/tripanza-headless-admin/includes/' + file, 'utf8'));
+  for (const file of ['bookings.php', 'booking-editor.php', 'booking-editor-calculations.php']) await php.writeFile('/' + file, fs.readFileSync('wordpress/tripanza-headless-admin/includes/' + file, 'utf8'));
   await php.writeFile('/fixture.php', fs.readFileSync('scripts/fixtures/booking-editor.php', 'utf8'));
   const result = await php.run({ scriptPath: '/fixture.php' });
   assert.equal(result.exitCode, 0, result.text + '\n' + result.errors);

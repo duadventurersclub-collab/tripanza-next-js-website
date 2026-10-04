@@ -152,7 +152,10 @@ if (!function_exists('tripanza_native_editor_financial_summary')) {
             ? $data_prices['total_price'] : ($data_prices['deposit_price'] ?? 0));
 
         $status = str_replace('-', '_', sanitize_key((string) get_post_meta($order_id, 'status', true)));
-        $closed_statuses = array('complete', 'completed', 'fully_paid', 'refunded', 'canceled', 'cancelled');
+        // Match the reference editor: complete/completed can describe a paid
+        // advance (the headless PayU callback sets complete), not a fully paid
+        // trip. Never erase the remaining amount just because of that status.
+        $closed_statuses = array('fully_paid', 'refunded', 'canceled', 'cancelled');
         $balance = in_array($status, $closed_statuses, true) ? 0.0 : max(0, round($final_total - $amount_paid, 2));
         $overpayment = in_array($status, array('refunded', 'canceled', 'cancelled'), true)
             ? 0.0
