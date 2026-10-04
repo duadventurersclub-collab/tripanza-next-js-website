@@ -31,7 +31,7 @@ assert.ok(context.exports.bookingMatches(state.rows[0], '12-10-2026', '', '', ''
 assert.ok(context.exports.coordinatorMessage([state.rows[0]]).includes('Balance to collect'));
 assert.ok(!context.exports.coordinatorMessage([state.rows[1]]).includes('Balance to collect'));
 console.log('PASS PHP 7.4 syntax, protected mutations, original CSS declaration parity, totals/rooms/analytics/WhatsApp contract');
-let failAction = '', missing = false; const requests = [], actions = [];
+let failAction = '', missing = false, slowGet = false; const requests = [], actions = [];
 const mock = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://fixture'), route = url.pathname.replace('/wp-json/tripanza-headless/v1/', '');
   const send = (data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' }); res.end(JSON.stringify(data)); };
@@ -41,11 +41,11 @@ const mock = http.createServer(async (req, res) => {
     const auth = req.headers.authorization?.replace('Bearer ', '');
     if (!auth) return send({ message: 'Please sign in.' }, 401);
     if (auth !== 'fixture-admin') return send({ message: 'Administrator access required.' }, 403);
-    if (route === 'admin/identity') return send({ name: 'Fixture Admin', api_version: '2.0.0' });
+    if (route === 'admin/identity') return send({ id: 1, name: 'Fixture Admin', api_version: '2.0.0' });
     if (route !== 'admin/bookings') return send({ message: 'Not found.' }, 404);
     if (missing) return send({ message: 'Update Tripanza Native Admin API to v2.1.0 in WordPress.' }, 404);
     assert.ok(url.searchParams.has('_tripanza_live')); assert.equal(req.headers['cache-control'], 'no-cache, no-store');
-    if (req.method === 'GET') return send(state);
+    if (req.method === 'GET') { if (slowGet) await new Promise(resolve => setTimeout(resolve, 1000)); return send(state); }
     let raw = ''; for await (const chunk of req) raw += chunk;
     const data = JSON.parse(raw); actions.push(data);
     if (data.nonce !== state.nonce) return send({ message: 'Session expired.' }, 403);
@@ -87,7 +87,7 @@ try {
   assert.equal((await post({ action: 'status', value: 'x'.repeat(21000) })).status, 413);
   assert.equal((await fetch(origin + '/api/admin/bookings?page=NaN', { headers })).status, 400);
   assert.equal((await fetch(origin + '/api/admin/bookings', { headers })).headers.get('cache-control'), 'private, no-store, max-age=0');
-  const html = await (await fetch(origin + '/admin/bookings', { headers })).text(); assert.ok(html.includes('Global Booking History')); assert.ok(!html.includes('<iframe')); assert.ok(!html.includes('fixture-admin'));
+  const html = await (await fetch(origin + '/admin/bookings', { headers })).text(); assert.ok(html.includes('Loading live booking history')); assert.ok(!html.includes('<iframe')); assert.ok(!html.includes('fixture-admin'));
   browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
   await ctx.addCookies([{ name: 'tripanza_session', value: 'fixture-admin', domain: '127.0.0.1', path: '/' }]);
@@ -95,6 +95,8 @@ try {
   page.on('pageerror', error => errors.push(error.message)); page.on('request', req => { if (req.isNavigationRequest() && req.frame() === page.mainFrame()) navigations.push(req.url()); });
   await page.goto(origin + '/admin/bookings');
   const rows = page.locator('#tzBookingHistoryTable tbody tr.order-row'); await expect(rows).toHaveCount(4); await expect(page.locator('#tzValConfirmed')).toHaveText('2');
+  state.rows[0] = { ...state.rows[0], customer: 'Updated Traveller 101' };
+  slowGet = true; await page.reload(); await expect(page.getByText('Showing saved bookings while live data loads…')).toBeVisible(); await expect(page.locator('main.tz-booking-app')).toHaveAttribute('inert', ''); await expect(rows).toHaveCount(4); await expect(rows.first()).not.toContainText('Updated Traveller 101'); await expect(page.getByText('Bookings are up to date.')).toBeVisible(); await expect(page.locator('main.tz-booking-app')).not.toHaveAttribute('inert', ''); await expect(rows.first()).toContainText('Updated Traveller 101'); slowGet = false;
   const before = requests.length, navBefore = navigations.length;
   await page.locator('#titleSearchInput').fill('Spiti'); await expect(rows).toHaveCount(1); await expect(page.locator('#tzValConfirmed')).toHaveText('1');
   await page.locator('#titleSearchInput').fill(''); await page.locator('#searchInput').fill('12-10-2026'); await expect(rows).toHaveCount(3); await page.locator('#searchInput').fill('');
@@ -139,7 +141,7 @@ try {
   const stressDownload = page.waitForEvent('download'); await page.locator('#exportButton').click();
   await (await stressDownload).saveAs(path.join(out, 'booking-report.pdf'));
   const guest = await browser.newContext(); const gp = await guest.newPage(); await gp.goto(origin + '/admin/bookings'); await expect(gp).toHaveURL(origin + '/'); await guest.addCookies([{ name: 'tripanza_session', value: 'fixture-user', domain: '127.0.0.1', path: '/' }]); await gp.goto(origin + '/admin/bookings'); await expect(gp).toHaveURL(origin + '/'); await guest.close();
-  missing = true; await page.goto(origin + '/admin/bookings'); await expect(page.getByRole('heading', { name: 'Booking history is unavailable.' })).toBeVisible();
+  missing = true; await page.goto(origin + '/admin/bookings'); await expect(page.getByText('Showing a saved booking snapshot. Editing is paused until live data loads.')).toBeVisible();
   console.log('PASS native booking DOM, local filters, persisted columns, details, status failure/success, adjustment, email, archive/restore/purge confirmation, PDF, WhatsApp, mobile, permissions, missing-plugin state');
   console.log('QA output: ' + out);
 } finally { await browser?.close(); app.kill(); await new Promise(resolve => mock.close(resolve)); }

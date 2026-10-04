@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { clearAdminSnapshots } from "./useAdminSnapshot";
 import "./admin-menu-original.css";
 
 const sections = [
@@ -60,6 +61,7 @@ export default function AdminMenu({ name, wordpressOrigin }: { name: string; wor
     try {
       const response = await fetch("/api/auth/logout", { method: "POST" });
       if (!response.ok) throw new Error();
+      clearAdminSnapshots();
       // Full reload clears private dashboard/profile client state after logout.
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/";

@@ -101,7 +101,7 @@ try {
   const response = await fetch(origin + '/api/admin/dashboard', { headers });
   assert.equal(response.headers.get('cache-control'), 'private, no-store, max-age=0');
   const html = await (await fetch(origin + '/admin', { headers })).text();
-  assert.ok(html.includes('Welcome to Tripanza Dashboard')); assert.ok(!html.includes('<iframe')); assert.ok(!html.includes('fixture-admin'));
+  assert.ok(html.includes('Loading live dashboard')); assert.ok(!html.includes('<iframe')); assert.ok(!html.includes('fixture-admin'));
   browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
   const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
   await browserContext.addCookies([{ name: 'tripanza_session', value: 'fixture-admin', url: origin }]);

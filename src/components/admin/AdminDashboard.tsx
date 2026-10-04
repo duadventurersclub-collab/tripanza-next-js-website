@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- original dashboard logo */
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { clearAdminSnapshots } from "./useAdminSnapshot";
 import AdminMenu from "./AdminMenu";
 import AdminRevenueChart from "./AdminRevenueChart";
 import AdminMultipleDates from "./AdminMultipleDates";
@@ -16,8 +17,11 @@ function Filters({ id, options, value, onChange }: { id: string; options: string
   return <div id={id} className="filter-bar">{options.map(([key, label]) => <button key={key} type="button" className={`filter-pill${value === key ? " active" : ""}`} aria-pressed={value === key} onClick={() => onChange(key)}>{label}</button>)}</div>;
 }
 function errorMessage(data: { message?: string; data?: { message?: string; msg?: string } }) { return data?.message || data?.data?.message || data?.data?.msg || "The request could not be completed. Please try again."; }
-export default function AdminDashboard({ initial, wordpressOrigin }: { initial: AdminWorkspace; wordpressOrigin: string }) {
+export default function AdminDashboard({ initial, wordpressOrigin, readOnly = false, onDataChange }: { initial: AdminWorkspace; wordpressOrigin: string; readOnly?: boolean; onDataChange?: (data: AdminWorkspace) => void }) {
   const [state, setState] = useState(initial);
+  const [previousInitial, setPreviousInitial] = useState(initial);
+  if (initial !== previousInitial) { setPreviousInitial(initial); setState(initial); }
+  useEffect(() => { onDataChange?.(state); }, [state, onDataChange]);
   const [year, setYear] = useState(initial.today.slice(0, 4)), [month, setMonth] = useState("all");
   const [planFilter, setPlanFilter] = useState("all"), [holidayFilter, setHolidayFilter] = useState("all"), [taskFilter, setTaskFilter] = useState("all");
   const [tripName, setTripName] = useState(""), [dates, setDates] = useState<string[]>([]);
@@ -69,6 +73,7 @@ export default function AdminDashboard({ initial, wordpressOrigin }: { initial: 
   async function logout() {
     const response = await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
     if (!response?.ok) { setNotice({ message: "Could not sign out. Please try again.", error: true, scope: "dashboard" }); return; }
+    clearAdminSnapshots();
     // Clear private React and router state after logout, including on a shared device.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/";
@@ -76,7 +81,7 @@ export default function AdminDashboard({ initial, wordpressOrigin }: { initial: 
   const status = (scope: string) => notice?.scope === scope ? <p className={`native-admin-notice${notice.error ? " is-error" : ""}`} role={notice.error ? "alert" : "status"}>{notice.message}</p> : null;
   return <div className="native-admin-dashboard">
     <AdminMenu name={state.user.name} wordpressOrigin={wordpressOrigin} />
-    <main className="tripanza-admin-dashboard">
+    <main className="tripanza-admin-dashboard" inert={readOnly}>
       <div className="tp-dashboard-hero"><img className="tp-welcome-logo" src="https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png" alt="Tripanza Logo" /><div className="tp-dashboard-hero__content"><span className="tp-dashboard-badge"><Icon name="fa-gauge-high" /> Admin Hub</span><h1 className="tp-dashboard-title">Welcome to Tripanza Dashboard</h1><p className="tp-dashboard-subtitle">Analytics, team tasks, trip planning, and quick admin tools in one place.</p>{state.intro && <div className="tp-dashboard-intro" dangerouslySetInnerHTML={{ __html: state.intro }} />}</div></div>
       {status("dashboard")}
       <section className="tp-panel"><div className="tp-panel__header"><h2><Icon name="fa-chart-line" /> Confirmed Bookings Performance</h2><p>Revenue and occupancy from fully paid and partially paid bookings.</p></div><div className="tp-panel__body">

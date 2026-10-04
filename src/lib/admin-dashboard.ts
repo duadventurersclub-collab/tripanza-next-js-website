@@ -20,16 +20,16 @@ export async function requestAdminWorkspace(payload?: Record<string, unknown>) {
 }
 export const getAdminIdentity = cache(async () => {
   const token = await getSessionToken();
-  if (!token) return { status: 401, name: "", available: false };
+  if (!token) return { status: 401, id: 0, name: "", available: false };
   try {
     const response = await fetch(`${wordpressOrigin}/wp-json/tripanza-headless/v1/admin/identity?_tripanza_live=${randomUUID()}`, {
       cache: "no-store", headers: { Authorization: `Bearer ${token}`, "Cache-Control": "no-cache, no-store" }, signal: AbortSignal.timeout(15_000),
     });
     if (response.status === 404) {
       const fallback = await adminRequest("settings");
-      return { status: fallback.status, name: "Administrator", available: false };
+      return { status: fallback.status, id: 0, name: "Administrator", available: false };
     }
     const data = await response.json().catch(() => null);
-    return { status: response.status, name: typeof data?.name === "string" ? data.name : "Administrator", available: response.ok && data?.api_version === "2.0.0" };
-  } catch { return { status: 503, name: "", available: false }; }
+    return { status: response.status, id: response.ok && Number.isSafeInteger(data?.id) ? data.id as number : 0, name: typeof data?.name === "string" ? data.name : "Administrator", available: response.ok && data?.api_version === "2.0.0" };
+  } catch { return { status: 503, id: 0, name: "", available: false }; }
 });
