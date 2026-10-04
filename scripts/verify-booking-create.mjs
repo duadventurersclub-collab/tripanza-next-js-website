@@ -28,7 +28,7 @@ const mock = http.createServer(async (req, res) => {
     if (route !== 'admin/bookings/create') return send({ message: 'Not found.' }, 404);
     if (missing) return send({ message: 'Update native plugin.' }, 404);
     assert.ok(url.searchParams.has('_tripanza_live')); assert.equal(req.headers['cache-control'], 'no-cache, no-store');
-    if (req.method === 'GET') return send(missingSource ? { ...initial, custom_available: false, custom_prerequisites: { ...initial.custom_prerequisites, template_exists: false } } : initial);
+    if (req.method === 'GET') return send(missingSource ? { ...initial, custom_prerequisites: { ...initial.custom_prerequisites, template_exists: false } } : initial);
     let raw = ''; for await (const chunk of req) raw += chunk; const body = JSON.parse(raw); attempts.push(body);
     assert.equal(body.nonce, 'fixture-create'); assert.match(body.request_id, /^[a-z0-9-]{36}$/);
     await new Promise(resolve => setTimeout(resolve, 150));
@@ -73,7 +73,7 @@ try {
   lost = true; await page.locator('#bm_submit_custom_btn').click(); await expect(page.locator('.bm-native-notice[role=alert]')).toContainText('Fixture lost response'); await expect(page.locator('[name=quad_price]')).toBeDisabled(); await expect(page.getByRole('button', { name: 'Standard Tour', exact: true })).toBeDisabled(); const requestId = attempts.at(-1).request_id;
   await page.getByRole('button', { name: 'Retry same request', exact: true }).click(); await expect(page.locator('#bm_created_booking_actions')).toBeVisible(); assert.equal(attempts.at(-1).request_id, requestId); assert.equal(generated, 2); assert.equal(attempts.at(-1).fields.advance_payment, '0'); assert.equal(navigations.length, navCount, 'Creation/success/retry/modal never reload'); assert.deepEqual(errors, []);
   const guest = await browser.newContext(), gp = await guest.newPage(); await gp.goto(origin + '/admin/bookings/create'); await expect(gp).toHaveURL(origin + '/'); await guest.addCookies([{ name: 'tripanza_session', value: 'fixture-user', domain: '127.0.0.1', path: '/' }]); await gp.goto(origin + '/admin/bookings/create'); await expect(gp).toHaveURL(origin + '/'); await guest.close();
-  missingSource = true; await page.reload(); await page.getByRole('button', { name: 'Custom Package', exact: true }).click(); await expect(page.locator('.bm-native-notice[role=alert]')).toContainText('Source post #27807 is missing in WordPress.');
+  missingSource = true; await page.reload(); await page.getByRole('button', { name: 'Custom Package', exact: true }).click(); await expect(page.locator('.bm-native-notice[role=status]')).toContainText('A new private tour and booking will still be created'); await expect(page.locator('#bm_submit_custom_btn')).toBeEnabled();
   missing = true; await page.reload(); await expect(page.getByRole('heading', { name: 'Booking manager is unavailable.' })).toBeVisible();
   console.log('PASS PHP 7.4, scoped original CSS parity, native tabs/search keyboard/drafts, all standard/custom fields, pricing/zero advance, traveller controls, failed validation, lost-response same-ID retry, success animation/editor modal/no reload, mobile, protected APIs and admin-only pages. QA: ' + out);
 } finally { await browser?.close(); app.kill(); await new Promise(resolve => mock.close(resolve)); }

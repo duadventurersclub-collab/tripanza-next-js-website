@@ -23,7 +23,7 @@ function tripanza_native_create_get() {
     return tripanza_native_admin_response(array('create_api_version' => '1.0.0', 'user' => array('name' => wp_get_current_user()->display_name), 'nonce' => wp_create_nonce('tripanza_native_booking_create'), 'today' => current_time('Y-m-d'),
         'tours' => array_map(function ($tour) { return array('id' => (int) $tour->ID, 'name' => html_entity_decode(get_the_title($tour->ID), ENT_QUOTES, 'UTF-8')); }, tripanza_native_create_tours()),
         'standard_available' => $prerequisites['order_type_available'] && $prerequisites['traveler_table_available'] && function_exists('tripanza_create_tour_booking'),
-        'custom_available' => !in_array(false, $prerequisites, true), 'custom_prerequisites' => $prerequisites,
+        'custom_available' => $prerequisites['order_type_available'] && $prerequisites['traveler_table_available'], 'custom_prerequisites' => $prerequisites,
         'custom_template_id' => tripanza_native_create_template_id(), 'mail_available' => is_callable(array('STCart', 'send_mail_after_booking'))));
 }
 function tripanza_native_create_validate($data) {
@@ -58,9 +58,6 @@ function tripanza_native_create_validate($data) {
         if (!in_array($fields['selected_tour_id'], $allowed, true)) return tripanza_native_admin_error('Select an available admin tour.', 422);
         if (!function_exists('tripanza_create_tour_booking')) return tripanza_native_admin_error('The existing tripanza_create_tour_booking function is unavailable.', 503);
     } else {
-        // The original manager copies metadata from post #27807 without
-        // requiring that source post to be a tour. The new post is the tour.
-        if (!tripanza_native_create_template_exists()) return tripanza_native_admin_error('The custom booking metadata source post is unavailable.', 503);
         foreach (array('quad_price', 'triple_price', 'twin_price') as $key) { $fields[$key] = tripanza_native_editor_money_input($input[$key] ?? null); if ($fields[$key] === false) return tripanza_native_admin_error('Enter valid sharing prices with at most two decimal places.', 422); }
         $fields['custom_total'] = round($fields['adults'] * $fields['quad_price'] + $fields['children'] * $fields['triple_price'] + $fields['infants'] * $fields['twin_price'], 2);
         if ($fields['custom_total'] <= 0 || $fields['custom_total'] > 100000000) return tripanza_native_admin_error('Enter a positive package total below 100,000,000.', 422);
@@ -100,7 +97,9 @@ function tripanza_native_create_custom($fields, $key, $hash) {
         $title = 'Customized Trip - ' . $fields['custom_package_name'];
         $shadow = wp_insert_post(array('post_title' => $title, 'post_type' => 'st_tours', 'post_status' => 'private', 'post_author' => get_current_user_id()), true);
         if (is_wp_error($shadow) || !$shadow) throw new RuntimeException('Private invoice tour creation failed.');
-        foreach ((array) get_post_meta(tripanza_native_create_template_id()) as $meta_key => $values) foreach ((array) $values as $value) if (add_post_meta($shadow, $meta_key, wp_slash(maybe_unserialize($value))) === false) throw new RuntimeException('Private tour metadata copy failed.');
+        // The original page creates the private tour even when #27807 has no
+        // matching post/meta rows. Only the optional metadata copy is skipped.
+        if (tripanza_native_create_template_exists()) foreach ((array) get_post_meta(tripanza_native_create_template_id()) as $meta_key => $values) foreach ((array) $values as $value) if (add_post_meta($shadow, $meta_key, wp_slash(maybe_unserialize($value))) === false) throw new RuntimeException('Private tour metadata copy failed.');
         foreach (array('address' => $fields['boarding'], '_st_tour_dropoff' => $fields['dropoff'], '_is_custom_shadow_tour' => 'yes', 'type_tour' => 'daily_tour', 'duration_day' => $fields['duration']) as $meta_key => $value) tripanza_native_editor_meta_write($shadow, $meta_key, $value);
         $customer = get_user_by('email', $fields['email']); $user_id = $customer ? (int) $customer->ID : (get_userdata(1) ? 1 : get_current_user_id());
         $id = wp_insert_post(array('post_title' => 'Custom Booking - ' . $fields['first_name'] . ' - ' . $title, 'post_type' => 'st_order', 'post_status' => 'publish', 'post_author' => $user_id), true);
@@ -149,7 +148,8 @@ function tripanza_native_create_post(WP_REST_Request $request) {
     $fields = tripanza_native_create_validate($data); if (is_wp_error($fields)) return $fields;
     if (!tripanza_native_create_storage_ready()) return tripanza_native_admin_error('Traveler order storage is unavailable. No booking was created.', 503);
     if (!add_option($key, array('hash' => $hash, 'started' => time()), '', false)) return new WP_Error('tripanza_creation_pending', 'This request is already processing. Retry the same request.', array('status' => 409, 'uncertain' => true));
-    $id = 0; $warning = '';
+    $id = 0; $warning = $mode === 'custom' && !tripanza_native_create_template_exists()
+        ? 'Source post #' . tripanza_native_create_template_id() . ' is absent. The private tour and booking were created from the entered details without copied metadata.' : '';
     if ($mode === 'standard') {
         // Capture the order before the existing function sends mail. An email
         // failure after insertion must never cause a second order on retry.

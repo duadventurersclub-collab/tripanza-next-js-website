@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Native Admin API
  * Description: Protected JSON data and actions for the native Next.js admin dashboard. No embedded pages.
- * Version: 2.3.1
+ * Version: 2.3.2
  * Requires at least: 6.0
  * Requires PHP: 7.4
  */
