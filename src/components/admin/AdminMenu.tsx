@@ -13,9 +13,9 @@ const sections = [
   { label: "Tours & Content", items: [["/add-your-own-trip", "fa-route", "Add / Edit Trips"], ["/tripwise-costing/", "fa-calculator", "Tripwise Costing"], ["/poster-download", "fa-image", "Poster Download"]] },
   { label: "Hosts & Sales", items: [["/list-of-hosts-for-admin/", "fa-user-group", "List of Hosts"], ["/tripanza-global-host-commission-by-admin/", "fa-hand-holding-dollar", "Host Commission"], ["/admin-sales-campaign-cashback/", "fa-tags", "Sale Campaigns"]] },
   { label: "Tripanza Finance", items: [["/tripanza-financials/", "fa-wallet", "Inflow/Outflow/Profits"]] },
-  { label: "System", items: [["/admin/whatsapp", "fa-comment-dots", "WhatsApp Bots"], ["/admin-activity-logs/", "fa-clock-rotate-left", "Activity Logs"], ["/admin/settings", "fa-sliders", "Site Settings"]] },
+  { label: "System", items: [["/admin-activity-logs/", "fa-clock-rotate-left", "Activity Logs"], ["/admin/settings", "fa-sliders", "Site Settings"]] },
 ];
-const appPages = new Set(["/admin", "/admin/bookings", "/admin/bookings/create", "/admin/settings", "/admin/whatsapp", "/add-your-own-trip", "/poster-download"]);
+const appPages = new Set(["/admin", "/admin/bookings", "/admin/bookings/create", "/admin/settings", "/add-your-own-trip", "/poster-download"]);
 export default function AdminMenu({ name, wordpressOrigin }: { name: string; wordpressOrigin: string }) {
   const settings = useSiteSettings();
   const visible = (path: string) => path === "/admin" ? settings.admin_dashboard_enabled : path === "/admin/bookings" ? settings.admin_booking_history_enabled : path === "/admin/bookings/create" ? settings.admin_booking_create_enabled : true;
