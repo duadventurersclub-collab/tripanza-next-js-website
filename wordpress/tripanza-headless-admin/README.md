@@ -1,4 +1,4 @@
-# Tripanza Native Admin API v2.1.0
+# Tripanza Native Admin API v2.2.0
 
 The `/admin` dashboard and menu are React/Next.js components. This plugin provides
 protected JSON data/actions only. No iframe, remote PHP page, theme rendering,
@@ -8,7 +8,7 @@ are preserved. Calendar and revenue chart are native React components.
 
 ## Install/update
 
-Install `tripanza-headless-admin-2.1.0.zip` in WordPress, replacing v2.0.0 (or v1.0.0) of the
+Install `tripanza-headless-admin-2.2.0.zip` in WordPress, replacing the older version of the
 Original Admin Dashboard Bridge if installed. The plugin directory is unchanged,
 so WordPress can upgrade it. Activate alongside Headless Core and Site Controls.
 Nothing is migrated or deleted: existing `tripanza_admin_todos`,
@@ -66,10 +66,40 @@ Keep Traveler and the existing Tripanza itinerary/PDF modules active.
   typing `DELETE PERMANENTLY` and the backend verifies the booking is archived.
   The old seven-click UI unlock is replaced by visible admin-only controls and
   explicit confirmation, not treated as a security boundary.
-- Existing `st_order` normal bookings are writable. Legacy WooCommerce rows are
-  read-only here: use the existing full editor to preserve their lifecycle.
-  The separate full booking editor and invoice generator remain ordinary links;
-  neither is embedded. WordPress login may be needed for those separate tools.
+- Existing `st_order` normal bookings are writable. Edit links open the native
+  full editor at `/admin/bookings/{id}/edit`. Legacy WooCommerce rows are read-only;
+  their existing WordPress editor remains an explicit ordinary link to preserve
+  their lifecycle. Invoices still use the installed WordPress PDF generator.
+
+## Native full booking editor
+
+- Rebuilds `single-booking-edit-page.php` as React, retaining the complete scoped
+  reference CSS. No iframe, PHP page include, HTML bridge, or jQuery is used.
+  `/single-booking-edit?order_id={id}` redirects to the native route.
+- Admin-only JSON GET/POST at `/admin/bookings/{id}/editor`. Same-origin Next.js
+  proxy, server-held session, user-bound nonce, input validation, revision checks,
+  per-booking locks and idempotent save receipts protect mutations.
+- Tour search, locations, schedule, sharing counts, guest names/titles, add-ons,
+  customer/contact/notes, received payment and both transaction records are native
+  form controls. Add-on quantities follow traveller changes, but remain editable.
+- Checkout total/coupon/discount snapshots stay immutable. Sharing/add-on changes
+  produce automatic deltas; explicit charges/credits have a reason and append-only
+  ledger. GST applies to deltas. Booking history uses this same total calculation.
+  Saved zero payments remain zero; stale edits fail without discarding the draft.
+- All booking metadata copies and Traveler item dates/tour references synchronize.
+  Locations belong to the order, not the shared tour. Tour changes retain saved
+  unit prices; this admin editor is not a fresh quote or inventory reservation.
+- InnoDB is required for atomic money updates. A failed metadata/item save rolls
+  back. No automatic message retry. Email/WhatsApp sends require confirmation;
+  unconfirmed delivery must be checked before retrying. Existing delivery modules
+  are required. Status changes retain the original status/email behavior.
+- Wallet reversal requires a recorded wallet debit and the existing wallet module;
+  it restores that debit once. Promotional coupons are never credited as wallet
+  money. The original checkout discount is not removed by reversal.
+- Save/action feedback appears in place without reloading. Unsaved-link navigation
+  asks for confirmation. Returning to history refreshes changed records. Only a
+  boolean invalidation marker, not booking/customer data, is stored in sessionStorage.
+- Archived and WooCommerce-linked records are read-only in the native editor.
 
 Exclude `/wp-json/tripanza-headless/v1/admin/*` from CDN cache rules that ignore
 Cache-Control. Requests include a fresh cache-busting identifier. Do not deploy
@@ -92,6 +122,17 @@ execute a real WordPress database or send production emails/WhatsApp messages.
 After installing v2.1.0, compare a known booking's amounts with the original page
 and smoke-test status/email/adjustment on a temporary booking. Do not test purge
 on a real customer record. Existing order metadata is reused without migration.
+
+Run `node scripts/verify-booking-editor.mjs` and
+`node scripts/verify-booking-editor-php.mjs`. The browser test uses mock JSON data;
+the PHP test executes the actual editor handlers using stub WordPress/storage
+functions, not a real database. Optional temporary test tooling additionally needs
+`@php-wasm/universal` and `@php-wasm/node-8-3`. Nothing is added to app dependencies.
+Tests cover CSS parity, native navigation, forms, preview/save math, duplicate retry,
+stale writes, injected rollback, zero payments, permissions, mobile and wallet-once.
+After installing v2.2.0, use a temporary booking to smoke-test actual database
+engines, source totals, guest/add-on save, email/WhatsApp delivery and wallet ledger.
+These live integrations cannot be certified by the isolated fixture tests.
 
 Package: `powershell -NoProfile -ExecutionPolicy Bypass -File
 scripts/package-admin-dashboard.ps1 -OutputPath <new-path.zip>`.

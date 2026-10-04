@@ -97,6 +97,10 @@ function tripanza_native_booking_serialize($row, $statuses) {
     $coupon = (float) ($prices['coupon_price'] ?? 0);
     $advance = (float) ($prices['total_price'] ?? 0);
     $total = max(0, $with_tax - $coupon);
+    // Share the supplied editor's immutable-snapshot calculation, so a saved
+    // charge/credit has the same total and balance in history and editor.
+    $editor_financials = function_exists('tripanza_native_editor_financial_summary') && get_post_type($id) === 'st_order' ? tripanza_native_editor_financial_summary($id, $prices, $adjustment) : null;
+    if ($editor_financials) { $total = $editor_financials['final_total']; $advance = $editor_financials['amount_paid']; }
     $status_key = ($row->type ?? '') === 'normal_booking' ? (string) get_post_meta(absint($row->order_item_id ?? $id), 'status', true) : (string) ($row->status ?? '');
     $status = sanitize_text_field(wp_strip_all_tags((string) ($statuses[$status_key] ?? ucfirst($status_key))));
     $timestamp = absint($meta('check_in_timestamp'));
@@ -166,7 +170,7 @@ function tripanza_native_booking_serialize($row, $statuses) {
         'invoice_url' => esc_url_raw(function_exists('tripanza_invoice_download_url') ? tripanza_invoice_download_url($id) : home_url(user_trailingslashit('booking-invoice/' . $id))),
         'customer' => $customer, 'email' => sanitize_email($text('st_email')), 'phone' => $text('st_country_code') . $text('st_phone'), 'guests' => $guests,
         'male' => $male, 'female' => $female, 'quad' => $quad, 'triple' => $triple, 'twin' => $twin, 'persons' => $quad + $triple + $twin, 'sharing' => $sharing ? implode(', ', $sharing) : 'Not specified', 'addons' => $addons,
-        'currency' => $currency, 'total' => round($total, 2), 'advance' => round($advance, 2), 'balance' => round($with_tax - $advance - $coupon, 2), 'adjustment' => $adjustment,
+        'currency' => $currency, 'total' => round($total, 2), 'advance' => round($advance, 2), 'balance' => $editor_financials ? $editor_financials['balance'] : round($with_tax - $advance - $coupon, 2), 'adjustment' => $adjustment,
         'status_key' => $status_key, 'status' => $status, 'payment_status' => $text('payment_status'), 'transaction_id' => $text('transaction_id'), 'transaction_date' => $text('transaction_date'),
         'note' => $text('st_note'), 'boarding' => $text('boarding_location') ?: $text('address'), 'dropoff' => $text('dropoff_location') ?: $text('_st_tour_dropoff'),
     );

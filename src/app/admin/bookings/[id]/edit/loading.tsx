@@ -1,0 +1,1 @@
+export default function LoadingBookingEditor() { return <main className="admin-settings" aria-busy="true"><p className="as-eyebrow">TRIPANZA / ADMIN</p><h1>Opening booking editor…</h1><p>Loading the saved booking and fare snapshot.</p></main>; }

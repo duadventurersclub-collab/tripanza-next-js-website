@@ -60,6 +60,12 @@ Routes:
 - `/tours` – searchable tour listing
 - `/tours/[slug]` – complete tour detail
 - `/booking?tour={id}` – booking flow
+- `/admin/bookings` – native admin booking history
+- `/admin/bookings/{id}/edit` – native full booking editor (admin only)
+
+The booking editor requires Tripanza Native Admin API **v2.2.0** in WordPress.
+Replace the older plugin using `tripanza-headless-admin-2.2.0.zip`; details and
+live-integration smoke tests are in `wordpress/tripanza-headless-admin/README.md`.
 
 ## Validation
 
