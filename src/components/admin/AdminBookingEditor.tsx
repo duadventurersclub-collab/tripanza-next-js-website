@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import AdminMenu from "./AdminMenu";
 import { money } from "@/lib/admin-bookings-types";
 import { editorPreview, editorSale, editorGroup, emptyManual, type BookingEditorData, type EditorFields, type EditorManual } from "@/lib/admin-booking-editor-types";
 import "./booking-editor-original.css";
 import "./booking-editor-native.css";
 const fieldCopy = (data: BookingEditorData): EditorFields => structuredClone({ ...data.fields, guests: data.fields.guests.length ? data.fields.guests : [{ name: "", title: "", age: 0 }] });
-export default function AdminBookingEditor({ initial, wordpressOrigin }: { initial: BookingEditorData; wordpressOrigin: string }) {
+export type BookingEditorModalControls = { close: () => void; setDismissHandler: (handler: () => void) => void };
+export default function AdminBookingEditor({ initial, wordpressOrigin, modal, onChange }: { initial: BookingEditorData; wordpressOrigin: string; modal?: BookingEditorModalControls; onChange?: (data: BookingEditorData) => void }) {
   const [data, setData] = useState(initial), [fields, setFields] = useState(() => fieldCopy(initial)), [manual, setManual] = useState<EditorManual>(emptyManual);
   const [busy, setBusy] = useState(""), [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
   const [phone, setPhone] = useState(initial.country_code + initial.fields.st_phone), [query, setQuery] = useState("");
@@ -17,6 +18,12 @@ export default function AdminBookingEditor({ initial, wordpressOrigin }: { initi
   const dirty = JSON.stringify(fields) !== JSON.stringify(fieldCopy(data)) || manual.amount !== 0 || manual.reason !== "" || manual.internal_note !== "";
   const preview = editorPreview(data, fields, manual), id = data.booking.id, endpoint = `/api/admin/bookings/${id}/editor`;
   const disabled = Boolean(busy) || data.readonly;
+  const requestClose = useCallback(() => {
+    if (busyRef.current) { setNotice({ text: "Please wait for the current action to finish before closing.", error: true }); return; }
+    if (dirty && !window.confirm("Close the editor and discard unsaved booking changes?")) return;
+    modal?.close();
+  }, [dirty, modal]);
+  useEffect(() => { modal?.setDismissHandler(requestClose); }, [modal, requestClose]);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     if (!dirty) return;
@@ -47,18 +54,21 @@ export default function AdminBookingEditor({ initial, wordpressOrigin }: { initi
       const result = await response.json(); if (!response.ok || !result.ok || !result.editor) throw Error(result.message || "The action could not be confirmed. Refresh to check the saved booking.");
       if (!mounted.current) return;
       setData(result.editor);
+      onChange?.(result.editor);
       if (name === "save") { setFields(fieldCopy(result.editor)); setManual(emptyManual()); saveAttempt.current = null; setQuery(""); }
       setNotice({ text: [result.message, result.warning].filter(Boolean).join(" "), error: Boolean(result.warning) });
       // Only a boolean invalidation flag is stored, never customer data.
-      try { sessionStorage.setItem("tripanza-admin-bookings-changed", "1"); } catch { /* Storage can be disabled. */ }
-      window.dispatchEvent(new Event("tripanza-booking-updated"));
+      if (!modal) {
+        try { sessionStorage.setItem("tripanza-admin-bookings-changed", "1"); } catch { /* Storage can be disabled. */ }
+        window.dispatchEvent(new Event("tripanza-booking-updated"));
+      }
     } catch (error) { if (mounted.current) setNotice({ text: error instanceof Error ? error.message : "Could not confirm this action.", error: true }); }
     finally { busyRef.current = false; if (mounted.current) setBusy(""); }
   }
   async function refresh() {
     if (busyRef.current || dirty && !window.confirm("Refresh and discard unsaved changes?")) return;
     busyRef.current = true; setBusy("refresh");
-    try { const response = await fetch(endpoint, { cache: "no-store" }); const next = await response.json(); if (!response.ok || !next.fields) throw Error(next.message || "Refresh failed."); if (mounted.current) { setData(next); setFields(fieldCopy(next)); setManual(emptyManual()); saveAttempt.current = null; setQuery(""); setNotice({ text: "Saved booking refreshed.", error: false }); } }
+    try { const response = await fetch(endpoint, { cache: "no-store" }); const next = await response.json(); if (!response.ok || !next.fields) throw Error(next.message || "Refresh failed."); if (mounted.current) { setData(next); onChange?.(next); setFields(fieldCopy(next)); setManual(emptyManual()); saveAttempt.current = null; setQuery(""); setNotice({ text: "Saved booking refreshed.", error: false }); } }
     catch (error) { if (mounted.current) setNotice({ text: error instanceof Error ? error.message : "Refresh failed.", error: true }); }
     finally { busyRef.current = false; if (mounted.current) setBusy(""); }
   }
@@ -72,8 +82,9 @@ export default function AdminBookingEditor({ initial, wordpressOrigin }: { initi
   }
   function section(title: string, icon: string, children: ReactNode) { return <section className="edit-section"><h3><i className={`fa ${icon}`} aria-hidden="true" /> {title}</h3>{children}</section>; }
   const fmt = (value: number) => money(value, data.booking.currency);
-  return <div className="native-booking-editor"><AdminMenu name={data.user.name} wordpressOrigin={wordpressOrigin} /><main id="content">
-    <div className="editor-topbar"><div className="editor-brand"><span className="editor-brand__mark" aria-hidden="true">T</span><div>Tripanza<small>Booking operations</small></div></div><Link href="/admin/bookings" prefetch={false}>← Booking history</Link></div>
+  const Content = modal ? "div" : "main";
+  return <div className="native-booking-editor">{!modal && <AdminMenu name={data.user.name} wordpressOrigin={wordpressOrigin} />}<Content id="content">
+    <div className="editor-topbar"><div className="editor-brand"><span className="editor-brand__mark" aria-hidden="true">T</span><div>Tripanza<small>Booking operations</small></div></div>{modal ? <button type="button" onClick={requestClose}>← Back to booking history</button> : <Link href="/admin/bookings" prefetch={false}>← Booking history</Link>}</div>
     {notice && <div className={`editor-toast is-visible be-notice${notice.error ? " is-error" : ""}`} role={notice.error ? "alert" : "status"}>{notice.text}<button type="button" aria-label="Dismiss notification" onClick={() => setNotice(null)}>×</button></div>}
     <header className="editor-hero"><span className="editor-hero__eyebrow">Booking workspace</span><h1 ref={heading}>Edit booking #{id}</h1><div className="editor-hero__host"><span>Host</span><strong>{data.host_name}</strong></div><p>Review the saved trip record, update traveller and payment information, then publish every change in one secure action.</p><div className="editor-hero__meta"><span>{data.fields.selected_tour_name}</span><span className={`booking-source ${data.booking.poster === "host" ? "is-host" : "is-direct"}`}>{data.booking.source}</span><span>{data.created}</span><span>{data.status_label}</span></div></header>
     <div className="be-toolbar"><span>{dirty ? "Unsaved changes — the booking details below still show the saved record." : "All displayed booking details are saved."}</span><button type="button" onClick={refresh} disabled={Boolean(busy)}>{busy === "refresh" ? "Refreshing…" : "Refresh saved booking"}</button></div>
@@ -93,7 +104,7 @@ export default function AdminBookingEditor({ initial, wordpressOrigin }: { initi
       </fieldset>
     </form>
     <section className="edit-section order-actions-section"><h3><i className="fa fa-cogs" aria-hidden="true" /> Order Actions</h3><div className="grid-2"><label className="be-field">Update Order Status<select className="admin-order-status" value={data.booking.status_key} disabled={disabled} onChange={event => void action("status", { status: event.target.value })}>{!data.statuses[data.booking.status_key] && <option value={data.booking.status_key}>{data.status_label}</option>}{Object.entries(data.statuses).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label><div><label>Resend Confirmation Email</label><button className="resend-email-btn" disabled={disabled || !data.mail_available} onClick={() => { if (window.confirm(`Resend the saved booking confirmation to ${data.fields.st_email || "the customer"}?`)) void action("resend"); }}>{busy === "resend" ? "Sending…" : "Resend Email"}</button></div></div>{data.coupon_amount > 0 && <div className="be-wallet"><button className="reverse-wallet-btn" disabled={disabled || !data.wallet.can_reverse} onClick={() => { if (window.confirm(`Restore ${fmt(data.wallet.used)} to this booking’s wallet account? This does not remove its original checkout discount.`)) void action("reverse_wallet", { confirmation: "REVERSE WALLET" }); }}>{busy === "reverse_wallet" ? "Reversing…" : data.wallet.reversed ? "Wallet already reversed" : "Reverse Wallet / Coupon"}</button>{!data.wallet.can_reverse && !data.wallet.reversed && <p className="be-hint">No reversible wallet debit is recorded. Promotional coupons are not wallet credits.</p>}</div>}<p className="be-hint">These actions use the saved booking, not unsaved form changes. Emails and WhatsApp messages are sent only when you confirm.</p><a href={data.booking.invoice_url} target="_blank" rel="noopener noreferrer">Download invoice ↗</a></section>
-  </main></div>;
+  </Content></div>;
 }
 function SavedBooking({ data }: { data: BookingEditorData }) {
   const f = data.fields, v = data.financials, fmt = (value: number) => money(value, data.booking.currency);

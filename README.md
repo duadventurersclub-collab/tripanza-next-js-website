@@ -63,6 +63,9 @@ Routes:
 - `/admin/bookings` – native admin booking history
 - `/admin/bookings/{id}/edit` – native full booking editor (admin only)
 
+Booking-history Edit buttons open the editor in a modal without changing the URL
+or resetting filters, selection or scroll. Direct editor URLs still work.
+
 The booking editor requires Tripanza Native Admin API **v2.2.0** in WordPress.
 Replace the older plugin using `tripanza-headless-admin-2.2.0.zip`; details and
 live-integration smoke tests are in `wordpress/tripanza-headless-admin/README.md`.

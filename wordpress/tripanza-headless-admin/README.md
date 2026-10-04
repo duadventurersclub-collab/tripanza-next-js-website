@@ -67,7 +67,8 @@ Keep Traveler and the existing Tripanza itinerary/PDF modules active.
   The old seven-click UI unlock is replaced by visible admin-only controls and
   explicit confirmation, not treated as a security boundary.
 - Existing `st_order` normal bookings are writable. Edit links open the native
-  full editor at `/admin/bookings/{id}/edit`. Legacy WooCommerce rows are read-only;
+  full editor in a modal over history, preserving filters, selection and scroll.
+  `/admin/bookings/{id}/edit` remains available for direct URLs. Legacy WooCommerce rows are read-only;
   their existing WordPress editor remains an explicit ordinary link to preserve
   their lifecycle. Invoices still use the installed WordPress PDF generator.
 
@@ -96,8 +97,10 @@ Keep Traveler and the existing Tripanza itinerary/PDF modules active.
 - Wallet reversal requires a recorded wallet debit and the existing wallet module;
   it restores that debit once. Promotional coupons are never credited as wallet
   money. The original checkout discount is not removed by reversal.
-- Save/action feedback appears in place without reloading. Unsaved-link navigation
-  asks for confirmation. Returning to history refreshes changed records. Only a
+- Save/action feedback appears in place without reloading. Modal saves update the
+  history row immediately without resetting filters or selection. Close/Escape
+  protects unsaved changes and blocks dismissal during a pending action. Direct-page
+  unsaved-link navigation asks for confirmation. Returning from a direct page refreshes changed records. Only a
   boolean invalidation marker, not booking/customer data, is stored in sessionStorage.
 - Archived and WooCommerce-linked records are read-only in the native editor.
 

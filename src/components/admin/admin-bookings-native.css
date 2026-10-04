@@ -8,3 +8,4 @@
 .native-admin-bookings .table-booking-history tbody tr.order-row[data-order-status="Refunded"] td.status-display{background:#8b5cf6!important}
 .native-admin-bookings .table-booking-history tbody tr.order-row[data-order-status="Pending"] td.status-display{background:#e02020!important}
 @media(max-width:900px){.native-admin-bookings .table-booking-history{width:100%!important}.native-admin-bookings .table-booking-history tbody tr.order-row td>*{min-width:0;overflow-wrap:anywhere}}
+.native-admin-bookings .native-booking-details section>button{display:inline-block;margin:10px 18px 0 0;padding:10px 14px;border:1px solid #dfe4ef;border-radius:10px;background:#3157d5;color:#fff;font-size:12px;font-weight:750}
