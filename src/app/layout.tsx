@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Suspense } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import TripanzaBottomMenu from "@/components/navigation/TripanzaBottomMenu";
 import NavigationProgress from "@/components/navigation/NavigationProgress";
 import SiteSettingsProvider from "@/components/settings/SiteSettingsProvider";
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <TripanzaBottomMenu />
           <CookieConsent />
         </SiteSettingsProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
