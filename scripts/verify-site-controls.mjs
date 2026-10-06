@@ -271,8 +271,8 @@ try {
   await menuTab.goto(`${origin}/tours`);
   await menuTab.getByRole("button", { name: "Me", exact: true }).click();
   await menuTab.locator('.tp-profile-menu a[href="/host"]').waitFor({ state: "visible" });
-  const toggle = page.locator(".as-host input[type=checkbox]");
-  await page.locator(".as-host .as-toggle>span").click();
+  const toggle = page.locator(".as-card.as-host > .as-toggle > input[type=checkbox]").first();
+  await page.locator(".as-card.as-host > .as-toggle > span").first().click();
   assert.equal(await toggle.isChecked(), false);
   page.once("dialog", dialog => dialog.accept());
   await page.getByRole("button", { name: "Save settings" }).click();

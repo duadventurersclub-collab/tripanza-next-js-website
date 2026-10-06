@@ -55,7 +55,18 @@ function homeTour(tour: TourDetail, reviews: TourDetail["details"]["reviews"]): 
   };
 }
 
-async function loadHomepage(featuredSlugs: string[]): Promise<{ site: SiteConfig; tours: HomeTour[] }> {
+async function cachedTour(slug: string, ttl: number): Promise<TourDetail> {
+  const url = `${wordpressOrigin}/wp-json/tripanza-headless/v1/tours/${encodeURIComponent(slug)}`;
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    next: { revalidate: ttl, tags: ["public-data", "tours", `tour:${slug}`] },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`WordPress ${response.status} for ${slug}`);
+  return transformStTour(await response.json());
+}
+
+async function loadHomepage(featuredSlugs: string[], ttl: number): Promise<{ site: SiteConfig; tours: HomeTour[] }> {
   const [listing, siteResult] = await Promise.all([
     wordpressJson("tours?per_page=24&admin_only=1"),
     wordpressJson("site").catch(() => fallbackSite),
@@ -63,12 +74,23 @@ async function loadHomepage(featuredSlugs: string[]): Promise<{ site: SiteConfig
   const response = listing && typeof listing === "object" ? listing as { items?: unknown[]; admin_only?: boolean } : {};
   if (response.admin_only !== true || !Array.isArray(response.items)) throw new Error("The homepage tour listing is unavailable");
   const summaries = response.items.map(transformStTour);
-  const [details, featured] = await Promise.all([
-    Promise.allSettled(summaries.map(tour => getTourBySlug(tour.slug, true))),
-    Promise.allSettled(featuredSlugs.map(slug => getTourBySlug(slug, true))),
-  ]);
-  const base = summaries.map((tour, index) => details[index].status === "fulfilled" && details[index].value ? details[index].value! : tour);
-  const promoted = featured.flatMap(result => result.status === "fulfilled" && result.value ? [result.value] : []);
+  // Preserve rich content for all cards, but only bypass WordPress's CDN for
+  // the first eight and featured trips. The other details reuse Next's data
+  // cache instead of flooding the WordPress origin on every ISR rebuild.
+  const prioritySlugs = new Set([...featuredSlugs, ...summaries.slice(0, 8).map(tour => tour.slug)]);
+  const detailSlugs = [...new Set([...featuredSlugs, ...summaries.map(tour => tour.slug)])];
+  const detailResults = await Promise.allSettled(detailSlugs.map(slug =>
+    ttl === 0 || prioritySlugs.has(slug) ? getTourBySlug(slug, true) : cachedTour(slug, ttl),
+  ));
+  const bySlug = new Map(detailSlugs.flatMap((slug, index) => {
+    const result = detailResults[index];
+    return result.status === "fulfilled" && result.value ? [[slug, result.value] as const] : [];
+  }));
+  const base = summaries.map(tour => {
+    const detail = bySlug.get(tour.slug);
+    return detail ? { ...detail, title: tour.title, featured_image: tour.featured_image, price: tour.price, currency: tour.currency } : tour;
+  });
+  const promoted = featuredSlugs.flatMap(slug => bySlug.has(slug) ? [bySlug.get(slug)!] : []);
   const tours = [...promoted, ...base.filter(tour => !promoted.some(item => item.id === tour.id))];
   const seenReviews = new Set<string>();
   const reviews = tours.flatMap(tour => tour.details.reviews).filter(review => {
@@ -83,10 +105,11 @@ async function loadHomepage(featuredSlugs: string[]): Promise<{ site: SiteConfig
 export const getHomepageData = cache(async (live = false) => {
   const settings = await (live ? getSiteSettings() : getPublicSiteSettings());
   const featuredSlugs = settings.featured_tour_slugs.split(",").map(slug => slug.trim()).filter(Boolean).slice(0, 12);
-  if (live) return loadHomepage(featuredSlugs);
+  if (live) return loadHomepage(featuredSlugs, 0);
+  const ttl = Math.max(1, Math.min(settings.tour_cache_seconds, settings.site_cache_seconds));
   return unstable_cache(
-    () => loadHomepage(featuredSlugs),
+    () => loadHomepage(featuredSlugs, ttl),
     ["homepage-v1", wordpressOrigin, settings.cache_revision, featuredSlugs.join(",")],
-    { revalidate: Math.max(1, Math.min(settings.tour_cache_seconds, settings.site_cache_seconds)), tags: ["public-data", "tours", "site"] },
+    { revalidate: ttl, tags: ["public-data", "tours", "site"] },
   )();
 });

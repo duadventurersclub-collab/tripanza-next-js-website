@@ -69,8 +69,11 @@ async function save(patch) {
   const revision = `tour-test-${Date.now()}`;
   const response = await fetch(origin + "/api/admin/settings", { method: "POST", headers: { Cookie: "tripanza_session=fixture-admin", Origin: origin, "Content-Type": "application/json" }, body: JSON.stringify({ ...patch, revision, cache_revision: revision }) });
   assert.equal(response.status, 200);
-  // Proxy and render worker may be separate processes: maximum propagation 10s.
+  // Proxy and render worker may be separate processes. Expiry starts a
+  // background refresh, then the next request observes the updated controls.
   await sleep(10_100);
+  await page();
+  await sleep(300);
 }
 try {
   for (let retry = 0; retry < 80; retry++) {

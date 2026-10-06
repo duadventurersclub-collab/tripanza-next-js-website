@@ -1,10 +1,10 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { readLiveSiteSettings, liveSettingsUrl, LIVE_SETTINGS_HEADERS } from "@/lib/site-settings";
 import { getTourPageControls } from "@/lib/tour-page-controls";
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 
-export async function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const path = request.nextUrl.pathname;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete("x-tripanza-render-settings");
@@ -27,7 +27,7 @@ export async function proxy(request: NextRequest) {
   // Never read a browser-supplied snapshot when deciding maintenance access.
   const tourPage = /^\/tours\/[a-zA-Z0-9-]+\/?$/.test(path);
   const homePage = path === "/";
-  const settings = await (tourPage || homePage ? getTourPageControls() : readLiveSiteSettings());
+  const settings = await (tourPage || homePage ? getTourPageControls(promise => event.waitUntil(promise)) : readLiveSiteSettings());
   // Dynamic pages reuse the enforcement snapshot. The public root layout and
   // cached tour renderer deliberately avoid request headers to preserve ISR.
   requestHeaders.set("x-tripanza-render-settings", Buffer.from(JSON.stringify(settings)).toString("base64url"));

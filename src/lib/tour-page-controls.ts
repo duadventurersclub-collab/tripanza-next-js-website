@@ -13,9 +13,9 @@ export function resetTourPageControls() {
   pending = undefined;
 }
 
-export function getTourPageControls(): Promise<SiteSettings> {
+export function getTourPageControls(waitUntil?: (promise: Promise<unknown>) => void): Promise<SiteSettings> {
   if (snapshot && snapshot.expires > Date.now()) return Promise.resolve(snapshot.settings);
-  if (pending) return pending;
+  if (pending) return snapshot ? Promise.resolve(snapshot.settings) : pending;
   const version = generation;
   const request = fetchSiteSettings().then(settings => {
     if (version === generation) snapshot = { settings, expires: Date.now() + 10_000 };
@@ -27,5 +27,12 @@ export function getTourPageControls(): Promise<SiteSettings> {
     return settings;
   }).finally(() => { if (pending === request) pending = undefined; });
   pending = request;
+  if (snapshot) {
+    // Keep serving the last verified public controls while WordPress refreshes.
+    // Proxy fetches cannot use Next's Data Cache; waitUntil keeps this refresh
+    // alive after the response has been sent.
+    waitUntil?.(request);
+    return Promise.resolve(snapshot.settings);
+  }
   return request;
 }
