@@ -137,13 +137,17 @@ function ReelPreview({
   );
 }
 
+type ReelTour = Pick<TourDetail, "title" | "featured_image" | "price"> & {
+  details: Pick<TourDetail["details"], "reels" | "gallery" | "destination" | "origin" | "duration" | "pricing" | "partner" | "rating">;
+};
+
 export function ReelsViewer({
   tour,
   initialIndex,
   onClose,
   primaryHref,
 }: {
-  tour: TourDetail;
+  tour: ReelTour;
   initialIndex: number;
   onClose: () => void;
   primaryHref?: string;

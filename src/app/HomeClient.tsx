@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import AutoplayReelVideo from "@/components/reels/AutoplayReelVideo";
 import { ReelsViewer } from "@/components/tour/TourReels";
-import type { TourDetail } from "@/lib/wp";
+import type { HomeTour } from "@/lib/homepage-data";
 import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 
 const LOGO = "https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png";
@@ -63,19 +63,19 @@ function money(value: number, currency = "INR") {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
 }
 
-function duration(tour: TourDetail) {
+function duration(tour: HomeTour) {
   const { days, nights } = tour.details.duration;
   return days ? `${nights || Math.max(0, Number(days) - 1)}N/${days}D` : "";
 }
 
-function startingAmount(tour: TourDetail) {
+function startingAmount(tour: HomeTour) {
   const values = [tour.details.pricing.quad, tour.details.pricing.triple, tour.details.pricing.twin]
     .map((price) => price?.amount || 0)
     .filter((value) => value > 0);
   return values.length ? Math.min(...values) : 0;
 }
 
-function saleAmount(tour: TourDetail) {
+function saleAmount(tour: HomeTour) {
   const price = startingAmount(tour);
   const rate = tour.details.booking.discount_rate;
   if (!price || !rate) return price;
@@ -102,7 +102,7 @@ function monthLabel(value: string) {
   return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
-function tourTerms(tour: TourDetail) {
+function tourTerms(tour: HomeTour) {
   return Object.values(tour.terms || {}).flat().map((term) => term.name);
 }
 
@@ -111,7 +111,7 @@ function numeric(value?: string) {
   return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
 }
 
-function daysForTour(tour: TourDetail) {
+function daysForTour(tour: HomeTour) {
   return Number(tour.details.duration.days) || 0;
 }
 
@@ -119,7 +119,7 @@ function HomeImage({ src, alt, className = "" }: { src?: string | null; alt: str
   return <Image src={src || FALLBACKS[0]} alt={alt} fill sizes="(max-width: 760px) 100vw, 520px" className={className} />;
 }
 
-export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; siteName: string }) {
+export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; siteName: string }) {
   const settings = useSiteSettings();
   const WHATSAPP = `https://wa.me/${settings.whatsapp_number}`;
   const router = useRouter();
@@ -135,7 +135,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
   const [postcardKind, setPostcardKind] = useState<"state" | "country">("state");
   const [now, setNow] = useState(0);
   const [videoPaused, setVideoPaused] = useState(false);
-  const [reelTour, setReelTour] = useState<TourDetail | null>(null);
+  const [reelTour, setReelTour] = useState<HomeTour | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export default function HomeClient({ tours, siteName }: { tours: TourDetail[]; s
     return [...tours].sort((left, right) => scoreTour(right, answers) - scoreTour(left, answers))[0];
   }, [answers, tours]);
 
-  function scoreTour(tour: TourDetail, values: MatchAnswers) {
+  function scoreTour(tour: HomeTour, values: MatchAnswers) {
     let score = 0;
     const price = saleAmount(tour);
     const length = daysForTour(tour);
@@ -379,7 +379,7 @@ function InfoTile({ icon, title, copy }: { icon: string; title: string; copy: st
   return <div className="tph2-confidence__item"><i>{icon}</i><strong>{title}</strong><small>{copy}</small></div>;
 }
 
-function Shortcut({ title, kicker, tours }: { title: string; kicker: string; tours: TourDetail[] }) {
+function Shortcut({ title, kicker, tours }: { title: string; kicker: string; tours: HomeTour[] }) {
   return <article className="tph2-shortcut"><div className="tph2-shortcut__top"><div><small>{kicker}</small><h3>{title}</h3></div><Link href="/tours">See all →</Link></div><div>{tours.map((tour) => <Link className="tph2-mini" href={`/tours/${tour.slug}`} key={tour.id}><span><HomeImage src={tour.featured_image} alt="" /></span><span><strong>{tour.title}</strong><small>{duration(tour)} · From {tour.details.origin || "Delhi"}</small></span><b>{money(saleAmount(tour), tour.currency)}</b></Link>)}</div></article>;
 }
 

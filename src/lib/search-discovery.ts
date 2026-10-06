@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "./site-settings";
+import type { SiteSettings } from "./site-settings-types";
 
 export function publicOrigin(value: string): string | null {
   try {
@@ -17,8 +18,8 @@ export function safeJsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-export async function publicPageMetadata(path: string, title: string, description: string, image?: string): Promise<Metadata> {
-  const origin = publicOrigin((await getSiteSettings()).seo_site_url);
+export async function publicPageMetadata(path: string, title: string, description: string, image?: string, settings?: SiteSettings): Promise<Metadata> {
+  const origin = publicOrigin((settings || await getSiteSettings()).seo_site_url);
   const url = origin ? publicUrl(origin, path) : undefined;
   return {
     title: { absolute: title.includes("Tripanza") ? title : `${title} | Tripanza` },

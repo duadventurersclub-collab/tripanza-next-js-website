@@ -9,6 +9,11 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete("x-tripanza-render-settings");
   const next = () => NextResponse.next({ request: { headers: requestHeaders } });
+  if (path.startsWith("/home-cache/")) {
+    const target = request.nextUrl.clone();
+    target.pathname = "/";
+    return NextResponse.redirect(target);
+  }
   // The uncached renderer is only an internal rewrite target, never another URL
   // for indexing or sharing the same tour.
   if (path.startsWith("/tour-live/")) {
@@ -21,11 +26,17 @@ export async function proxy(request: NextRequest) {
   if (/^\/(?:admin|api|login|logout|account|dashboard|my-bookings|wallet|checkout|payment|booking-status|contact|tnc|privacy-policy|cookies-policy|cancellation-policy|disclaimer)(?:\/|$)/.test(path)) return next();
   // Never read a browser-supplied snapshot when deciding maintenance access.
   const tourPage = /^\/tours\/[a-zA-Z0-9-]+\/?$/.test(path);
-  const settings = await (tourPage ? getTourPageControls() : readLiveSiteSettings());
+  const homePage = path === "/";
+  const settings = await (tourPage || homePage ? getTourPageControls() : readLiveSiteSettings());
   // Dynamic pages reuse the enforcement snapshot. The public root layout and
   // cached tour renderer deliberately avoid request headers to preserve ISR.
   requestHeaders.set("x-tripanza-render-settings", Buffer.from(JSON.stringify(settings)).toString("base64url"));
   const render = () => {
+    if (homePage && settings.public_cache_enabled && settings.tour_cache_seconds > 0 && settings.site_cache_seconds > 0) {
+      const target = request.nextUrl.clone();
+      target.pathname = "/home-cache/home";
+      return NextResponse.rewrite(target, { request: { headers: requestHeaders } });
+    }
     if (tourPage && (!settings.public_cache_enabled || settings.tour_cache_seconds === 0)) {
       const target = request.nextUrl.clone();
       target.pathname = path.replace(/^\/tours\//, "/tour-live/");

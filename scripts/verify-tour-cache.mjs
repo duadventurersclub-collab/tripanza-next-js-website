@@ -8,7 +8,7 @@ let settings = { host_enabled: false, public_cache_enabled: true, tour_cache_sec
   new_bookings_enabled: true, maintenance_enabled: false, maintenance_message: "Fixture maintenance",
   revision: "tour-test-1", cache_revision: "tour-test-1" };
 let title = "Cache fixture mountain escape", outage = false;
-const calls = { settings: 0, tours: 0, quotes: 0 };
+const calls = { settings: 0, tours: 0, listings: 0, quotes: 0 };
 const mock = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://fixture");
   const route = url.pathname.replace("/wp-json/tripanza-headless/v1/", "");
@@ -28,16 +28,22 @@ const mock = http.createServer(async (req, res) => {
   }
   if (route === "booking/quote") { calls.quotes++; return send({ quote_id: `live-${calls.quotes}` }); }
   if (outage) return send({ message: "Upstream unavailable" }, 503);
+  if (route === "site") return send({ name: "Tripanza Fixture", description: "Test trips", url: "http://fixture", admin_url: "", site_language: "en-IN", timezone: "Asia/Kolkata" });
+  if (route === "tours") {
+    calls.listings++;
+    return send({ admin_only: true, items: [{ id: 42, slug: "cache-fixture", title, currency: "INR", price: "10000",
+      details: { origin: "Delhi", destination: "Manali", duration: { days: "3", nights: "2" }, pricing: { quad: { amount: 10000, display: "₹10,000" } } } }] });
+  }
   if (route === "tours/cache-fixture") {
     calls.tours++;
     await sleep(300);
     return send({ id: 42, slug: "cache-fixture", title: url.searchParams.has("_tripanza_live") ? title : "STALE CDN TOUR",
+      content: "FULL_ITINERARY_SHOULD_NOT_SHIP",
       currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" },
         pricing: { quad: { amount: 10000, display: "₹10,000" } }, itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] } });
   }
   if (route.startsWith("tours/")) return send({ code: "tripanza_tour_not_found" }, 404);
   if (url.pathname === "/wp-json/wp/v2/st_tours") return send([]);
-  if (route === "tours") return send({ items: [] });
   return send({}, 404);
 });
 await new Promise(resolve => mock.listen(0, "127.0.0.1", resolve));
@@ -74,6 +80,20 @@ try {
   }
   // Production HTML survives process restarts; reset only the test build cache.
   assert.equal((await invalidate("site-controls")).status, 200);
+  const homeCold = await page("/");
+  assert.equal(homeCold.response.status, 200);
+  assert.ok(homeCold.html.includes(title));
+  assert.ok(!homeCold.html.includes("FULL_ITINERARY_SHOULD_NOT_SHIP"));
+  const homeCalls = { ...calls };
+  for (let i = 0; i < 3; i++) {
+    const homeWarm = await page("/");
+    assert.equal(homeWarm.response.headers.get("x-nextjs-cache"), "HIT");
+    assert.ok(homeWarm.html.includes(title));
+  }
+  assert.equal(calls.listings, homeCalls.listings);
+  assert.equal(calls.tours, homeCalls.tours);
+  assert.equal(calls.settings, homeCalls.settings);
+  console.log(`PASS: homepage serves cached HTML at /; ${homeCold.ms}ms cold, no repeat WordPress calls or full itineraries`);
   const cold = await page();
   assert.equal(cold.response.status, 200);
   assert.ok(cold.html.includes(title));
@@ -92,6 +112,7 @@ try {
   title = "Updated fixture mountain escape";
   assert.equal((await invalidate()).status, 200);
   assert.ok((await page()).html.includes(title), "Tour webhook must refresh HTML and origin data");
+  assert.ok((await page("/")).html.includes(title), "Tour webhook must refresh the homepage");
   console.log("PASS: signed tour webhook invalidates HTML/data, bypasses stale upstream CDN; bad secret rejected");
 
   const bookingBody = JSON.stringify({ tour_id: 42, date: "2027-01-01", counts: { quad: 1, triple: 0, twin: 0 }, extras: [] });
@@ -109,17 +130,25 @@ try {
   for (const patch of [{ public_cache_enabled: false }, { public_cache_enabled: true, tour_cache_seconds: 0 }]) {
     await save(patch);
     const before = calls.tours;
+    const beforeListings = calls.listings;
     for (let i = 0; i < 2; i++) {
       const live = await page();
       assert.equal(live.response.status, 200);
       assert.ok(live.html.includes(title));
       assert.ok(live.response.headers.get("cache-control").includes("no-store"));
+      const homeLive = await page("/");
+      assert.equal(homeLive.response.status, 200);
+      assert.ok(homeLive.html.includes(title));
+      assert.ok(homeLive.response.headers.get("cache-control").includes("no-store"));
     }
     assert.ok(calls.tours >= before + 2, "Disabled cache must fetch on every page request");
+    assert.ok(calls.listings >= beforeListings + 2, "Disabled homepage cache must fetch its listing every time");
   }
   console.log("PASS: public cache OFF and tour TTL=0 both use live renderer at the original URL");
   const redirect = await fetch(origin + "/tour-live/cache-fixture", { redirect: "manual" });
   assert.equal(new URL(redirect.headers.get("location"), origin).pathname, "/tours/cache-fixture");
+  const homeRedirect = await fetch(origin + "/home-cache/home", { redirect: "manual" });
+  assert.equal(new URL(homeRedirect.headers.get("location"), origin).pathname, "/");
   await save({ public_cache_enabled: true, tour_cache_seconds: 1 });
   await page();
   title = "Background refreshed mountain escape";
@@ -137,8 +166,11 @@ try {
   await save({ public_cache_enabled: true, tour_cache_seconds: 300 });
   await page();
   assert.equal((await page()).response.headers.get("x-nextjs-cache"), "HIT");
+  await page("/");
+  assert.equal((await page("/")).response.headers.get("x-nextjs-cache"), "HIT");
   await save({ maintenance_enabled: true });
   assert.equal((await page()).response.status, 503);
+  assert.equal((await page("/")).response.status, 503);
   assert.equal((await page(undefined, { Cookie: "tripanza_session=fixture-user" })).response.status, 503);
   assert.equal((await page(undefined, { Cookie: "tripanza_session=fixture-admin" })).response.status, 200);
   console.log("PASS: cache re-enable works; maintenance blocks cached pages; only verified admin bypasses");

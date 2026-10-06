@@ -48,6 +48,7 @@ export async function POST(request: Request) {
   revalidateTag("meta-reels", { expire: 0 });
   if (slug) revalidateTag(`tour:${slug}`, { expire: 0 });
   revalidatePath("/");
+  revalidatePath("/home-cache/home");
   revalidatePath("/tours");
   revalidatePath("/trips");
   if (slug) revalidatePath(`/tours/${slug}`);
