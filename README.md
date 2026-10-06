@@ -2,6 +2,12 @@
 
 Next.js 16 frontend for Tripanza. Tour listings and detail pages are rendered from the WordPress `st_tours` post type.
 
+## WhatsApp bot source
+
+The [Tripanza WhatsApp bot](https://github.com/duadventurersclub-collab/tripanza-whatsapp-bot) is included in [`whatsapp-bot/`](whatsapp-bot/) as a Git subtree. Its own `README.md`, `package.json`, workspace, and tests remain together in that directory. This is source-code consolidation only: the website's `npm install`, `npm run build`, and `npm start` do not install or launch the bot.
+
+To work on the bot locally, run its commands from `whatsapp-bot/`. If deploying it from this repository, configure it as a separate service with `whatsapp-bot` as the service root directory; leave the Next.js service rooted here. Keep bot credentials, WhatsApp sessions, and workspace data out of Git. The existing bot deployment is not switched to this repository automatically.
+
 ## Configuration
 
 Copy `.env.example` to `.env.local` and set:
