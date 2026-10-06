@@ -15,17 +15,21 @@ export function liveSettingsUrl(path: "settings/public" | "admin/settings" | "ad
   return url.toString();
 }
 
-// Only request-local deduplication: a process cache could keep Host enabled after
-// an administrator disables it. Neither config nor authorization is data-cached.
+// Fresh reader for enforcement. Public rendering wraps this separately in a
+// bounded cache; authorization and booking APIs continue to use live settings.
+export async function fetchSiteSettings(): Promise<SiteSettings> {
+  const response = await fetch(liveSettingsUrl("settings/public"), {
+    cache: "no-store", headers: LIVE_SETTINGS_HEADERS, signal: AbortSignal.timeout(8000),
+  });
+  if (!response.ok) throw new Error("Site settings are unavailable");
+  const data = await response.json();
+  if (typeof data.host_enabled !== "boolean" || typeof data.cache_revision !== "string") throw new Error("Invalid site settings");
+  return { ...DEFAULT_SETTINGS, ...data };
+}
+
 export async function readLiveSiteSettings(): Promise<SiteSettings> {
   try {
-    const response = await fetch(liveSettingsUrl("settings/public"), {
-      cache: "no-store", headers: LIVE_SETTINGS_HEADERS, signal: AbortSignal.timeout(8000),
-    });
-    if (!response.ok) return DEFAULT_SETTINGS;
-    const data = await response.json();
-    if (typeof data.host_enabled !== "boolean" || typeof data.cache_revision !== "string") return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...data };
+    return await fetchSiteSettings();
   } catch { return DEFAULT_SETTINGS; }
 }
 

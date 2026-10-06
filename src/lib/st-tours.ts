@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { randomUUID } from "node:crypto";
 import { publicCacheOptions } from "./site-settings";
 
 type UnknownRecord = Record<string, unknown>;
@@ -636,12 +637,18 @@ async function json(path: string, revalidate = 300, tags: string[] = []): Promis
 }
 
 async function freshJson(path: string): Promise<unknown> {
-  const url = `${WORDPRESS_URL}/${path.replace(/^\//, "")}`;
+  const url = new URL(`${WORDPRESS_URL}/${path.replace(/^\//, "")}`);
+  url.searchParams.set("_tripanza_live", randomUUID());
   const response = await fetch(url, {
-    headers: { Accept: "application/json" },
+    headers: { Accept: "application/json", "Cache-Control": "no-cache, no-store" },
     cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
   });
-  if (!response.ok) throw new Error(`WordPress ${response.status} for ${url}`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    if (response.status === 404 && error.code === "tripanza_tour_not_found") return null;
+    throw new Error(`WordPress ${response.status} for ${url.pathname}`);
+  }
   return response.json();
 }
 
@@ -655,7 +662,7 @@ function galleryMediaIds(value: unknown): number[] {
   });
 }
 
-async function resolveGalleryMedia(values: unknown[]): Promise<unknown[]> {
+async function resolveGalleryMedia(values: unknown[], fresh = false): Promise<unknown[]> {
   const idsByTour = values.map((value) => {
     const source = record(value);
     const fields = { ...record(source.meta), ...record(source.acf), ...record(source.details), ...source };
@@ -665,7 +672,8 @@ async function resolveGalleryMedia(values: unknown[]): Promise<unknown[]> {
   if (!ids.length) return values;
 
   try {
-    const mediaPayload = await json(`wp-json/wp/v2/media?include=${ids.join(",")}&per_page=${ids.length}`, 300);
+    const path = `wp-json/wp/v2/media?include=${ids.join(",")}&per_page=${ids.length}`;
+    const mediaPayload = await (fresh ? freshJson(path) : json(path, 300));
     if (!Array.isArray(mediaPayload)) return values;
     const mediaUrls = new Map(mediaPayload.map((item) => {
       const media = record(item);
@@ -740,27 +748,28 @@ export async function getAppTours(params?: {
   }
 }
 
-export const getTourBySlug = cache(async (slug: string): Promise<TourDetail | null> => {
+export const getTourBySlug = cache(async (slug: string, fresh = false): Promise<TourDetail | null> => {
   const cleanSlug = slug.trim();
   if (!cleanSlug) return null;
   const encoded = encodeURIComponent(cleanSlug);
+  const read = fresh ? freshJson : json;
   const loaders = [
-    async () => unwrapTour(await json(
+    async () => unwrapTour(await read(
       `wp-json/tripanza-headless/v1/tours/${encoded}`,
       300,
       ["tours", `tour:${cleanSlug}`],
     )),
     async () => {
-      const payload = await json(
+      const payload = await read(
         `wp-json/wp/v2/st_tours?slug=${encoded}&_embed=1`,
         300,
         ["tours", `tour:${cleanSlug}`],
       );
       if (!Array.isArray(payload) || !payload[0]) return null;
-      return (await resolveGalleryMedia([payload[0]]))[0];
+      return (await resolveGalleryMedia([payload[0]], fresh))[0];
     },
     async () => {
-      const result = listFrom(await json(
+      const result = listFrom(await read(
         `wp-json/tripanza-headless/v1/tours?search=${encoded}&per_page=100`,
         300,
         ["tours", `tour:${cleanSlug}`],
@@ -769,14 +778,18 @@ export const getTourBySlug = cache(async (slug: string): Promise<TourDetail | nu
     },
   ];
 
+  let reachedWordPress = false;
   for (const load of loaders) {
     try {
       const value = await load();
+      reachedWordPress = true;
       if (value && Object.keys(record(value)).length) return transformStTour(value);
     } catch {
       // Try the next supported WordPress route.
     }
   }
+  // Do not turn an upstream outage into a cached "tour not found" page.
+  if (fresh && !reachedWordPress) throw new Error("Tour details are temporarily unavailable");
   return null;
 });
 

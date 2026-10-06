@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import TripanzaBottomMenu from "@/components/navigation/TripanzaBottomMenu";
 import NavigationProgress from "@/components/navigation/NavigationProgress";
 import SiteSettingsProvider from "@/components/settings/SiteSettingsProvider";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublicSiteSettings } from "@/lib/public-site-settings";
 import SiteAnnouncement from "@/components/settings/SiteAnnouncement";
 import CookieConsent from "@/components/settings/CookieConsent";
 import { publicOrigin } from "@/lib/search-discovery";
@@ -18,7 +18,7 @@ const geistSans = Geist({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSiteSettings();
+  const settings = await getPublicSiteSettings();
   const origin = publicOrigin(settings.seo_site_url);
   return {
     metadataBase: origin ? new URL(origin) : undefined,
@@ -38,7 +38,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const settings = await getSiteSettings();
+  const settings = await getPublicSiteSettings();
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">

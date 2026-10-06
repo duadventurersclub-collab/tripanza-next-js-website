@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
+import { invalidateAppCache } from "@/lib/cache-controls";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,11 @@ export async function POST(request: Request) {
     ? payload.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "")
     : "";
   const source = typeof payload.source === "string" ? payload.source.trim().toLowerCase() : "";
+
+  if (source === "site-controls") {
+    invalidateAppCache("all");
+    return NextResponse.json({ revalidated: true, source });
+  }
 
   revalidateTag("tours", { expire: 0 });
   revalidateTag("meta-reels", { expire: 0 });

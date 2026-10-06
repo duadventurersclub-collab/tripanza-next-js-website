@@ -112,6 +112,7 @@ const mock = http.createServer(async (req, res) => {
       pricing: { quad: { amount: 10000, display: "₹10,000" } },
       itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] },
   });
+  if (relative === "tours/fixture-missing") return send({ code: "tripanza_tour_not_found", message: "Tour not found." }, 404);
   if (relative.startsWith("admin/")) {
     if (!auth) return send({ message: "Please sign in." }, 401);
     if (auth !== "fixture-admin") return send({ message: "Administrator access required." }, 403);

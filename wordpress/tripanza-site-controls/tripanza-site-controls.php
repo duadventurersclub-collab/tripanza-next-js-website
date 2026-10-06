@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Site Controls
  * Description: Administrator-only cache, feature, content, maintenance and operational controls for Tripanza Next.js.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Requires PHP: 7.4
  */
 defined('ABSPATH') || exit;
@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 final class Tripanza_Site_Controls {
     const OPTION = 'tripanza_site_controls_v1';
     const NS = 'tripanza-headless/v1';
-    const VERSION = '1.3.0';
+    const VERSION = '1.3.1';
 
     public static function defaults() {
         return array('host_enabled' => true, 'public_cache_enabled' => true,
@@ -152,7 +152,21 @@ final class Tripanza_Site_Controls {
             if ($before[$key] !== $settings[$key]) $changes[$key] = array('from' => $before[$key], 'to' => $settings[$key]);
         }
         self::audit('settings_saved', $changes);
+        self::notify_next_revalidation();
         return self::admin_settings();
+    }
+
+    private static function notify_next_revalidation() {
+        $url = defined('TRIPANZA_NEXT_REVALIDATE_URL') ? (string) TRIPANZA_NEXT_REVALIDATE_URL : (string) get_option('tripanza_next_revalidate_url', '');
+        $secret = defined('TRIPANZA_NEXT_REVALIDATE_SECRET') ? (string) TRIPANZA_NEXT_REVALIDATE_SECRET : (string) get_option('tripanza_next_revalidate_secret', '');
+        if ($url === '' || $secret === '') return;
+        // Same configured, authenticated endpoint as tour revalidation. Never
+        // put the secret in a URL or follow a redirect to another destination.
+        wp_remote_post(esc_url_raw($url), array(
+            'timeout' => 1, 'blocking' => false, 'redirection' => 0,
+            'headers' => array('Content-Type' => 'application/json', 'X-Tripanza-Revalidate-Secret' => $secret),
+            'body' => wp_json_encode(array('source' => 'site-controls')),
+        ));
     }
 
     private static function audit($action, $changes = array()) {
@@ -248,6 +262,7 @@ final class Tripanza_Site_Controls {
             update_option(self::OPTION, $settings, false);
         }
         self::audit('purge_' . $scope);
+        self::notify_next_revalidation();
         return self::response(array_merge(array('ok' => true, 'scope' => $scope), $details));
     }
 

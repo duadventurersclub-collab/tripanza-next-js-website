@@ -53,6 +53,12 @@ define('TRIPANZA_NEXT_REVALIDATE_SECRET', 'the-same-secret-used-in-render');
 
 Public tour data has a five-minute fallback cache. The webhook expires the homepage, listing and affected detail page after a tour is saved or deleted.
 
+Tour detail pages also use on-demand static HTML/ISR: the first uncached request generates the page, then subsequent requests reuse it. Cached tour data uses the admin-configured tour TTL (default 300 seconds); public layout settings revalidate every 60 seconds. Expired entries regenerate in the background. Fresh upstream reads use a cache-busting query so a stale WordPress CDN response cannot refill the Next.js cache after a purge.
+
+Site Controls 1.3.1 sends the same authenticated webhook when settings are saved or caches purged from WordPress. Next.js admin changes invalidate directly too. Tour maintenance/cache-mode checks have a maximum 10-second snapshot lifetime; public-cache OFF or tour TTL=0 selects a live renderer without changing the visible URL. Host/admin access and booking/payment API validation remain live. Private account data is never included in cached tour HTML.
+
+Run `npm run build` then `node scripts/verify-tour-cache.mjs` for an isolated production-server test of cache hits, invalidation, cache-off, maintenance and live quote checks. This does not contact or modify production WordPress. Caching does not eliminate a hosting cold start after a free instance sleeps, nor the first uncached tour request.
+
 ## Development
 
 ```bash

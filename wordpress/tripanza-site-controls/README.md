@@ -1,5 +1,11 @@
 # Tripanza Site Controls
 
+## Version 1.3.1 upgrade
+
+Settings saves and cache purges also notify the Next.js revalidation webhook, including changes made in WordPress. Uses the existing `TRIPANZA_NEXT_REVALIDATE_URL` and `TRIPANZA_NEXT_REVALIDATE_SECRET` constants (or their lowercase option names). The matching Next.js `REVALIDATION_SECRET` must be configured. No saved settings, booking logic or authentication state are changed by upgrading.
+
+Tour detail HTML is now cached by Next.js with background regeneration. Public display settings revalidate every 60 seconds; Next.js admin saves/webhooks invalidate them sooner. Without a working webhook, display changes propagate on subsequent requests after expiry/background regeneration. Tour maintenance/cache-mode checks use a separate 10-second process snapshot (never an admin authorization cache). Booking, payment and protected API checks remain live. Disabling public caching or setting the tour TTL to zero switches tour pages to an uncached renderer at the same public URL.
+
 ## Version 1.3.0 upgrade
 
 Search & Measurement settings add an optional canonical Next.js HTTPS origin, GA4 Measurement ID, Meta Pixel ID and Google Search Console HTML-tag verification token. All default blank. The origin must be a domain actually serving the Next.js site; leaving it blank prevents the sitemap and canonical tags from claiming an unverified WordPress domain. Analytics and Pixel scripts are gated by separate visitor choices. Installing this plugin does not create Analytics/Meta/Search Console accounts, verify ownership, submit a sitemap or guarantee search/AI placement. Upload `tripanza-site-controls-1.3.0.zip` before using the new admin fields.
