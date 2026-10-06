@@ -1,0 +1,12 @@
+.git
+**/node_modules
+business/data
+business/backend/dist
+business/frontend/.next
+auth_*
+whatsapp-auth
+.env
+.env.*
+!.env.example
+**/*.log
+**/*.tsbuildinfo

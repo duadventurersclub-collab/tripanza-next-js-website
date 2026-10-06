@@ -1,0 +1,8 @@
+{
+  "name": "Tripanza Workspace",
+  "short_name": "Tripanza",
+  "start_url": "/workspace",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#3157d5"
+}
