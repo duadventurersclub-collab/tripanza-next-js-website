@@ -1,0 +1,5 @@
+.tpj-optin{display:flex!important;align-items:flex-start!important;gap:8px!important;width:100%;margin:8px 0 10px!important;color:#647086!important;font:400 11px/1.4 Inter,system-ui,sans-serif!important;letter-spacing:normal!important;text-align:left!important;text-transform:none!important;cursor:pointer}
+.tpj-optin span{font:inherit!important;letter-spacing:normal!important;text-transform:none!important}
+.tpj-optin__input{flex:0 0 15px!important;width:15px!important;height:15px!important;min-height:15px!important;margin:1px 0 0!important;accent-color:#3157d5}
+.tpj-optin__status{display:block;margin:3px 0 8px;color:#526078;font:500 11px/1.4 Inter,system-ui,sans-serif}
+.tpj-optin[hidden]{display:none!important}

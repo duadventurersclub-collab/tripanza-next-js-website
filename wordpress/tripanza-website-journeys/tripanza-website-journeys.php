@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Website Journeys
  * Description: Consent-aware website follow-up queue for the existing QR-linked WhatsApp bot.
- * Version: 0.1.0
+ * Version: 0.2.1
  * Requires PHP: 7.4
  */
 
@@ -54,6 +54,102 @@ function tpj_phone($value) {
     if (strlen($digits) === 10) $digits = '91' . $digits;
     return preg_match('/^[1-9][0-9]{10,14}$/D', $digits) ? $digits : '';
 }
+
+function tpj_browser_id($create = false) {
+    $visitor = isset($_COOKIE['tripanza_journey']) ? sanitize_text_field(wp_unslash($_COOKIE['tripanza_journey'])) : '';
+    if (preg_match('/^[a-f0-9-]{36}$/i', $visitor)) return $visitor;
+    if (!$create) return '';
+    $visitor = wp_generate_uuid4();
+    if (!headers_sent()) {
+        setcookie('tripanza_journey', $visitor, [
+            'expires' => time() + 90 * DAY_IN_SECONDS,
+            'path' => '/',
+            'secure' => is_ssl(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+    }
+    $_COOKIE['tripanza_journey'] = $visitor;
+    return $visitor;
+}
+
+// The native WordPress site writes to the same queue without exposing the
+// server-to-server secret used by Next.js. The nonce and same-origin AJAX route
+// are for CSRF protection; phone ownership is still not proven for guest forms.
+add_action('wp_ajax_tpj_web_event', 'tpj_web_event');
+add_action('wp_ajax_nopriv_tpj_web_event', 'tpj_web_event');
+function tpj_web_event() {
+    if (!check_ajax_referer('tpj_web_event', 'nonce', false)) wp_send_json_error(['message' => 'The form expired. Reload and try again.'], 403);
+    $event = isset($_POST['event']) ? sanitize_key(wp_unslash($_POST['event'])) : '';
+    if (!in_array($event, ['consent', 'itinerary_downloaded', 'checkout_started', 'cart_created', 'tour_view', 'withdraw'], true)) wp_send_json_error(['message' => 'Invalid event.'], 400);
+    $source = isset($_POST['source']) ? sanitize_key(wp_unslash($_POST['source'])) : '';
+    if ($event === 'consent' && (!in_array($source, ['signup', 'itinerary', 'checkout'], true) || (string) ($_POST['consent'] ?? '') !== '1')) wp_send_json_error(['message' => 'Consent is required.'], 400);
+    if ($event === 'consent' && $source === 'signup') {
+        $user_id = get_current_user_id();
+        $submitted_phone = tpj_phone(isset($_POST['phone']) ? wp_unslash($_POST['phone']) : '');
+        $account_phone = $user_id ? tpj_phone(get_user_meta($user_id, 'st_phone', true) ?: get_user_meta($user_id, 'billing_phone', true)) : '';
+        $verified_here = $user_id && $submitted_phone && function_exists('sol_contact_is_verified')
+            && sol_contact_is_verified($user_id, 'whatsapp', $submitted_phone);
+        if (!$user_id || !$submitted_phone || ($submitted_phone !== $account_phone && !$verified_here)) wp_send_json_error(['message' => 'Sign in with this number before enabling WhatsApp follow-ups.'], 403);
+    }
+    $visitor = tpj_browser_id($event === 'consent');
+    if (!$visitor) wp_send_json_success(['ok' => true]);
+    $request = new WP_REST_Request('POST', '/tripanza-journey/v1/event');
+    foreach (['event', 'phone', 'email', 'source', 'tour_id'] as $key) {
+        if (isset($_POST[$key]) && is_scalar($_POST[$key])) $request->set_param($key, sanitize_text_field(wp_unslash($_POST[$key])));
+    }
+    if ($event === 'consent' && $source === 'signup') $request->set_param('email', wp_get_current_user()->user_email);
+    $request->set_param('visitor_id', $visitor);
+    $result = tpj_record_event($request);
+    if (is_wp_error($result)) {
+        $error_data = $result->get_error_data();
+        $status = is_array($error_data) && isset($error_data['status']) ? (int) $error_data['status'] : 400;
+        wp_send_json_error(['message' => $result->get_error_message()], $status);
+    }
+    wp_send_json_success(['ok' => true]);
+}
+
+add_action('wp_enqueue_scripts', function () {
+    if (is_admin()) return;
+    $cart_tour_id = 0;
+    $traveler = function_exists('st') ? st() : null;
+    $traveler_checkout_id = is_object($traveler) && is_callable([$traveler, 'get_option']) ? absint($traveler->get_option('page_checkout', 0)) : 0;
+    $is_booking_page = is_page('cart') || is_page('checkout') || ($traveler_checkout_id && is_page($traveler_checkout_id));
+    if ($is_booking_page && class_exists('STCart') && is_callable(['STCart', 'get_carts'])) {
+        $carts = STCart::get_carts();
+        if (is_array($carts)) foreach (array_keys($carts) as $id) {
+            if (is_numeric($id) && get_post_type(absint($id)) === 'st_tours') { $cart_tour_id = absint($id); break; }
+        }
+    }
+    $tour_id = is_singular('st_tours') ? get_queried_object_id() : 0;
+    $asset = plugin_dir_path(__FILE__) . 'native-journey.js';
+    wp_enqueue_script('tripanza-website-journey', plugins_url('native-journey.js', __FILE__), [], filemtime($asset), true);
+    wp_enqueue_style('tripanza-website-journey', plugins_url('native-journey.css', __FILE__), [], filemtime(plugin_dir_path(__FILE__) . 'native-journey.css'));
+    wp_add_inline_script('tripanza-website-journey', 'window.TPJ_WEB = ' . wp_json_encode([
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('tpj_web_event'),
+        'tourId' => absint($tour_id),
+        'cartTourId' => $cart_tour_id,
+    ]) . ';', 'before');
+});
+
+// Registration forms that submit this unchecked field may enroll only after
+// WordPress actually creates the account. No number is enrolled from a failed
+// signup or merely because it was entered into a profile.
+add_action('user_register', function ($user_id) {
+    if ((string) ($_POST['tpj_followups'] ?? '') !== '1') return;
+    $visitor = tpj_browser_id(true);
+    add_action('shutdown', function () use ($user_id, $visitor) {
+        $phone = get_user_meta($user_id, 'st_phone', true) ?: get_user_meta($user_id, 'billing_phone', true);
+        if (!$phone && isset($_POST['phone'])) $phone = sanitize_text_field(wp_unslash($_POST['phone']));
+        if (!$phone && isset($_POST['st_phone'])) $phone = sanitize_text_field(wp_unslash($_POST['st_phone']));
+        if (!tpj_phone($phone)) return;
+        $user = get_userdata($user_id);
+        $request = new WP_REST_Request('POST', '/tripanza-journey/v1/event');
+        foreach (['visitor_id' => $visitor, 'event' => 'consent', 'source' => 'signup', 'phone' => $phone, 'email' => $user ? $user->user_email : ''] as $key => $value) $request->set_param($key, $value);
+        tpj_record_event($request);
+    });
+}, 30);
 
 add_action('rest_api_init', function () {
     register_rest_route('tripanza-journey/v1', '/event', [
@@ -135,14 +231,20 @@ function tpj_record_event($request) {
 
 // All Traveler booking paths call this hook; suppress pending outreach even when
 // the order was created outside the Next.js checkout.
-add_action('st_booking_created', function ($booking_id) {
+function tpj_mark_booked_phone($phone) {
     global $wpdb;
-    $phone = tpj_phone(get_post_meta(absint($booking_id), 'st_phone', true));
+    $phone = tpj_phone($phone);
     if ($phone) {
         set_transient('tpj_booked_' . hash('sha256', $phone), 1, DAY_IN_SECONDS);
         $wpdb->update(tpj_table(), ['converted' => 1, 'due_at' => null], ['phone' => $phone]);
     }
+}
+add_action('st_booking_created', function ($booking_id) {
+    tpj_mark_booked_phone(get_post_meta(absint($booking_id), 'st_phone', true));
 }, 20);
+foreach (['added_post_meta', 'updated_post_meta'] as $hook) add_action($hook, function ($meta_id, $post_id, $meta_key, $value) {
+    if ($meta_key === 'st_phone' && get_post_type($post_id) === 'st_order') tpj_mark_booked_phone($value);
+}, 20, 4);
 
 function tpj_process_due() {
     // Deployment never begins sending marketing automatically.

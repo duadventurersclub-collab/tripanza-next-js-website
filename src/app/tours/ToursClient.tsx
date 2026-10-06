@@ -213,7 +213,7 @@ export default function ToursClient({ tours, total }: ToursClientProps) {
           </div>
         ) : (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleTours.map((tour) => {
+            {visibleTours.map((tour, index) => {
               const details = tour.details;
               const cashbackAmount = Number((details.cashback || "").replace(/[^0-9.-]/g, ""));
               const hasCashback = Number.isFinite(cashbackAmount) && cashbackAmount > 0;
@@ -284,7 +284,7 @@ export default function ToursClient({ tours, total }: ToursClientProps) {
                     </div>
 
                     <h3 className="text-xl font-bold leading-snug text-slate-900 group-hover:text-emerald-700 transition">
-                      <Link href={`/tours/${tour.slug}`}>{tour.title}</Link>
+                      <Link href={`/tours/${tour.slug}`} prefetch={index < 3}>{tour.title}</Link>
                     </h3>
 
                     <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-slate-600">
@@ -325,6 +325,7 @@ export default function ToursClient({ tours, total }: ToursClientProps) {
 
                       <Link
                         href={`/tours/${tour.slug}`}
+                        prefetch={index < 3}
                         className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-600 active:scale-95 shadow-sm"
                       >
                         View Itinerary →
