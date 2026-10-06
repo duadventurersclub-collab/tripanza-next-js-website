@@ -39,6 +39,16 @@ function load(file, overrides = {}, globals = {}) {
   return context.exports;
 }
 const types = load("src/lib/site-settings-types.ts");
+const pageInvalidations = { paths: [], tags: [] };
+const pageCache = load("src/lib/page-cache.ts", { "next/cache": { revalidatePath: path => pageInvalidations.paths.push(path), revalidateTag: tag => pageInvalidations.tags.push(tag) } });
+assert.equal(pageCache.cachePagePath("/admin/settings"), null);
+assert.equal(pageCache.cachePagePath("/tours/fixture-tour"), "/tours/fixture-tour");
+pageCache.clearPublicPageCache("/tours/fixture-tour");
+assert.deepEqual(pageInvalidations.paths, ["/tours/fixture-tour"]);
+assert.deepEqual(pageInvalidations.tags, ["tour:fixture-tour"]);
+pageCache.clearPublicPageCache("/");
+assert.ok(pageInvalidations.paths.includes("/home-cache/home"));
+assert.ok(pageInvalidations.tags.includes("homepage"));
 let monitorRequest;
 const monitor = load("src/lib/error-monitoring.ts", {}, { process: { env: { WORDPRESS_URL: "https://fixture.test", TRIPANZA_MONITORING_SECRET: "fixture-monitoring-secret-at-least-32-characters" } }, fetch: async (url, init) => { monitorRequest = { url, init }; return Response.json({ ok: true }); } });
 await monitor.reportOperationalError("server_error", "booking");
@@ -116,7 +126,7 @@ const mock = http.createServer(async (req, res) => {
   if (relative === "tours") {
     const first = { id: 42, slug: "fixture-tour", title: "Fixture mountain escape", currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" }, pricing: { quad: { amount: 10000, display: "₹10,000" } } } };
     const extra = { ...first, id: 43, slug: "second-fixture-tour", title: "Second fixture trip" };
-    return send({ admin_only: true, total: 2, items: url.searchParams.get("per_page") === "100" ? [first, extra] : [first] });
+    return send({ admin_only: true, total: 2, total_pages: 1, items: url.searchParams.get("per_page") === "100" ? [first, extra] : [first] });
   }
   if (relative === "tours/fixture-missing") return send({ code: "tripanza_tour_not_found", message: "Tour not found." }, 404);
   if (relative.startsWith("admin/")) {
@@ -193,6 +203,14 @@ try {
   const deniedPurge = await fetch(`${origin}/api/admin/cache`, { method: "POST", headers: { ...headers, Cookie: "tripanza_session=fixture-user" }, body: JSON.stringify({ scope: "all" }) });
   assert.equal(deniedPurge.status, 403); assert.equal(purges, 0);
   assert.equal((await fetch(`${origin}/api/admin/cache`, { method: "POST", headers, body: JSON.stringify({ scope: "unknown" }) })).status, 400);
+  assert.equal((await fetch(`${origin}/api/admin/page-cache`)).status, 401);
+  assert.equal((await fetch(`${origin}/api/admin/page-cache`, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 403);
+  assert.equal((await fetch(`${origin}/api/admin/page-cache`, { method: "POST", headers: { ...headers, Origin: "https://evil.example", "Sec-Fetch-Site": "cross-site" }, body: JSON.stringify({ paths: ["/"] }) })).status, 403);
+  assert.equal((await fetch(`${origin}/api/admin/page-cache`, { method: "POST", headers, body: JSON.stringify({ paths: ["/admin/settings"] }) })).status, 400);
+  const cachePages = await (await fetch(`${origin}/api/admin/page-cache`, { headers })).json();
+  assert.ok(cachePages.pages.some(page => page.path === "/tours/fixture-tour"));
+  assert.ok(cachePages.pages.some(page => page.path === "/"));
+  assert.ok(!cachePages.pages.some(page => page.path === "/account"));
   console.log("PASS: anonymous/non-admin access denied; cross-origin writes denied; invalid purge scopes rejected");
   browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
   for (const session of [null, "fixture-user", "fixture-invalid"]) {
@@ -247,6 +265,14 @@ try {
   assert.equal(legacyTarget.hash, "#trips");
   await page.goto(`${origin}/admin/settings`);
   await page.getByRole("heading", { name: /Your site/ }).waitFor();
+  const cachedTourRow = page.locator(".as-page-cache__row").filter({ hasText: "Fixture mountain escape" });
+  await cachedTourRow.waitFor();
+  await cachedTourRow.getByRole("button", { name: "Generate" }).click();
+  await page.getByRole("status").filter({ hasText: "Generated 1 public pages" }).waitFor();
+  await cachedTourRow.getByRole("checkbox").check();
+  page.once("dialog", dialog => void dialog.accept());
+  await page.getByRole("button", { name: "Clear selected", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "Cleared 1 public pages" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Save settings" }).isDisabled(), true);
   const openAdminTab = await context.newPage();
   await openAdminTab.goto(`${origin}/admin`);

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import InfoHeader from "@/components/info/InfoHeader";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getPublicSiteSettings } from "@/lib/public-site-settings";
 import { publicPageMetadata } from "@/lib/search-discovery";
 
 export const generateMetadata = (): Promise<Metadata> => publicPageMetadata("/contact", "Contact Us", "Contact Tripanza for trip planning, booking help, cancellations or any travel question.");
 
 export default async function ContactPage() {
-  const s = await getSiteSettings();
+  const s = await getPublicSiteSettings();
   return (
     <main className="tp-info-page">
       <InfoHeader />

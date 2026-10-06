@@ -114,6 +114,6 @@ export const getHomepageData = cache(async (live = false) => {
   return unstable_cache(
     () => loadHomepage(featuredSlugs, ttl),
     ["homepage-v1", wordpressOrigin, settings.cache_revision, featuredSlugs.join(",")],
-    { revalidate: ttl, tags: ["public-data", "tours", "site"] },
+    { revalidate: ttl, tags: ["public-data", "tours", "site", "homepage"] },
   )();
 });
