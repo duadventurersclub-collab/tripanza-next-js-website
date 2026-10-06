@@ -21,7 +21,7 @@ export default function SiteSettingsProvider({ initial, children }: { initial: S
   const requestSequence = useRef(0);
   const hostEntryPage = pathname === "/host" || pathname === "/host/register";
   useEffect(() => {
-    if (verified && hostEntryPage && !live.host_enabled) router.replace("/tours");
+      if (verified && hostEntryPage && !live.host_enabled) router.replace("/?tripanza_view=all#trips");
   }, [verified, hostEntryPage, live.host_enabled, router]);
   useEffect(() => {
     const disabled = pathname === "/admin" ? !live.admin_dashboard_enabled

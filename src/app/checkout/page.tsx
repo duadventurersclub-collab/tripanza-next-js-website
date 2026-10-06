@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function CheckoutPage() {
   const cart = await getBookingCart();
   if (!cart) {
-    return <main className="min-h-screen bg-slate-50 px-5 py-20"><div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black text-slate-950">Your cart is empty</h1><p className="mt-3 text-slate-500">Add a tour before opening checkout.</p><Link href="/tours" className="mt-7 inline-flex rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white">Explore tours</Link></div></main>;
+    return <main className="min-h-screen bg-slate-50 px-5 py-20"><div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black text-slate-950">Your cart is empty</h1><p className="mt-3 text-slate-500">Add a tour before opening checkout.</p><Link href="/?tripanza_view=all#trips" className="mt-7 inline-flex rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white">Explore tours</Link></div></main>;
   }
 
   let quote;

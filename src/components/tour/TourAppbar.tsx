@@ -24,13 +24,6 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
     return () => window.removeEventListener("scroll", update);
   }, []);
 
-  const handleBack = (e: React.MouseEvent) => {
-    if (document.referrer && new URL(document.referrer, window.location.href).hostname === window.location.hostname && window.history.length > 1) {
-      e.preventDefault();
-      window.history.back();
-    }
-  };
-
   const handleShare = () => {
     const pageUrl = window.location.href.split("#")[0];
     if (navigator.share) {
@@ -82,8 +75,7 @@ export default function TourAppbar({ tour }: TourAppbarProps) {
       <nav className={`tp-tour-appbar${isScrolled ? " is-scrolled" : ""}`} aria-label="Tour navigation">
         <Link
           className="tp-tour-appbar__action"
-          href="/tours"
-          onClick={handleBack}
+          href="/?tripanza_view=all#trips"
           aria-label="Go back"
         >
           <i className="fa-solid fa-arrow-left" aria-hidden="true" />

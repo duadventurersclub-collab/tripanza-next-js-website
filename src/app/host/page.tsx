@@ -10,7 +10,7 @@ import { publicPageMetadata } from "@/lib/search-discovery";
 export const generateMetadata = () => publicPageMetadata("/host", "Become a Host", "Explore Tripanza's Host community and learn how to lead your own group trip.");
 
 export default async function HostPage({ searchParams }: { searchParams: Promise<{ register?: string }> }) {
-  if (!(await getSiteSettings()).host_enabled) redirect("/tours");
+  if (!(await getSiteSettings()).host_enabled) redirect("/?tripanza_view=all#trips");
   const token = await getSessionToken();
   const [landing, profile, account, params] = await Promise.all([
     getPublicHostData<{ trips: HostTour[]; hosts: HostSummary[]; leaderboard: { id: number; name: string; slug: string; revenue: number; earnings: number; bookings: number }[] }>("host"),

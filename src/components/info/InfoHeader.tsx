@@ -5,7 +5,7 @@ export default function InfoHeader() {
     <header className="tp-info-header">
       <Link href="/" className="tp-info-brand" aria-label="Tripanza home">tripanza<span>.</span></Link>
       <nav aria-label="Company navigation">
-        <Link href="/tours">Explore trips</Link>
+        <Link href="/?tripanza_view=all#trips">Explore trips</Link>
         <Link href="/about">About us</Link>
         <Link href="/contact">Contact us</Link>
       </nav>

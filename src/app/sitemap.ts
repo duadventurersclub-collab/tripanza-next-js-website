@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await getSiteSettings();
   const origin = publicOrigin(settings.seo_site_url);
   if (!origin) return [];
-  const paths = ["/", "/tours", "/about", "/contact", "/cancellation-policy", "/cookies-policy", "/disclaimer", "/privacy-policy", "/tnc"];
+  const paths = ["/", "/about", "/contact", "/cancellation-policy", "/cookies-policy", "/disclaimer", "/privacy-policy", "/tnc"];
   if (settings.reels_enabled) paths.push("/trips");
   if (settings.host_enabled) paths.push("/host");
   const urls = paths.map(path => ({ url: publicUrl(origin, path) }));

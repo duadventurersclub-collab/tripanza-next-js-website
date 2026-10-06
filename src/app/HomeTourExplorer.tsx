@@ -40,7 +40,7 @@ export default function HomeTourExplorer({ tours }: { tours: TourSummary[] }) {
             Trips worth sending to the group chat.
           </h2>
         </div>
-        <Link href="/tours" className="text-xs font-black text-[#3157d5]">
+        <Link href="/?tripanza_view=all#trips" className="text-xs font-black text-[#3157d5]">
           Explore every trip -&gt;
         </Link>
       </div>

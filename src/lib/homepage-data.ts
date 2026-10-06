@@ -55,6 +55,10 @@ function homeTour(tour: TourDetail, reviews: TourDetail["details"]["reviews"]): 
   };
 }
 
+export function homeTourSummary(tour: TourDetail): HomeTour {
+  return homeTour(tour, []);
+}
+
 async function cachedTour(slug: string, ttl: number): Promise<TourDetail> {
   const url = `${wordpressOrigin}/wp-json/tripanza-headless/v1/tours/${encodeURIComponent(slug)}`;
   const response = await fetch(url, {

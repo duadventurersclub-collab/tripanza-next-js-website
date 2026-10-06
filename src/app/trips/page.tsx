@@ -11,7 +11,7 @@ export const revalidate = 300;
 export const generateMetadata = (): Promise<Metadata> => publicPageMetadata("/trips", "Trip Drops", "Watch real group-trip moments and find your next escape.");
 
 export default async function TripsPage({ searchParams }: { searchParams: Promise<{ reel?: string }> }) {
-  if (!(await getSiteSettings()).reels_enabled) redirect("/tours");
+  if (!(await getSiteSettings()).reels_enabled) redirect("/?tripanza_view=all#trips");
   const [items, params] = await Promise.all([getMetaReels(), searchParams]);
   const requestedId = Number(params.reel) || 0;
   const requestedIndex = requestedId ? items.findIndex((item) => item.id === requestedId) : 0;

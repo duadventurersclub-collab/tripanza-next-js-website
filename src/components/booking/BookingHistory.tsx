@@ -73,6 +73,6 @@ export default function BookingHistory({ bookings }: { bookings: UserBooking[] }
           </div>
         </div>
       </article>)}</div> : <div className="tp-bookings-filter-empty">Nothing in this trip lane yet.</div>}
-    </> : <div className="tp-bookings-empty"><span aria-hidden="true">✈</span><small>YOUR TRIPS</small><h2>No trips yet.<br /><em>Let&apos;s fix that.</em></h2><p>Pick a date, meet your crew and give this screen something to flex.</p><Link className="tp-bookings-login" href="/tours">Explore trips <b aria-hidden="true">→</b></Link></div>}
+    </> : <div className="tp-bookings-empty"><span aria-hidden="true">✈</span><small>YOUR TRIPS</small><h2>No trips yet.<br /><em>Let&apos;s fix that.</em></h2><p>Pick a date, meet your crew and give this screen something to flex.</p><Link className="tp-bookings-login" href="/?tripanza_view=all#trips">Explore trips <b aria-hidden="true">→</b></Link></div>}
   </section>;
 }

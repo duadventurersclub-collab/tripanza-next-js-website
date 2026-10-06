@@ -113,7 +113,11 @@ const mock = http.createServer(async (req, res) => {
       itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] },
   });
   if (relative === "site") return send({ name: "Tripanza", description: "Fixture site", url: "http://fixture", admin_url: "", site_language: "en-IN", timezone: "Asia/Kolkata" });
-  if (relative === "tours") return send({ admin_only: true, items: [{ id: 42, slug: "fixture-tour", title: "Fixture mountain escape", currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" }, pricing: { quad: { amount: 10000, display: "₹10,000" } } } }] });
+  if (relative === "tours") {
+    const first = { id: 42, slug: "fixture-tour", title: "Fixture mountain escape", currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" }, pricing: { quad: { amount: 10000, display: "₹10,000" } } } };
+    const extra = { ...first, id: 43, slug: "second-fixture-tour", title: "Second fixture trip" };
+    return send({ admin_only: true, total: 2, items: url.searchParams.get("per_page") === "100" ? [first, extra] : [first] });
+  }
   if (relative === "tours/fixture-missing") return send({ code: "tripanza_tour_not_found", message: "Tour not found." }, 404);
   if (relative.startsWith("admin/")) {
     if (!auth) return send({ message: "Please sign in." }, 401);
@@ -231,6 +235,16 @@ try {
   await page.getByRole("heading", { name: "Fixture mountain escape", exact: true }).waitFor();
   await page.reload();
   await page.getByRole("heading", { name: "Fixture mountain escape", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Go back" }).click();
+  await page.waitForURL(`${origin}/?tripanza_view=all#trips`);
+  await page.locator(".tph-card").nth(1).waitFor();
+  assert.equal(await page.locator(".tph-card").count(), 2, "Tour back button opens all trips on the homepage, including lazy-loaded cards");
+  const legacyTours = await fetch(`${origin}/tours?search=mountain`, { redirect: "manual" });
+  assert.equal(legacyTours.status, 308);
+  const legacyTarget = new URL(legacyTours.headers.get("location"), origin);
+  assert.equal(legacyTarget.pathname, "/");
+  assert.equal(legacyTarget.searchParams.get("search"), "mountain");
+  assert.equal(legacyTarget.hash, "#trips");
   await page.goto(`${origin}/admin/settings`);
   await page.getByRole("heading", { name: /Your site/ }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Save settings" }).isDisabled(), true);
@@ -268,7 +282,7 @@ try {
   console.log("PASS: all native admin pages can be disabled and restored; their APIs are gated while settings remain accessible");
   const hostTab = await context.newPage(); await hostTab.goto(`${origin}/host`);
   const menuTab = await context.newPage();
-  await menuTab.goto(`${origin}/tours`);
+  await menuTab.goto(origin);
   await menuTab.getByRole("button", { name: "Me", exact: true }).click();
   await menuTab.locator('.tp-profile-menu a[href="/host"]').waitFor({ state: "visible" });
   const toggle = page.locator(".as-card.as-host > .as-toggle > input[type=checkbox]").first();
@@ -287,12 +301,12 @@ try {
   assert.equal(await menuTab.locator('a[href="/host"]').count(), 0, "Disabled Become Host must not be in server-rendered menu");
   const guestContext = await browser.newContext();
   const guest = await guestContext.newPage();
-  await guest.goto(`${origin}/tours`);
+  await guest.goto(origin);
   await guest.getByRole("button", { name: "Me", exact: true }).click();
   assert.equal(await guest.locator('.tp-profile-menu a[href="/host"]').count(), 0, "Guest menu must also hide Become Host");
   for (const route of ["/host", "/host?register=1", "/host/register"]) {
     await guest.goto(origin + route);
-    await guest.waitForURL(`${origin}/tours`);
+    await guest.waitForURL(`${origin}/?tripanza_view=all#trips`);
     assert.equal(await guest.locator('.th-register-modal, .th-final').count(), 0, "Disabled onboarding page must not render");
   }
   const previousHosts = hostRequests;
@@ -302,7 +316,7 @@ try {
   }
   assert.equal(hostRequests, previousHosts, "Disabled Next.js endpoints must not forward Host requests");
   await hostTab.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await hostTab.waitForURL(`${origin}/tours`);
+  await hostTab.waitForURL(`${origin}/?tripanza_view=all#trips`);
   for (const route of ["/host-dashboard", "/poster-download", "/add-your-own-trip", "/host/example/reels", "/crm"]) {
     const html = await (await fetch(origin + route, { headers })).text();
     assert.ok(html.includes("Hosting is currently unavailable."), route);
@@ -356,7 +370,7 @@ try {
   await page.goto(`${origin}/tours/fixture-tour`);
   assert.equal(await page.locator(".tp-tour-help-pill, .tp-mobile-booking-bar, #booking-request").count(), 0);
   assert.ok(await page.getByRole("button", { name: "Downloads paused" }).isDisabled());
-  await page.goto(`${origin}/trips`); await page.waitForURL(`${origin}/tours`);
+  await page.goto(`${origin}/trips`); await page.waitForURL(`${origin}/?tripanza_view=all#trips`);
   for (const [endpoint, body] of [["/api/checkout", {}], ["/api/cart", {}], ["/api/itinerary-lead", {}], ["/api/tour-chat", { action: "ask" }], ["/api/host/reels", {}]]) {
     const response = await fetch(origin + endpoint, { method: "POST", headers, body: JSON.stringify(body) });
     assert.equal(response.status, 503, `${endpoint} disabled before forwarding`);
@@ -364,16 +378,22 @@ try {
   console.log("PASS: feature switches survive reload; content/support links wired; disabled APIs reject direct requests; AI, booking and PDF controls reflect saved settings");
 
   await saveSettings({ ...savedBaseline, maintenance_enabled: true, maintenance_message: "Fixture scheduled maintenance <script>alert(1)</script>" });
-  const maintenance = await fetch(`${origin}/tours`, { headers: { "X-Tripanza-Render-Settings": Buffer.from(JSON.stringify({ maintenance_enabled: false })).toString("base64url") } });
+  await new Promise(resolve => setTimeout(resolve, 10_100));
+  await fetch(origin); // Start the proxy's background controls refresh.
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const maintenance = await fetch(origin, { headers: { "X-Tripanza-Render-Settings": Buffer.from(JSON.stringify({ maintenance_enabled: false })).toString("base64url") } });
   assert.equal(maintenance.status, 503); assert.equal(maintenance.headers.get("retry-after"), "300");
   const maintenanceHtml = await maintenance.text(); assert.ok(maintenanceHtml.includes("&lt;script&gt;")); assert.ok(!maintenanceHtml.includes("<script>"));
-  assert.equal((await fetch(`${origin}/tours`, { headers })).status, 200, "Verified admin bypass");
-  assert.equal((await fetch(`${origin}/tours`, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 503, "Ordinary signed-in users cannot bypass maintenance");
+  assert.equal((await fetch(origin, { headers })).status, 200, "Verified admin bypass");
+  assert.equal((await fetch(origin, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 503, "Ordinary signed-in users cannot bypass maintenance");
   for (const route of ["/contact", "/privacy-policy", "/login", "/api/account"]) assert.equal((await fetch(origin + route)).status, 200, `${route} remains accessible`);
   assert.equal((await fetch(`${origin}/api/payment/payu/callback?booking_id=42&token=fixture`, { redirect: "manual" })).status, 303, "Existing payment callback still works");
   assert.equal((await fetch(`${origin}/api/cart`, { method: "POST", headers: { ...headers, Cookie: "tripanza_session=fixture-user" }, body: "{}" })).status, 503);
   await saveSettings(savedBaseline);
-  assert.equal((await fetch(`${origin}/tours`)).status, 200, "Site recovers after maintenance disable");
+  await new Promise(resolve => setTimeout(resolve, 10_100));
+  await fetch(origin);
+  await new Promise(resolve => setTimeout(resolve, 300));
+  assert.equal((await fetch(origin)).status, 200, "Site recovers after maintenance disable");
   await page.goto(`${origin}/admin/settings`);
   await page.getByRole("heading", { name: /Your site/ }).waitFor();
   console.log("PASS: real 503 maintenance boundary, sanitized custom message, forged-header rejection, verified admin bypass, login/legal/account/payment recovery and maintenance-off restoration");

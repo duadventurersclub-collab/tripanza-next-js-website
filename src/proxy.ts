@@ -9,6 +9,16 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete("x-tripanza-render-settings");
   const next = () => NextResponse.next({ request: { headers: requestHeaders } });
+  if (path === "/tours" || path === "/tours/") {
+    const target = request.nextUrl.clone();
+    const search = target.searchParams.get("search")?.trim();
+    target.pathname = "/";
+    target.search = "";
+    target.searchParams.set("tripanza_view", "all");
+    if (search) target.searchParams.set("search", search);
+    target.hash = "trips";
+    return NextResponse.redirect(target, 308);
+  }
   if (path.startsWith("/home-cache/")) {
     const target = request.nextUrl.clone();
     target.pathname = "/";

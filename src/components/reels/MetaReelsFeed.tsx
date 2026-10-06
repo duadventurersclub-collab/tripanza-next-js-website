@@ -196,7 +196,7 @@ export default function MetaReelsFeed({ items, initialIndex }: { items: MetaReel
   }
 
   if (!items.length) {
-    return <main className="tmr-app"><div className="tmr-stage"><div className="tmr-empty"><span aria-hidden="true">▶</span><h1>Fresh trip drops soon</h1><p>We are collecting the next batch of real group-trip moments.</p><Link href="/tours">Explore Tripanza</Link></div></div></main>;
+    return <main className="tmr-app"><div className="tmr-stage"><div className="tmr-empty"><span aria-hidden="true">▶</span><h1>Fresh trip drops soon</h1><p>We are collecting the next batch of real group-trip moments.</p><Link href="/?tripanza_view=all#trips">Explore Tripanza</Link></div></div></main>;
   }
 
   return <main className="tmr-app">

@@ -119,7 +119,7 @@ export default async function TourDetailPage({ params, live = false }: TourDetai
         </div>
 
         {/* Spacer for mobile sticky bottom bar */}
-        <footer className="tp-app-signoff"><span>See you out there.</span><strong>Good trips. Better people.</strong><Link href="/tours">Find your next escape <span aria-hidden="true">↗</span></Link></footer>
+        <footer className="tp-app-signoff"><span>See you out there.</span><strong>Good trips. Better people.</strong><Link href="/?tripanza_view=all#trips">Find your next escape <span aria-hidden="true">↗</span></Link></footer>
         <div className="tp-app-bottom-space" aria-hidden="true" />
       </main>
 

@@ -119,6 +119,10 @@ function HomeImage({ src, alt, className = "" }: { src?: string | null; alt: str
   return <Image src={src || FALLBACKS[0]} alt={alt} fill sizes="(max-width: 760px) 100vw, 520px" className={className} />;
 }
 
+function revealAllTrips() {
+  window.dispatchEvent(new Event("tripanza:show-all-trips"));
+}
+
 export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; siteName: string }) {
   const settings = useSiteSettings();
   const WHATSAPP = `https://wa.me/${settings.whatsapp_number}`;
@@ -128,6 +132,11 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
   const [navScrolled, setNavScrolled] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
+  const [showAll, setShowAll] = useState(false);
+  const [catalog, setCatalog] = useState<HomeTour[] | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogError, setCatalogError] = useState(false);
+  const [catalogRetry, setCatalogRetry] = useState(0);
   const [saved, setSaved] = useState<number[]>([]);
   const [departureMonth, setDepartureMonth] = useState("all");
   const [destinationFilter, setDestinationFilter] = useState("all");
@@ -145,7 +154,10 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
       onScroll();
       const stored = tours.filter((tour) => window.localStorage.getItem(`tripanza_saved_tour_${tour.id}`) === "1").map((tour) => tour.id);
       setSaved(stored);
-      if (new URLSearchParams(window.location.search).get("tripanza_filter") === "saved") setActiveFilter("saved");
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tripanza_filter") === "saved") setActiveFilter("saved");
+      if (params.get("tripanza_view") === "all") setShowAll(true);
+      if (params.get("search")) { setSearch(params.get("search") || ""); setShowAll(true); }
       setNow(Date.now());
     });
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -155,11 +167,55 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
   useEffect(() => {
     const showSavedTrips = () => {
       setActiveFilter("saved");
+      setSearch("");
       window.setTimeout(() => document.getElementById("trips")?.scrollIntoView({ behavior: "smooth" }), 0);
     };
     window.addEventListener("tripanza:show-saved", showSavedTrips);
     return () => window.removeEventListener("tripanza:show-saved", showSavedTrips);
   }, []);
+
+  useEffect(() => {
+    const showAllTrips = () => { setShowAll(true); setActiveFilter("all"); setSearch(""); };
+    window.addEventListener("tripanza:show-all-trips", showAllTrips);
+    return () => window.removeEventListener("tripanza:show-all-trips", showAllTrips);
+  }, []);
+
+  useEffect(() => {
+    if (!showAll || catalog) return;
+    const controller = new AbortController();
+    async function loadCatalog() {
+      setCatalogLoading(true);
+      setCatalogError(false);
+      try {
+        const items: HomeTour[] = [];
+        let total = 0;
+        for (let page = 1; page <= 50; page++) {
+          const response = await fetch(`/api/tours?page=${page}`, { cache: "no-store", signal: controller.signal });
+          if (!response.ok) throw new Error("Trip catalogue is unavailable");
+          const batch = await response.json() as { items: HomeTour[]; total: number };
+          if (!Array.isArray(batch.items)) throw new Error("Invalid trip catalogue");
+          items.push(...batch.items);
+          total = batch.total;
+          if (!batch.items.length || items.length >= total) break;
+        }
+        if (!items.length && tours.length) throw new Error("Trip catalogue is empty");
+        if (!controller.signal.aborted) setCatalog(items);
+      } catch {
+        if (!controller.signal.aborted) setCatalogError(true);
+      } finally {
+        if (!controller.signal.aborted) setCatalogLoading(false);
+      }
+    }
+    void loadCatalog();
+    return () => controller.abort();
+  }, [showAll, catalog, catalogRetry, tours.length]);
+
+  const gridTours = useMemo(() => {
+    if (!catalog) return tours;
+    const rich = new Map(tours.map(tour => [tour.id, tour]));
+    const listed = new Set(catalog.map(tour => tour.id));
+    return [...catalog.map(tour => rich.get(tour.id) || tour), ...tours.filter(tour => !listed.has(tour.id))];
+  }, [catalog, tours]);
 
   const filters = useMemo(() => {
     const names = Array.from(new Set(tours.flatMap(tourTerms))).filter(Boolean).slice(0, 6);
@@ -167,14 +223,16 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
   }, [tours]);
 
   const searchMatches = search.trim().length >= 2
-    ? tours.filter((tour) => `${tour.title} ${tour.details.destination}`.toLowerCase().includes(search.toLowerCase())).slice(0, 6)
+    ? gridTours.filter((tour) => `${tour.title} ${tour.details.destination}`.toLowerCase().includes(search.toLowerCase())).slice(0, 6)
     : [];
 
-  const visibleTours = tours.filter((tour) => {
+  const filteredTours = gridTours.filter((tour) => {
+    if (search.trim() && !`${tour.title} ${tour.details.destination} ${tour.details.origin}`.toLowerCase().includes(search.trim().toLowerCase())) return false;
     if (activeFilter === "saved") return saved.includes(tour.id);
     if (activeFilter === "all") return true;
     return tourTerms(tour).includes(activeFilter);
-  }).slice(0, 6);
+  });
+  const visibleTours = showAll ? filteredTours : filteredTours.slice(0, 6);
 
   const departures = useMemo(() => tours.flatMap((tour) => tour.details.departures.slice(0, 3).map((departure) => ({ tour, departure })))
     .sort((a, b) => a.departure.date.localeCompare(b.departure.date)).slice(0, 12), [tours]);
@@ -226,7 +284,8 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
   function submitSearch(event: React.FormEvent) {
     event.preventDefault();
     const match = searchMatches[0];
-    if (match) router.push(`/tours/${match.slug}`); else router.push(`/tours?search=${encodeURIComponent(search)}&admin_only=1`);
+    if (match) router.push(`/tours/${match.slug}`);
+    else { setShowAll(true); document.getElementById("trips")?.scrollIntoView({ behavior: "smooth" }); }
   }
 
   function toggleVideo() {
@@ -289,13 +348,13 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
 
       {deals.length ? <section className="tph2-deals" id="deal-drops"><div className="tph-shell"><div className="tph2-deals__head"><div><div className="tph2-kicker">Deal drop</div><h2 className="tph2-title">Your budget just <span>caught a break.</span></h2></div></div><div className="tph2-deals__grid">{deals.map((tour) => { const base = startingAmount(tour); const sale = saleAmount(tour); const cashback = numeric(tour.details.cashback); const bulk = [...tour.details.bulk_discounts].sort((a, b) => a.from - b.from)[0]; const end = Date.parse(tour.details.offer.ends_at); const remaining = end - now; return <Link href={`/tours/${tour.slug}`} className={`tph2-deal${remaining > 0 ? " has-timer" : ""}`} key={tour.id}><span className="tph2-deal__media"><HomeImage src={tour.featured_image} alt={tour.title} /><i className="tph2-deal__flash">{cashback ? "₹" : tour.details.booking.discount_type === "percent" ? "%" : "⚡"}</i></span><span className="tph2-deal__body"><h3>{tour.title}</h3><span className="tph2-deal__meta"><span>{tour.details.destination || "Tripanza trip"}</span>{duration(tour) ? <span>{duration(tour)}</span> : null}</span><span className="tph2-deal__tags">{cashback ? <span className="tph2-deal__tag tph2-deal__tag--cashback">{money(cashback, tour.currency)} cashback / person</span> : null}{tour.details.booking.discount_rate ? <span className="tph2-deal__tag">{tour.details.booking.discount_type === "percent" ? `${tour.details.booking.discount_rate}% off` : `Save ${money(tour.details.booking.discount_rate, tour.currency)}`}</span> : null}{bulk ? <span className="tph2-deal__tag tph2-deal__tag--group">{bulk.type === "percent" ? `${bulk.value}%` : money(bulk.value, tour.currency)} off from {bulk.from} travellers</span> : null}</span>{remaining > 0 ? <span className="tph2-deal__timer"><span>{tour.details.offer.note || "Offer closes in"}</span><strong>{countdown(remaining)}</strong></span> : null}<span className="tph2-deal__bottom"><span className="tph2-deal__price"><small>Trip from</small><strong>{money(sale, tour.currency)}{base > sale ? <del>{money(base, tour.currency)}</del> : null}</strong></span><span className="tph2-deal__cta">See deal →</span></span></span></Link>; })}</div></div></section> : null}
 
-      <section id="trips" className="tph-section"><div className="tph-shell"><div className="tph-head"><div><div className="tph-eyebrow">Currently passing the vibe check</div><h2>Trips worth sending to the group chat.</h2></div></div><div className="tph-filters">{filters.map((filter) => <button key={filter} onClick={() => setActiveFilter(filter)} className={activeFilter === filter ? "is-active" : ""}>{filter === "all" ? "All trips" : filter === "saved" ? "Saved ♥" : filter}</button>)}</div><div className="tph-grid">{visibleTours.map((tour, index) => <article className="tph-card" key={tour.id}><Link className="tph-card__media" href={`/tours/${tour.slug}`} prefetch={index < 3}><HomeImage src={tour.featured_image} alt={tour.title} />{tour.details.is_premium ? <span className="tph-card__badge">Premium</span> : null}<span className="tph-card__route">{[tour.details.origin, tour.details.destination].filter(Boolean).join(" to ")}</span></Link><button type="button" className={`tph-save${saved.includes(tour.id) ? " is-saved" : ""}`} onClick={() => toggleSaved(tour.id)} aria-label="Save trip">{saved.includes(tour.id) ? "♥" : "♡"}</button><div className="tph-card__body"><Link className="tph-card__title" href={`/tours/${tour.slug}`} prefetch={index < 3}>{tour.title}</Link><div className="tph-card__meta">{duration(tour) ? <span>{duration(tour)}</span> : null}{tour.details.rating.value > 0 ? <span>★ {tour.details.rating.value.toFixed(1)} ({tour.details.rating.count})</span> : null}<span>{tour.details.partner.name || "Tripanza"}</span></div><div className="tph-card__bottom"><span><small>Starts from</small><strong>{money(saleAmount(tour), tour.currency)}</strong></span>{tour.details.departures[0] ? <span><b>Next: {dateLabel(tour.details.departures[0].date)}</b><small>{tour.details.departures[0].status}</small></span> : null}</div></div></article>)}</div>{!visibleTours.length ? <p className="tph-empty">{activeFilter === "saved" ? "No saved trips yet. Tap the heart on a trip you like." : "No trip matches that yet."}</p> : null}<div className="tph-all"><Link href="/tours">Explore every trip →</Link></div></div></section>
+      <section id="trips" className="tph-section"><div className="tph-shell"><div className="tph-head"><div><div className="tph-eyebrow">Currently passing the vibe check</div><h2>Trips worth sending to the group chat.</h2></div></div><div className="tph-filters">{filters.map((filter) => <button key={filter} onClick={() => setActiveFilter(filter)} className={activeFilter === filter ? "is-active" : ""}>{filter === "all" ? "All trips" : filter === "saved" ? "Saved ♥" : filter}</button>)}</div><div className="tph-grid">{visibleTours.map((tour, index) => <article className="tph-card" key={tour.id}><Link className="tph-card__media" href={`/tours/${tour.slug}`} prefetch={index < 3}><HomeImage src={tour.featured_image} alt={tour.title} />{tour.details.is_premium ? <span className="tph-card__badge">Premium</span> : null}<span className="tph-card__route">{[tour.details.origin, tour.details.destination].filter(Boolean).join(" to ")}</span></Link><button type="button" className={`tph-save${saved.includes(tour.id) ? " is-saved" : ""}`} onClick={() => toggleSaved(tour.id)} aria-label="Save trip">{saved.includes(tour.id) ? "♥" : "♡"}</button><div className="tph-card__body"><Link className="tph-card__title" href={`/tours/${tour.slug}`} prefetch={index < 3}>{tour.title}</Link><div className="tph-card__meta">{duration(tour) ? <span>{duration(tour)}</span> : null}{tour.details.rating.value > 0 ? <span>★ {tour.details.rating.value.toFixed(1)} ({tour.details.rating.count})</span> : null}<span>{tour.details.partner.name || "Tripanza"}</span></div><div className="tph-card__bottom"><span><small>Starts from</small><strong>{money(saleAmount(tour), tour.currency)}</strong></span>{tour.details.departures[0] ? <span><b>Next: {dateLabel(tour.details.departures[0].date)}</b><small>{tour.details.departures[0].status}</small></span> : null}</div></div></article>)}</div>{!visibleTours.length ? <p className="tph-empty">{activeFilter === "saved" ? "No saved trips yet. Tap the heart on a trip you like." : "No trip matches that yet."}</p> : null}<div className="tph-all"><Link href="/?tripanza_view=all#trips" onClick={revealAllTrips}>{showAll ? "All trips" : "Explore every trip →"}</Link>{showAll && catalogLoading ? <p role="status">Loading more trips…</p> : null}{showAll && catalogError ? <button type="button" onClick={() => setCatalogRetry(value => value + 1)}>Try loading more trips</button> : null}</div></div></section>
 
       <section className="tph2-confidence"><div className="tph-shell"><div className="tph2-confidence__card"><div className="tph2-confidence__head"><div><div className="tph2-kicker">No shady booking energy</div><h2>Know the plan. Know the price.</h2></div><p>No surprise charges. No disappearing humans.</p></div><div className="tph2-confidence__grid">{minAdvance < 100 ? <InfoTile icon="₹" title="Start small" copy={`Reserve eligible trips from ${minAdvance}% and pay the rest later.`} /> : null}<InfoTile icon="✓" title="See every rupee" copy="The complete payable amount appears before you pay." /><InfoTile icon="@" title="Proof in your inbox" copy="Your confirmed booking details stay easy to find." /><InfoTile icon="☺" title="Humans stay around" copy="Talk to Tripanza before and after you book." /></div><small>Advance changes by trip. Checkout shows exactly what you pay now and what comes later.</small></div></div></section>
 
       {reviews.length ? <section className="tph2-section tph2-reviews" id="traveller-reviews"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Receipts from the road</div><h2 className="tph2-title">Proof the group chat made it out.</h2></div><div className="tph2-review-score"><strong>{(reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)}</strong><span>Rated on Google</span></div></div><div className="tph2-scroll">{reviews.map((review, index) => <article className="tph2-review" key={`${review.author_name}-${index}`}><div className="tph2-review__person">{review.profile_photo_url ? <Image src={review.profile_photo_url} alt="" width={44} height={44} unoptimized /> : <span>{review.author_name.charAt(0)}</span>}<div><strong>{review.author_name}</strong><small>{review.date}</small></div><b>G</b></div><div className="tph2-stars">{"★".repeat(Math.round(review.rating))}{"☆".repeat(5 - Math.round(review.rating))}</div><blockquote>{review.text}</blockquote><span className="tph2-review__quote">“</span></article>)}</div></div></section> : null}
 
-      {gallery.length ? <section className="tph2-camera" id="tripanza-camera-roll"><div className="tph-shell"><div className="tph2-kicker">Straight from the group chat</div><h2 className="tph2-title">Proof the group chat actually left the chat.</h2></div><div className="tph2-camera__viewport">{[0, 1].map((row) => <div className={`tph2-camera__track${row ? " is-reverse" : ""}`} key={row}>{[...gallery.slice(row * 8, row * 8 + 8), ...gallery.slice(row * 8, row * 8 + 8)].map((photo, index) => <Link href={`/tours/${photo.tour.slug}`} className="tph2-camera__photo" key={`${row}-${photo.tour.id}-${index}`}><HomeImage src={photo.url} alt={photo.alt || photo.tour.title} /><span>{["Crew cam", "Trip frame", "Road drop"][index % 3]}<strong>{photo.tour.title}</strong></span></Link>)}</div>)}</div><div className="tph-shell tph2-camera__foot"><span>{gallery.length} memories in this roll</span><Link href="/tours">Find your frame →</Link></div></section> : null}
+      {gallery.length ? <section className="tph2-camera" id="tripanza-camera-roll"><div className="tph-shell"><div className="tph2-kicker">Straight from the group chat</div><h2 className="tph2-title">Proof the group chat actually left the chat.</h2></div><div className="tph2-camera__viewport">{[0, 1].map((row) => <div className={`tph2-camera__track${row ? " is-reverse" : ""}`} key={row}>{[...gallery.slice(row * 8, row * 8 + 8), ...gallery.slice(row * 8, row * 8 + 8)].map((photo, index) => <Link href={`/tours/${photo.tour.slug}`} className="tph2-camera__photo" key={`${row}-${photo.tour.id}-${index}`}><HomeImage src={photo.url} alt={photo.alt || photo.tour.title} /><span>{["Crew cam", "Trip frame", "Road drop"][index % 3]}<strong>{photo.tour.title}</strong></span></Link>)}</div>)}</div><div className="tph-shell tph2-camera__foot"><span>{gallery.length} memories in this roll</span><Link href="/?tripanza_view=all#trips" onClick={revealAllTrips}>Find your frame →</Link></div></section> : null}
 
       {stays.length ? <section className="tph2-section tph2-stays" id="trip-stays"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Sleep scene</div><h2 className="tph2-title">Where you&apos;ll wake up matters.</h2></div><div className="tph2-stay-trust">✓ <span><strong>No room roulette</strong><small>Real stays. Actually checked.</small></span></div></div><div className="tph2-stay-guide">✦ Swipe through the rooms. Screenshot your favourite.</div><div className="tph2-stay-grid">{stays.map((stay) => <Link href={`/tours/${stay.tour.slug}`} className="tph2-stay" key={`${stay.tour.id}-${stay.title}`}><HomeImage src={stay.images[0]} alt={stay.title} /><span className="tph2-stay__checked">✓ Checked stay</span><span className="tph2-stay__copy"><small>{stay.tour.title}</small><strong>{stay.title}</strong><span>{[stay.location, stay.type].filter(Boolean).join(" · ")}</span><em>{stay.amenities.slice(0, 3).join(" · ")}</em></span></Link>)}</div><p className="tph2-stay-note">Property is subject to availability; a similar or upgraded stay may be arranged when required.</p></div></section> : null}
 
@@ -316,7 +375,7 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
 
       <section className="tph2-section tph2-find" id="find-my-vibe"><div className="tph-shell"><div className="tph2-find__card"><div className="tph2-find__quiz"><div className="tph2-kicker">Three taps. Zero overthinking.</div><h2>Find the trip matching your current mood.</h2><MatchQuestion label="Your budget?" name="budget" values={[["10000", "Under ₹10K"], ["15000", "Under ₹15K"], ["any", "Worth it > cheap"]]} answers={answers} setAnswers={setAnswers} /><MatchQuestion label="How long can you disappear?" name="duration" values={[["short", "Weekend-ish"], ["long", "Proper escape"], ["any", "Flexible"]]} answers={answers} setAnswers={setAnswers} /><MatchQuestion label="Pick the energy." name="vibe" values={[["mountain", "Mountain chaos"], ["beach", "Beach energy"], ["any", "Surprise me"]]} answers={answers} setAnswers={setAnswers} /></div><div className="tph2-match">{match ? <article className="tph2-match__result"><span className="tph2-match__media"><HomeImage src={match.featured_image} alt={match.title} /><b>Found your vibe</b></span><div><small>Your trip match</small><strong>{match.title}</strong><span>{duration(match)} · {match.details.destination}</span><b>{money(saleAmount(match), match.currency)}</b><Link href={`/tours/${match.slug}`}>See this trip</Link></div></article> : <div className="tph2-match__empty"><span>Your trip moodboard</span><div>{tours.slice(0, 3).map((tour) => <span key={tour.id}><HomeImage src={tour.featured_image} alt="" /></span>)}</div><strong>Pick your mood. We will find the scene.</strong><small>Three choices. One trip that actually fits.</small></div>}</div></div></div></section>
 
-      <section className="tph2-paylater" id="travel-now-pay-later"><div className="tph-shell"><div className="tph2-paylater__card"><div className="tph2-paylater__copy"><small>Plot twist for your trip budget</small><h2><del>Pay now. Travel later.</del><span>Travel now. Pay later.</span></h2><p>On eligible bookings, choose an available EMI or Pay Later option at checkout and split the trip cost into manageable payments.</p><Link href="/tours">Find your next trip</Link></div><div className="tph2-paylater__visual"><div className="tph2-paylater__pass"><div><span><small>FROM</small><strong>Someday</strong></span><b>✈</b><span><small>TO</small><strong>Right now</strong></span></div><div>{["Pick trip", "Choose EMI", "Pack bags"].map((step, index) => <span key={step}><small>Step {index + 1}</small><strong>{step}</strong></span>)}</div><p>PayU-supported secure checkout</p></div><span>Trip first<br />EMIs after</span></div><div className="tph2-paylater__banks"><small>EMI options across major eligible banks</small>{["HDFC", "ICICI", "SBI", "AXIS", "KOTAK", "BOB"].map((bank) => <span key={bank}>{bank}</span>)}</div><p className="tph2-paylater__fine">EMI, BNPL, interest, tenure and eligibility depend on the issuing bank, payment method, transaction value and the options returned by PayU at checkout.</p></div></div></section>
+      <section className="tph2-paylater" id="travel-now-pay-later"><div className="tph-shell"><div className="tph2-paylater__card"><div className="tph2-paylater__copy"><small>Plot twist for your trip budget</small><h2><del>Pay now. Travel later.</del><span>Travel now. Pay later.</span></h2><p>On eligible bookings, choose an available EMI or Pay Later option at checkout and split the trip cost into manageable payments.</p><Link href="/?tripanza_view=all#trips" onClick={revealAllTrips}>Find your next trip</Link></div><div className="tph2-paylater__visual"><div className="tph2-paylater__pass"><div><span><small>FROM</small><strong>Someday</strong></span><b>✈</b><span><small>TO</small><strong>Right now</strong></span></div><div>{["Pick trip", "Choose EMI", "Pack bags"].map((step, index) => <span key={step}><small>Step {index + 1}</small><strong>{step}</strong></span>)}</div><p>PayU-supported secure checkout</p></div><span>Trip first<br />EMIs after</span></div><div className="tph2-paylater__banks"><small>EMI options across major eligible banks</small>{["HDFC", "ICICI", "SBI", "AXIS", "KOTAK", "BOB"].map((bank) => <span key={bank}>{bank}</span>)}</div><p className="tph2-paylater__fine">EMI, BNPL, interest, tenure and eligibility depend on the issuing bank, payment method, transaction value and the options returned by PayU at checkout.</p></div></div></section>
 
       <section className="tph2-section tph2-money" id="where-money-goes"><div className="tph-shell"><div className="tph2-safe"><div><div className="tph2-kicker">Two humans. Zero faceless booking.</div><h2>Your trip money is safe with Akshay &amp; Yashika.</h2><p>No faceless marketplace energy. The founders are right here—and accountable for every Tripanza booking.</p></div><div className="tph2-safe__people"><Founder image={FOUNDER_AKSHAY} label="The builder" name="Akshay Verma" role="Builds the booking tech" /><Founder image={FOUNDER_YASHIKA} label="The people person" name="Yashika Taneja" role="Helps travellers book right" /></div><div className="tph2-safe__bottom"><span>● Booking ka doubt? Ask the humans behind the trip.</span><Link href="/about">Meet your trip people →</Link></div></div></div></section>
 
@@ -354,7 +413,7 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
         </div>
       </section>
 
-      <section className="tph2-postcards" id="trip-postcards"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Collect your next place</div><h2 className="tph2-title">States now. Countries next.</h2></div><span>Tripanza postcard club</span></div><div className="tph2-postcards__tabs"><button className={postcardKind === "state" ? "is-active" : ""} onClick={() => setPostcardKind("state")}>India state drops <b>4</b></button><button className={postcardKind === "country" ? "is-active" : ""} onClick={() => setPostcardKind("country")}>Country drops incoming <b>4</b></button></div><div className="tph2-postcards__desk">{(postcardKind === "state" ? [["Himachal", "Mountain mornings & chai"], ["Uttarakhand", "Trails, temples & tiny roads"], ["Rajasthan", "Forts, sunsets & stories"], ["Goa", "Salt air, scenes & sunsets"]] : [["Thailand", "Night markets loading"], ["Vietnam", "Lantern streets loading"], ["Indonesia", "Bali era incoming"], ["Georgia", "Snow, streets & wine"]]).map(([place, copy], index) => { const tour = tours[(index + (postcardKind === "country" ? 4 : 0)) % Math.max(1, tours.length)]; return <Link className="tph2-postcard" href={tour ? `/tours/${tour.slug}` : "/tours"} key={place}><span className="tph2-postcard__art"><HomeImage src={tour?.featured_image} alt={place} /><em>Greetings from</em><b>{place}</b><u>{postcardKind === "state" ? "India state series" : "Passport series"}</u></span><span className="tph2-postcard__copy"><span><small>Tripanza postcard</small><strong>{tour?.title || place}</strong><em>{copy}</em></span><i className="tph2-postcard__stamp">✈<small>TPZ</small></i></span></Link>; })}</div><div className="tph2-postcards__foot"><span>Start with a state. Graduate to a passport stamp.</span><Link href="/tours">Pick a place →</Link></div></div></section>
+      <section className="tph2-postcards" id="trip-postcards"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Collect your next place</div><h2 className="tph2-title">States now. Countries next.</h2></div><span>Tripanza postcard club</span></div><div className="tph2-postcards__tabs"><button className={postcardKind === "state" ? "is-active" : ""} onClick={() => setPostcardKind("state")}>India state drops <b>4</b></button><button className={postcardKind === "country" ? "is-active" : ""} onClick={() => setPostcardKind("country")}>Country drops incoming <b>4</b></button></div><div className="tph2-postcards__desk">{(postcardKind === "state" ? [["Himachal", "Mountain mornings & chai"], ["Uttarakhand", "Trails, temples & tiny roads"], ["Rajasthan", "Forts, sunsets & stories"], ["Goa", "Salt air, scenes & sunsets"]] : [["Thailand", "Night markets loading"], ["Vietnam", "Lantern streets loading"], ["Indonesia", "Bali era incoming"], ["Georgia", "Snow, streets & wine"]]).map(([place, copy], index) => { const tour = tours[(index + (postcardKind === "country" ? 4 : 0)) % Math.max(1, tours.length)]; return <Link className="tph2-postcard" href={tour ? `/tours/${tour.slug}` : "/?tripanza_view=all#trips"} key={place}><span className="tph2-postcard__art"><HomeImage src={tour?.featured_image} alt={place} /><em>Greetings from</em><b>{place}</b><u>{postcardKind === "state" ? "India state series" : "Passport series"}</u></span><span className="tph2-postcard__copy"><span><small>Tripanza postcard</small><strong>{tour?.title || place}</strong><em>{copy}</em></span><i className="tph2-postcard__stamp">✈<small>TPZ</small></i></span></Link>; })}</div><div className="tph2-postcards__foot"><span>Start with a state. Graduate to a passport stamp.</span><Link href="/?tripanza_view=all#trips" onClick={revealAllTrips}>Pick a place →</Link></div></div></section>
 
       <section className="tph2-section tph2-faq" id="trip-faq"><div className="tph-shell tph2-faq__layout"><div className="tph2-faq__intro"><div className="tph2-kicker">No awkward questions</div><h2 className="tph2-title">Ask before the group chat does.</h2><p>Straight answers for first-time community travellers. No confusing travel jargon.</p><div><span>Solo aa sakte hain?</span><span>Girls ke liye safe?</span><span>Kitna pay now?</span></div><a href={WHATSAPP}>Still confused? Ask a human</a></div><div className="tph2-faq__list">{[["Can I join a Tripanza trip alone?", "Yes. These community trips welcome solo travellers as well as friends, and the trip team helps everyone settle into the group."], ["Who usually joins?", "This youth collection is designed for travellers aged 18–28. Check the individual trip page for its batch and audience details."], ["How does Tripanza support women travellers?", "Stay, transport, captain and batch details are shared where available, with human support before and during the trip."], ["Who leads the group?", "Group departures are supported by the trip captain or team shown on the trip page."], ["How much do I pay now?", "Checkout shows the valid price breakdown, advance payable now and remaining balance before payment."]].map(([question, answer], index) => <details key={question} open={index === 0 ? true : undefined}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
 
@@ -380,7 +439,7 @@ function InfoTile({ icon, title, copy }: { icon: string; title: string; copy: st
 }
 
 function Shortcut({ title, kicker, tours }: { title: string; kicker: string; tours: HomeTour[] }) {
-  return <article className="tph2-shortcut"><div className="tph2-shortcut__top"><div><small>{kicker}</small><h3>{title}</h3></div><Link href="/tours">See all →</Link></div><div>{tours.map((tour) => <Link className="tph2-mini" href={`/tours/${tour.slug}`} key={tour.id}><span><HomeImage src={tour.featured_image} alt="" /></span><span><strong>{tour.title}</strong><small>{duration(tour)} · From {tour.details.origin || "Delhi"}</small></span><b>{money(saleAmount(tour), tour.currency)}</b></Link>)}</div></article>;
+  return <article className="tph2-shortcut"><div className="tph2-shortcut__top"><div><small>{kicker}</small><h3>{title}</h3></div><Link href="/?tripanza_view=all#trips" onClick={revealAllTrips}>See all →</Link></div><div>{tours.map((tour) => <Link className="tph2-mini" href={`/tours/${tour.slug}`} key={tour.id}><span><HomeImage src={tour.featured_image} alt="" /></span><span><strong>{tour.title}</strong><small>{duration(tour)} · From {tour.details.origin || "Delhi"}</small></span><b>{money(saleAmount(tour), tour.currency)}</b></Link>)}</div></article>;
 }
 
 function Founder({ image, label, name, role }: { image: string; label: string; name: string; role: string }) {
