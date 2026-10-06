@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BookingQuote, BookingTraveller } from "@/lib/booking";
 import type { TourDetail } from "@/lib/st-tours";
@@ -93,6 +93,8 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
   const [paymentMethod, setPaymentMethod] = useState<"payu" | "upi">("payu");
   const [billingOpen, setBillingOpen] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [followups, setFollowups] = useState(false);
+  const [followupStatus, setFollowupStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [idempotencyKey] = useState(() =>
@@ -100,6 +102,38 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random()}`,
   );
+
+  useEffect(() => {
+    if (!followups || contact.phone.replace(/\D/g, "").length < 10) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const saved = await fetch("/api/journey", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event: "consent", consent: true, source: "checkout", phone: contact.phone, email: contact.email, tourId: quote.tour.id }),
+        });
+        if (!saved.ok) { if (!cancelled) setFollowupStatus("WhatsApp reminders could not be enabled right now."); return; }
+        if (cancelled) {
+          void fetch("/api/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "withdraw" }) });
+          return;
+        }
+        const event = await fetch("/api/journey", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event: "checkout_started", tourId: quote.tour.id }),
+        });
+        if (!cancelled) setFollowupStatus(event.ok ? "Optional WhatsApp reminders enabled." : "WhatsApp reminders could not be enabled right now.");
+      } catch { if (!cancelled) setFollowupStatus("WhatsApp reminders could not be enabled right now."); }
+    }, 900);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [followups, contact.phone, contact.email, quote.tour.id]);
+
+  async function toggleFollowups(checked: boolean) {
+    setFollowups(checked);
+    setFollowupStatus("");
+    if (!checked) {
+      await fetch("/api/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "withdraw" }) }).catch(() => {});
+    }
+  }
 
   function updateContact(key: keyof Contact, value: string) {
     setContact((current) => ({ ...current, [key]: value }));
@@ -309,6 +343,11 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
               <input type="checkbox" required checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
               <span>I agree to Tripanza&apos;s <Link href="/tnc" target="_blank" className="font-black text-blue-600 hover:underline">terms and conditions</Link> and <Link href="/cancellation-policy" target="_blank" className="font-black text-blue-600 hover:underline">cancellation policy</Link>.</span>
             </label>
+            <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs leading-relaxed text-slate-600">
+              <input type="checkbox" checked={followups} onChange={(event) => { void toggleFollowups(event.target.checked); }} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
+              <span>Optional: WhatsApp me about this unfinished booking and relevant trips. I can opt out anytime.</span>
+            </label>
+            {followupStatus ? <p className="mt-2 text-xs text-slate-500" role="status">{followupStatus}</p> : null}
 
             {error ? <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
             <button disabled={submitting || !termsAccepted} type="submit" className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Creating secure booking…" : `Confirm and pay ${money(quote.amounts.pay_now, quote.currency)} →`}</button>

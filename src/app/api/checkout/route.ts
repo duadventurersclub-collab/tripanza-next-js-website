@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { featureUnavailable } from "@/lib/feature-access";
+import { journeyIdFromRequest, recordJourney } from "@/lib/journey";
 import {
   BookingApiError,
   createWordPressBooking,
@@ -28,6 +29,8 @@ export async function POST(request: Request) {
     const quote = await requestBookingQuote(cart.selection);
     await setBookingCart({ ...cart, quote, updated_at: new Date().toISOString() });
     const booking = await createWordPressBooking({ ...cart.selection, ...payload });
+    const visitorId = journeyIdFromRequest(request);
+    if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "booking_created", phone: payload.contact.phone }));
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {
     if (error instanceof BookingApiError) {

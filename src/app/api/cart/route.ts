@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { featureUnavailable } from "@/lib/feature-access";
+import { journeyIdFromRequest, recordJourney } from "@/lib/journey";
 import {
   BookingApiError,
   clearBookingCart,
@@ -53,6 +54,8 @@ export async function POST(request: Request) {
     const quote = await requestBookingQuote(selection);
     const cart = { selection, quote, updated_at: new Date().toISOString() };
     await setBookingCart(cart);
+    const visitorId = journeyIdFromRequest(request);
+    if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "cart_created", tour_id: selection.tour_id }));
     return NextResponse.json({ cart }, { status: 201 });
   } catch (error) {
     if (error instanceof BookingApiError) {

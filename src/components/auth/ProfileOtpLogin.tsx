@@ -33,6 +33,7 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
   const [step, setStep] = useState<"identity" | "otp" | "success">("identity");
   const [identity, setIdentity] = useState("");
   const [otp, setOtp] = useState("");
+  const [followups, setFollowups] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -79,7 +80,7 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
     if (!/^\d{4}$/.test(otp)) { setError("Enter the complete 4-digit OTP."); otpRef.current?.focus(); return; }
     setLoading(true); setError(""); setNotice("");
     try {
-      const data = await parseResponse(await fetch("/api/auth/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: identity, channel, otp }) }));
+      const data = await parseResponse(await fetch("/api/auth/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: identity, channel, otp, followups }) }));
       setStep("success");
       await onSuccess(data.user);
     } catch (caught) { setStep("otp"); setError(caught instanceof Error ? caught.message : "Verification failed. Please try again."); otpRef.current?.focus(); }
@@ -119,6 +120,7 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
       {step === "success" ? <div className="tp-auth-success" role="status"><span>✓</span><strong>{mode === "register" ? "Your account is ready" : "Welcome back"}</strong><p>Your next trip is waiting.</p></div> : step === "identity" ? <>
         <label className="tp-visually-hidden" htmlFor="tp-auth-identity">{channel === "whatsapp" ? "WhatsApp number" : "Email address"}</label>
         <div className="tp-auth-input-wrap">{channel === "whatsapp" ? <WhatsAppIcon /> : <MailIcon />}<input ref={identityRef} id="tp-auth-identity" type={channel === "whatsapp" ? "tel" : "email"} inputMode={channel === "whatsapp" ? "tel" : "email"} autoComplete={channel === "whatsapp" ? "tel" : "email"} value={identity} onChange={(event) => setIdentity(event.target.value)} placeholder={channel === "whatsapp" ? "WhatsApp number with country code" : "Email address"} disabled={loading} /></div>
+        {channel === "whatsapp" ? <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-600"><input type="checkbox" className="mt-0.5" checked={followups} onChange={(event) => setFollowups(event.target.checked)} /><span>Send me optional trip suggestions and follow-ups on WhatsApp. I can opt out anytime.</span></label> : null}
         {channel === "whatsapp" ? <button className="tp-auth-channel-switch" type="button" onClick={() => reset("email")}>Use email OTP instead</button> : null}
         {error ? <p className="tp-auth-message is-error" role="alert">{error}</p> : null}
         <button className="tp-auth-submit" type="submit" disabled={loading}>{loading ? <><i /> Sending your code</> : channel === "whatsapp" ? "Send WhatsApp OTP" : "Send Email OTP"}</button>

@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/session";
+import { JOURNEY_COOKIE, journeyIdFromRequest, newJourneyId, recordJourney } from "@/lib/journey";
 
 type AuthResponse = {
   session_token?: unknown;
@@ -66,8 +67,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Login succeeded but no secure session was returned. Please try again." }, { status: 502 });
     }
     await setSessionCookie(sessionToken);
-
-    return NextResponse.json({ user: data.user || data.data?.user || null }, { headers: { "Cache-Control": "no-store" } });
+    const result = NextResponse.json({ user: data.user || data.data?.user || null }, { headers: { "Cache-Control": "no-store" } });
+    if (channel === "whatsapp" && body.followups === true) {
+      const existingId = journeyIdFromRequest(req);
+      const visitorId = existingId || newJourneyId();
+      after(() => recordJourney({ visitor_id: visitorId, event: "consent", phone: normalized, source: "signup" }));
+      if (!existingId) result.cookies.set(JOURNEY_COOKIE, visitorId, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 90 });
+    }
+    return result;
   } catch (error) {
     console.error("Error verifying OTP:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

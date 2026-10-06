@@ -35,6 +35,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
   const [pdfStatus, setPdfStatus] = useState<"idle" | "form" | "saving" | "preparing" | "started">("idle");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
+  const [leadFollowups, setLeadFollowups] = useState(false);
   const [leadError, setLeadError] = useState("");
   const pdfFrameRef = useRef<HTMLIFrameElement>(null);
   const pdfTimerRef = useRef<number | null>(null);
@@ -62,6 +63,13 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
     if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
     leadAbortRef.current?.abort();
   }, []);
+
+  useEffect(() => {
+    void fetch("/api/journey", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "tour_view", tourId: tour.id }),
+    }).catch(() => {});
+  }, [tour.id]);
 
   useEffect(() => {
     if (pdfStatus === "idle") return;
@@ -95,6 +103,19 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
       const result = (await response.json().catch(() => ({}))) as { error?: string };
       if (controller.signal.aborted) return;
       if (!response.ok) throw new Error(result.error || "Your details could not be saved. Please try again.");
+
+      if (leadFollowups) {
+        // The PDF request is transactional; marketing consent is separate and optional.
+        void fetch("/api/journey", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event: "consent", consent: true, source: "itinerary", phone: leadPhone.trim(), email: leadEmail.trim(), tourId: tour.id }),
+        }).then((saved) => {
+          if (saved.ok) return fetch("/api/journey", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event: "itinerary_downloaded", tourId: tour.id }),
+          });
+        }).catch(() => {});
+      }
 
       if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
       setPdfStatus("preparing");
@@ -331,6 +352,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
                 <input id="tp-itinerary-email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={leadEmail} onChange={(event) => setLeadEmail(event.target.value)} required />
                 <label htmlFor="tp-itinerary-phone">Phone number</label>
                 <input id="tp-itinerary-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" value={leadPhone} onChange={(event) => setLeadPhone(event.target.value)} required />
+                <label className="tp-pdf-lead__consent"><input type="checkbox" checked={leadFollowups} onChange={(event) => setLeadFollowups(event.target.checked)} /> <span>Send me optional trip suggestions and follow-ups on WhatsApp. I can opt out anytime.</span></label>
                 {leadError ? <span className="tp-pdf-lead__error" role="alert">{leadError}</span> : null}
                 <button type="submit" disabled={pdfStatus === "saving"}>
                   <span>{pdfStatus === "saving" ? "Saving your details…" : "Download itinerary"}</span>

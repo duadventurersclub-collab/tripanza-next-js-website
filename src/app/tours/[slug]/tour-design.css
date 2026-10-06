@@ -1042,6 +1042,8 @@
 .tp-pdf-lead__form input { width: 100%; min-height: 48px; margin: 0 0 8px; padding: 11px 13px; border: 1px solid #dbe2ef; border-radius: 12px; outline: none; color: #171923; background: #f8faff; font: inherit; font-size: 16px; }
 .tp-pdf-lead__form input:focus { border-color: #3157d5; box-shadow: 0 0 0 3px rgba(49,87,213,.13); }
 .tp-pdf-lead__form input::placeholder { color: #99a3b3; }
+.tp-pdf-lead__form .tp-pdf-lead__consent { display: flex; align-items: flex-start; gap: 9px; margin: 1px 0 7px; color: #526078; font-size: 11px; font-weight: 500; line-height: 1.45; }
+.tp-pdf-lead__form .tp-pdf-lead__consent input { flex: 0 0 auto; width: 16px; min-height: 16px; height: 16px; margin: 0; accent-color: #3157d5; }
 .tp-pdf-lead__form > button { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 9px; margin-top: 5px; border: 0; border-radius: 13px; color: #fff; background: #3157d5; font-size: 13px; font-weight: 850; cursor: pointer; }
 .tp-pdf-lead__form > button:disabled { opacity: .65; cursor: wait; }
 .tp-pdf-lead__error { padding: 9px 11px; border: 1px solid #f0c9c9; border-radius: 10px; color: #9d2e2e; background: #fff5f5; font-size: 11px; line-height: 1.45; }
