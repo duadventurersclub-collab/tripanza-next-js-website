@@ -1,23 +1,29 @@
 import Link from "next/link";
 import CheckoutForm from "@/components/booking/CheckoutForm";
+import CheckoutPreparation from "@/components/booking/CheckoutPreparation";
 import { getBookingCart, requestBookingQuote } from "@/lib/booking";
-import { getTourById } from "@/lib/wp";
+import { getTourById, getTourBySlug } from "@/lib/wp";
 
 export const dynamic = "force-dynamic";
 
-export default async function CheckoutPage() {
+export default async function CheckoutPage({ searchParams }: { searchParams: Promise<{ prepare?: string }> }) {
+  if ((await searchParams).prepare === "1") return <CheckoutPreparation />;
   const cart = await getBookingCart();
   if (!cart) {
     return <main className="min-h-screen bg-slate-50 px-5 py-20"><div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black text-slate-950">Your cart is empty</h1><p className="mt-3 text-slate-500">Add a tour before opening checkout.</p><Link href="/?tripanza_view=all#trips" className="mt-7 inline-flex rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white">Explore tours</Link></div></main>;
   }
 
+  const tourPromise = cart.selection.tour_slug
+    ? getTourBySlug(cart.selection.tour_slug).catch(() => null)
+    : getTourById(cart.selection.tour_id).catch(() => null);
   let quote;
+  let tourCandidate;
   try {
-    quote = await requestBookingQuote(cart.selection);
+    [quote, tourCandidate] = await Promise.all([requestBookingQuote(cart.selection), tourPromise]);
   } catch (error) {
     return <main className="min-h-screen bg-slate-50 px-5 py-20"><div className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black text-slate-950">Checkout needs attention</h1><p className="mt-3 text-red-700">{error instanceof Error ? error.message : "This fare is no longer available."}</p><Link href="/cart" className="mt-7 inline-flex rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white">Return to cart</Link></div></main>;
   }
-  const tour = await getTourById(quote.tour.id);
+  const tour = tourCandidate?.id === quote.tour.id ? tourCandidate : null;
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:py-16">

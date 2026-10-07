@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { BookingSelection } from "@/lib/booking";
 import type { TourDetail } from "@/lib/wp";
+import { CHECKOUT_PENDING_KEY } from "@/lib/booking-handoff";
 
 type Sharing = "quad" | "triple" | "twin";
 const labels: Record<Sharing, { title: string; occupancy: string }> = {
@@ -122,6 +123,7 @@ export default function TourBookingPanel({
     counts[sharing] = travellers;
     const selection: BookingSelection = {
       tour_id: tour.id,
+      tour_slug: tour.slug,
       date: departure.date,
       counts,
       extras: selectedExtras.map((extra) => ({ name: extra.name, quantity: extra.required ? travellers : 1 })),
@@ -129,6 +131,11 @@ export default function TourBookingPanel({
 
     setIsSubmitting(true);
     setError("");
+    try {
+      window.sessionStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify(selection));
+      router.push("/checkout?prepare=1");
+      return;
+    } catch { /* Storage can be blocked; use the existing validated cart route. */ }
     try {
       const response = await fetch("/api/cart", {
         method: "POST",
@@ -220,7 +227,7 @@ export default function TourBookingPanel({
           {tour.details.booking.deposit_percentage < 100 ? <div className="tp-booking-payment-split"><span>Estimated pay now<strong>{money(payNow, tour.currency)}</strong><small>{tour.details.booking.deposit_percentage}% advance</small></span><span>Estimated later<strong>{money(estimate - payNow, tour.currency)}</strong><small>Remaining trip balance</small></span></div> : null}
           {cashbackTotal > 0 ? <p className="tp-booking-cashback-note"><i className="fa-solid fa-gift" aria-hidden="true" /><span><strong>Earn {money(cashbackTotal, tour.currency)} cashback</strong> Cashback eligibility is confirmed after login and credited after the advance payment.</span></p> : null}
           {error ? <p className="tp-booking-error" role="alert">{error}</p> : null}
-          <button type="submit" className="tp-booking-submit" disabled={isSubmitting || !departure}><span>{isSubmitting ? "Verifying your fare…" : "Continue to secure checkout"}</span><i className="fa-solid fa-arrow-right" /></button>
+          <button type="submit" className="tp-booking-submit" disabled={isSubmitting || !departure}><span>{isSubmitting ? "Opening secure checkout…" : "Continue to secure checkout"}</span><i className="fa-solid fa-arrow-right" /></button>
           <div className="tp-booking-assurance"><span>● Instant confirmation</span><span>● Secure payment</span></div>
         </section>
       </form>

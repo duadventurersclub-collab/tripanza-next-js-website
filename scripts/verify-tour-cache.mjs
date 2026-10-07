@@ -2,6 +2,9 @@
 import assert from "node:assert/strict";
 import http from "node:http";
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 let settings = { host_enabled: false, public_cache_enabled: true, tour_cache_seconds: 300,
@@ -26,7 +29,14 @@ const mock = http.createServer(async (req, res) => {
     }
     return send({ settings });
   }
-  if (route === "booking/quote") { calls.quotes++; return send({ quote_id: `live-${calls.quotes}` }); }
+  if (route === "booking/quote") {
+    calls.quotes++;
+    return send({ quote_id: `live-${calls.quotes}`, currency: "INR", tour: { id: 42, slug: "cache-fixture", title, image: "" },
+      departure: { date: "2027-01-01", display_date: "1 Jan 2027", check_in: "2027-01-01", check_out: "2027-01-04", check_in_timestamp: 1798761600, check_out_timestamp: 1799020800 },
+      travellers: { quad: 1, triple: 0, twin: 0, total: 1 }, unit_prices: { quad: 10000, triple: 0, twin: 0 },
+      discount: { rate: 0, type: "percent" }, extras: [], amounts: { package: 10000, sale_discount: 0, group_discount: 0, extras: 0, tax: 0, trip_total: 10000, grand_total: 10000, pay_now: 10000, pay_later: 0 },
+      deposit: { percentage: 100 }, expires_at: "2027-01-01T00:15:00Z" });
+  }
   if (outage) return send({ message: "Upstream unavailable" }, 503);
   if (route === "site") return send({ name: "Tripanza Fixture", description: "Test trips", url: "http://fixture", admin_url: "", site_language: "en-IN", timezone: "Asia/Kolkata" });
   if (route === "tours") {
@@ -40,7 +50,7 @@ const mock = http.createServer(async (req, res) => {
     return send({ id: 42, slug: "cache-fixture", title: url.searchParams.has("_tripanza_live") ? title : "STALE CDN TOUR",
       content: "FULL_ITINERARY_SHOULD_NOT_SHIP",
       currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" },
-        pricing: { quad: { amount: 10000, display: "₹10,000" } }, itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] } });
+        pricing: { quad: { amount: 10000, display: "₹10,000" } }, departures: [{ date: "2027-01-01", status: "Seats available" }], itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] } });
   }
   if (route.startsWith("tours/")) return send({ code: "tripanza_tour_not_found" }, 404);
   if (url.pathname === "/wp-json/wp/v2/st_tours") return send([]);
@@ -124,11 +134,43 @@ try {
     assert.equal(response.status, 201);
     assert.equal((await response.json()).cart.quote.quote_id, `live-${i}`);
   }
+  const beforeDeferred = calls.quotes;
+  const pending = await fetch(origin + "/api/cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...JSON.parse(bookingBody), tour_slug: "cache-fixture", defer_quote: true }) });
+  assert.equal(pending.status, 201);
+  assert.equal((await pending.json()).cart.quote, undefined);
+  assert.equal(calls.quotes, beforeDeferred, "Fast handoff must not quote before navigation");
+  const checkout = await page("/checkout", { Cookie: pending.headers.get("set-cookie").split(";")[0] });
+  assert.equal(checkout.response.status, 200);
+  assert.ok(checkout.html.includes("Complete your booking"));
+  assert.ok(checkout.html.includes("Confirm and pay"));
+  assert.equal(calls.quotes, beforeDeferred + 1, "Checkout validates the live quote exactly once before showing the form");
+  assert.equal((await fetch(origin + "/api/cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...JSON.parse(bookingBody), date: "invalid", defer_quote: true }) })).status, 400);
+  assert.equal(calls.quotes, beforeDeferred + 1);
+  let chromium;
+  try { chromium = createRequire(join(tmpdir(), "tripanza-studio-validation", "fixture.cjs"))("@playwright/test").chromium; }
+  catch { console.log("SKIP: optional mobile browser tooling is not installed"); }
+  if (chromium) {
+    const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
+    try {
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+      const mobile = await context.newPage();
+      let cartStartedFrom = "";
+      mobile.on("request", request => { if (request.url().endsWith("/api/cart") && request.method() === "POST") cartStartedFrom = mobile.url(); });
+      await mobile.goto(origin + "/tours/cache-fixture");
+      await mobile.getByRole("button", { name: /Check dates/i }).click();
+      await mobile.getByRole("dialog", { name: "Book this tour" }).getByRole("button", { name: /Continue to secure checkout/i }).click();
+      await mobile.getByRole("button", { name: /Confirm and pay/i }).waitFor({ timeout: 30_000 });
+      assert.equal(new URL(cartStartedFrom).pathname, "/checkout", "Cart request starts after immediate mobile navigation");
+      assert.equal(new URL(mobile.url()).pathname, "/checkout");
+      assert.equal(calls.quotes, beforeDeferred + 2, "Mobile handoff quotes once before showing the form");
+      await context.close();
+    } finally { await browser.close(); }
+  }
   settings.new_bookings_enabled = false;
   assert.equal((await fetch(origin + "/api/cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: bookingBody })).status, 503);
-  assert.equal(calls.quotes, 2);
+  assert.equal(calls.quotes, beforeDeferred + (chromium ? 2 : 1));
   settings.new_bookings_enabled = true;
-  console.log("PASS: booking quotes stay live on each request; booking disable enforced immediately despite cached page");
+  console.log("PASS: mobile checkout handoff navigates without a quote, checkout validates once, invalid selection fails, booking disable remains live");
 
   for (const patch of [{ public_cache_enabled: false }, { public_cache_enabled: true, tour_cache_seconds: 0 }]) {
     await save(patch);

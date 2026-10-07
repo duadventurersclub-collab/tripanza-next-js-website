@@ -22,6 +22,10 @@ export default async function CartPage() {
     return <main className="min-h-screen bg-slate-50 px-5 py-20"><div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm"><span className="text-4xl">🧳</span><h1 className="mt-4 text-3xl font-black text-slate-950">Your cart is empty</h1><p className="mt-3 text-slate-500">Choose a live departure and room-sharing option to continue.</p><Link href="/?tripanza_view=all#trips" className="mt-7 inline-flex rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white">Explore tours</Link></div></main>;
   }
 
+  if (unavailable || !cart.quote) {
+    return <main className="min-h-screen bg-slate-50 px-5 py-20"><div className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black text-slate-950">Cart needs attention</h1><p className="mt-3 text-red-700">{unavailable || "Your trip fare could not be loaded."}</p><Link href={stored?.selection.tour_slug ? `/tours/${stored.selection.tour_slug}` : "/?tripanza_view=all#trips"} className="mt-7 inline-flex rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white">Choose another departure</Link></div></main>;
+  }
+
   const { quote } = cart;
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:py-16">

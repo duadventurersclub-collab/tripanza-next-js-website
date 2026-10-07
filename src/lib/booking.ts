@@ -7,6 +7,7 @@ export type BookingExtraSelection = { name: string; quantity: number };
 
 export type BookingSelection = {
   tour_id: number;
+  tour_slug?: string;
   date: string;
   counts: { quad: number; triple: number; twin: number };
   extras: BookingExtraSelection[];
@@ -43,7 +44,7 @@ export type BookingQuote = {
   expires_at: string;
 };
 
-export type BookingCart = { selection: BookingSelection; quote: BookingQuote; updated_at: string };
+export type BookingCart = { selection: BookingSelection; quote?: BookingQuote; updated_at: string };
 
 export type CheckoutContact = {
   first_name: string;
@@ -213,7 +214,7 @@ function encodeCart(cart: BookingCart) {
 function decodeCart(value: string): BookingCart | null {
   try {
     const cart = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as BookingCart;
-    if (!cart?.selection?.tour_id || !cart?.selection?.date || !cart?.quote?.quote_id) return null;
+    if (!cart?.selection?.tour_id || !cart?.selection?.date || (cart.quote && !cart.quote.quote_id)) return null;
     return cart;
   } catch {
     return null;
