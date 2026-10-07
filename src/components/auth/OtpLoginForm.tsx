@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoginOnboarding from "@/components/auth/LoginOnboarding";
 
 export default function OtpLoginForm() {
   const router = useRouter();
+  const [showIntro, setShowIntro] = useState(true);
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -70,7 +72,10 @@ export default function OtpLoginForm() {
     }
   };
 
+  if (showIntro) return <LoginOnboarding onLogin={() => setShowIntro(false)} onClose={() => router.push("/")} />;
+
   return (
+    <div className="px-6 py-20 sm:py-32">
     <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
       <div className="bg-slate-900 p-8 text-center text-white">
         <h2 className="text-2xl font-black">
@@ -156,6 +161,7 @@ export default function OtpLoginForm() {
           </form>
         )}
       </div>
+    </div>
     </div>
   );
 }

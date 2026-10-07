@@ -16,7 +16,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 py-20 px-6 sm:py-32">
+    <main className="min-h-screen bg-slate-50">
       <OtpLoginForm />
     </main>
   );

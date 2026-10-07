@@ -1,0 +1,62 @@
+.tp-login-intro{--intro-blue:#3157d5;--intro-lime:#d0e562;--intro-ink:#151925;position:relative;display:flex;width:min(100%,680px);height:100dvh;min-height:570px;margin:0 auto;overflow:hidden;flex-direction:column;color:var(--intro-ink);background:radial-gradient(circle at 50% 48%,rgba(208,229,98,.22),transparent 230px),#f6f8fc;font-family:Inter,var(--font-geist-sans),Arial,sans-serif;text-align:center}
+.tp-login-intro *{box-sizing:border-box}
+.tp-login-intro:before{position:absolute;top:11%;right:-118px;width:170px;height:170px;border:24px solid rgba(208,229,98,.34);border-radius:50%;content:"";pointer-events:none}
+.tp-login-intro__top{position:relative;z-index:5;display:grid;height:62px;min-height:62px;padding:10px 14px;grid-template-columns:1fr 1fr 1fr;align-items:start}
+.tp-login-intro__top button{height:38px;border:1px solid #dce4f1;border-radius:999px;background:#fff;color:var(--intro-blue);font-size:12px;font-weight:850;cursor:pointer}
+.tp-login-intro__close{width:38px;justify-self:start;font-size:23px!important;font-weight:400!important;line-height:1}
+.tp-login-intro__mark{display:grid;width:32px;height:32px;margin:3px auto 0;place-items:center;border-radius:50%;background:var(--intro-blue)}
+.tp-login-intro__mark img{display:block;width:32px;height:32px;object-fit:contain}
+.tp-login-intro__skip{min-width:56px;padding:0 13px;justify-self:end;color:#465472!important}
+.tp-login-intro__headline{position:relative;z-index:2;min-height:54px;margin:8px 20px 0;color:var(--intro-blue);font-size:clamp(18px,4.6vw,23px);font-weight:950;line-height:1.2;text-transform:uppercase;letter-spacing:-.35px;animation:tp-intro-appear .45s ease both}
+.tp-login-intro__visual{position:relative;display:grid;min-height:0;flex:1;place-items:center;touch-action:pan-y}
+.tp-login-intro__visual:before{position:absolute;width:240px;height:320px;border-radius:50%;background:var(--intro-lime);opacity:.28;filter:blur(75px);content:""}
+.tp-login-intro__orbit{position:absolute;width:310px;height:310px;border:1px dashed rgba(49,87,213,.2);border-radius:50%;animation:tp-intro-orbit 26s linear infinite}
+.tp-login-intro__badge{position:absolute;z-index:3;display:flex;width:66px;height:62px;padding:5px;align-items:center;justify-content:center;flex-direction:column;gap:3px;border:1.5px solid rgba(49,87,213,.22);border-radius:15px;background:rgba(255,255,255,.97);box-shadow:0 12px 28px rgba(32,61,166,.13);font-size:8px;line-height:1.05;animation:tp-intro-float 3s ease-in-out infinite}
+.tp-login-intro__badge:before{position:absolute;top:-4px;width:19px;height:7px;border-radius:3px;background:var(--intro-lime);content:""}
+.tp-login-intro__badge span{display:grid;width:25px;height:25px;place-items:center;border-radius:9px;background:#eef2ff;font-size:13px}
+.tp-login-intro__badge b{max-width:58px;font-weight:850}
+.tp-login-intro__badge--0{top:8%;left:max(3%,calc(50% - 206px));transform:rotate(-7deg)}
+.tp-login-intro__badge--1{top:25%;right:max(3%,calc(50% - 206px));border-color:rgba(208,229,98,.9);animation-delay:.5s}
+.tp-login-intro__badge--2{bottom:28%;left:max(2%,calc(50% - 210px));animation-delay:1s}
+.tp-login-intro__badge--3{right:max(2%,calc(50% - 210px));bottom:14%;border-color:rgba(208,229,98,.9);animation-delay:1.5s}
+.tp-login-intro__phone{position:relative;z-index:2;width:214px;height:min(428px,57dvh);min-height:325px;overflow:hidden;border:7px solid var(--intro-ink);border-radius:30px;background:#fff;box-shadow:0 24px 55px rgba(32,61,166,.16)}
+.tp-login-intro__notch{position:absolute;z-index:5;top:0;left:50%;width:82px;height:17px;border-radius:0 0 13px 13px;background:var(--intro-ink);transform:translateX(-50%)}
+.tp-login-intro__status{position:absolute;z-index:4;top:6px;right:9px;left:11px;display:flex;justify-content:space-between;color:var(--intro-ink);font-size:6px;font-weight:850}
+.tp-login-intro__phone-content{height:100%;padding-top:24px;animation:tp-intro-appear .5s ease both}
+.tp-login-intro__date-screen{height:100%;overflow:hidden;background:linear-gradient(#fff,#fafbff);text-align:left}
+.tp-login-intro__kicker{display:inline-block;margin:4px 10px 7px;padding:5px 7px;border-radius:99px;background:#f1edff;color:var(--intro-blue);font-size:5.5px;font-weight:950;letter-spacing:.65px}
+.tp-login-intro__date-screen h2{margin:0 10px;color:var(--intro-ink);font-size:18px;font-weight:950;line-height:.95;letter-spacing:-.7px}
+.tp-login-intro__date-screen h2 strong{display:block;margin-top:3px;color:var(--intro-blue)}
+.tp-login-intro__filters{display:flex;margin:10px 10px 8px;gap:5px}
+.tp-login-intro__filters span{padding:5px 7px;border:1px solid #dce4f1;border-radius:99px;background:#fff;color:#596478;font-size:5.5px;font-weight:750;white-space:nowrap}
+.tp-login-intro__filters span:first-child{border-color:var(--intro-lime);background:var(--intro-lime);color:var(--intro-ink)}
+.tp-login-intro__trip-stage{position:relative;display:flex;height:226px;align-items:center;justify-content:center;overflow:hidden}
+.tp-login-intro__trip-stage>i{position:absolute;width:72px;height:185px;border:1px solid rgba(49,87,213,.22);border-radius:17px;background:url('https://tripanza.com/wp-content/uploads/2026/09/himachal.jpg') center/cover;opacity:.46}
+.tp-login-intro__trip-stage>i:first-child{left:-45px;transform:rotate(-3deg)}
+.tp-login-intro__trip-stage>i:last-child{right:-45px;background-image:url('https://tripanza.com/wp-content/uploads/2026/09/uttarakhand.jpg');transform:rotate(3deg)}
+.tp-login-intro__trip-card{position:relative;z-index:2;width:126px;height:216px;overflow:hidden;border:1.5px solid #ff766c;border-radius:18px;background:url('https://tripanza.com/wp-content/uploads/2025/03/ChatGPT-Image-Apr-30-2026-01_49_59-PM-e1777537390775.png') center/cover;box-shadow:0 14px 28px rgba(21,25,37,.16)}
+.tp-login-intro__trip-card:after{position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgba(5,12,16,.94));content:""}
+.tp-login-intro__trip-card>span{position:absolute;z-index:2;top:10px;left:9px;padding:5px 7px;border-radius:6px;background:#ff6b68;color:#fff;font-size:5.5px;font-weight:950}
+.tp-login-intro__trip-card>div{position:absolute;z-index:2;right:9px;bottom:9px;left:9px;color:#fff}
+.tp-login-intro__trip-card b,.tp-login-intro__trip-card small,.tp-login-intro__trip-card strong{display:block}
+.tp-login-intro__trip-card b{font-size:10px;line-height:1.1}.tp-login-intro__trip-card small{margin:4px 0 7px;font-size:5px}.tp-login-intro__trip-card strong{color:var(--intro-lime);font-size:9px}
+.tp-login-intro__thumbs{display:flex;height:43px;align-items:center;justify-content:center;gap:10px}
+.tp-login-intro__thumbs i{width:24px;height:24px;border:2px solid #fff;border-radius:50%;background:url('https://tripanza.com/wp-content/uploads/2026/09/himachal.jpg') center/cover;box-shadow:0 0 0 1px #dbe3ef}
+.tp-login-intro__thumbs i:nth-child(2){background-image:url('https://tripanza.com/wp-content/uploads/2025/03/ChatGPT-Image-Apr-30-2026-01_49_59-PM-e1777537390775.png');box-shadow:0 0 0 2px var(--intro-blue)}
+.tp-login-intro__thumbs i:nth-child(3){background-image:url('https://tripanza.com/wp-content/uploads/2026/09/uttarakhand.jpg')}.tp-login-intro__thumbs i:nth-child(4){background-image:url('https://tripanza.com/wp-content/uploads/2026/09/rajasthan.jpg')}.tp-login-intro__thumbs i:nth-child(5){background-image:url('https://tripanza.com/wp-content/uploads/2026/09/goa.jpg')}
+.tp-login-intro__image-screen{position:relative;display:flex;height:100%;padding:18px 12px;justify-content:space-between;flex-direction:column;background-position:center;background-size:cover;color:#fff;text-align:left}
+.tp-login-intro__image-screen:before{position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.1) 35%,rgba(0,0,0,.78));content:""}
+.tp-login-intro__image-screen>*{position:relative}.tp-login-intro__image-screen span{align-self:start;padding:6px 8px;border-radius:99px;background:#fff;color:var(--intro-blue);font-size:6px;font-weight:900;letter-spacing:.5px}.tp-login-intro__image-screen strong{font-size:17px;font-weight:950;line-height:1.1}
+.tp-login-intro__image-screen--spiti{background-image:url('https://tripanza.com/wp-content/uploads/2026/09/tripanza-spiti-slide.png?v=e4baf535')}
+.tp-login-intro__image-screen--crew{background-image:url('https://tripanza.com/wp-content/uploads/2021/06/WhatsApp-Image-2021-07-12-at-2.28.22-AM-15-e1662666832961.jpeg')}
+.tp-login-intro__payment-screen{display:flex;height:100%;padding:40px 16px;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 38%,rgba(208,229,98,.34),transparent 115px),#fff}
+.tp-login-intro__payment-screen span{display:grid;width:56px;height:56px;margin-bottom:15px;place-items:center;border-radius:50%;background:var(--intro-lime);color:#294700;font-size:25px;font-weight:950}.tp-login-intro__payment-screen strong{font-size:15px;font-weight:900}.tp-login-intro__payment-screen b{margin-top:8px;color:var(--intro-blue);font-size:28px}.tp-login-intro__payment-screen small{margin-top:16px;padding:9px 12px;border:1px dashed #b9c6df;border-radius:8px;font-size:7px}.tp-login-intro__payment-screen p{margin-top:auto;color:var(--intro-blue);font-size:9px;font-weight:900;text-transform:uppercase}
+.tp-login-intro__bottom{position:relative;z-index:4;padding:12px 18px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,rgba(246,248,252,0),#f6f8fc 18%)}
+.tp-login-intro__progress{display:flex;margin:0 0 12px;justify-content:center;gap:6px}.tp-login-intro__progress button{width:34px;height:5px;padding:0;overflow:hidden;border:0;border-radius:99px;background:#dfe5ef;cursor:pointer}.tp-login-intro__progress span{display:block;width:0;height:100%;border-radius:inherit;background:var(--intro-blue)}.tp-login-intro__progress .is-active span{animation:tp-intro-fill 3.5s linear forwards}
+.tp-login-intro__login{width:100%;min-height:50px;border:0;border-radius:14px;background:var(--intro-lime);color:var(--intro-ink);font-size:14px;font-weight:900;cursor:pointer}.tp-login-intro__login:hover{background:var(--intro-blue);color:#fff}
+.tp-login-intro__bottom p{margin:10px 0 0;color:#8a95a8;font-size:11px;line-height:1.45}.tp-login-intro__bottom a{color:var(--intro-blue);font-weight:800;text-decoration:underline}
+.tp-login-intro button:focus-visible,.tp-login-intro a:focus-visible{outline:2px solid var(--intro-blue);outline-offset:3px}
+@keyframes tp-intro-fill{from{width:0}to{width:100%}}@keyframes tp-intro-appear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes tp-intro-orbit{to{transform:rotate(360deg)}}@keyframes tp-intro-float{50%{translate:0 -8px}}
+@media(max-height:700px){.tp-login-intro__headline{min-height:36px;margin-top:0}.tp-login-intro__phone{height:min(350px,52dvh);min-height:280px}.tp-login-intro__badge{width:60px;height:57px}.tp-login-intro__bottom{padding-top:4px}}
+@media(max-width:380px){.tp-login-intro__badge{width:60px;height:57px}.tp-login-intro__badge--0{left:0}.tp-login-intro__badge--1{right:0}.tp-login-intro__badge--2{left:0}.tp-login-intro__badge--3{right:0}.tp-login-intro__phone{width:198px}.tp-login-intro__progress button{width:29px}}
+@media(prefers-reduced-motion:reduce){.tp-login-intro__orbit,.tp-login-intro__badge,.tp-login-intro__phone-content,.tp-login-intro__headline,.tp-login-intro__progress .is-active span{animation:none}.tp-login-intro__progress .is-active span{width:100%}}

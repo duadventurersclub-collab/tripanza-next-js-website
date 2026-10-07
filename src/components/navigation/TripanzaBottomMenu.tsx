@@ -191,7 +191,7 @@ export default function TripanzaBottomMenu() {
   const hiddenOnTourDetail = pathParts[0] === "tours" && pathParts.length > 1;
   const hiddenOnReels = pathParts[0] === "trips";
   const hiddenOnHost = pathParts[0] === "host" || pathParts[0] === "admin" || ["host-dashboard", "admin-host-trips", "add-your-own-trip", "poster-download", "host-reels", "host-customer-booking-history", "host-payout-details", "host-wallet", "crm"].includes(pathParts[0]);
-  const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels || hiddenOnHost;
+  const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels || hiddenOnHost || pathParts[0] === "login";
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -409,7 +409,7 @@ export default function TripanzaBottomMenu() {
     </nav>}
 
     <section id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
-      {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onSuccess={completeLogin} /> : walletOpen ? <WalletView wallet={account.wallet} onBack={() => setWalletOpen(false)} /> : profileEditOpen && account.profile ? <ProfileEditor profile={account.profile} onBack={() => setProfileEditOpen(false)} onSaved={(profile) => { setAccount((current) => { const next = { ...current, profile }; writeCachedAccount(next); return next; }); window.setTimeout(() => setProfileEditOpen(false), 700); }} /> : <>
+      {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onClose={closeProfile} onSuccess={completeLogin} /> : walletOpen ? <WalletView wallet={account.wallet} onBack={() => setWalletOpen(false)} /> : profileEditOpen && account.profile ? <ProfileEditor profile={account.profile} onBack={() => setProfileEditOpen(false)} onSaved={(profile) => { setAccount((current) => { const next = { ...current, profile }; writeCachedAccount(next); return next; }); window.setTimeout(() => setProfileEditOpen(false), 700); }} /> : <>
         <div className="tp-profile-shell">
           {account.authenticated ? <div className="tp-profile-cover"><Image src={account.profile?.cover || DEFAULT_COVER} alt="" fill sizes="640px" unoptimized /><div className="tp-profile-cover__controls"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => setWalletOpen(true)} aria-label="Open wallet"><Icon name="wallet" /> {amount(account.wallet.balance, account.wallet.currency)}</button></div></div> : <header className="tp-profile-guest-head"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => requireLogin("login")}><Icon name="wallet" /> ₹0</button></header>}
 

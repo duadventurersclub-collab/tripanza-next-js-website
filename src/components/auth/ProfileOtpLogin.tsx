@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import LoginOnboarding from "@/components/auth/LoginOnboarding";
 import { journeyEvent, useJourneyPreference } from "@/lib/use-journey-preference";
 
 export type AuthenticatedUser = { id?: number; email?: string; display_name?: string };
 type AuthChannel = "email" | "whatsapp";
-type Props = { mode: "login" | "register"; onBack: () => void; onSuccess: (user?: AuthenticatedUser) => Promise<void> | void };
+type Props = { mode: "login" | "register"; onBack: () => void; onClose: () => void; onSuccess: (user?: AuthenticatedUser) => Promise<void> | void };
 
 const ArrowIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14" /></svg>;
 const MailIcon = () => <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V6c0-1.1-.9-2-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z" /></svg>;
@@ -29,7 +30,8 @@ async function parseResponse(response: Response) {
   return data;
 }
 
-export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
+export default function ProfileOtpLogin({ mode, onBack, onClose, onSuccess }: Props) {
+  const [showIntro, setShowIntro] = useState(mode === "login");
   const [channel, setChannel] = useState<AuthChannel>("email");
   const [step, setStep] = useState<"identity" | "otp" | "success">("identity");
   const [identity, setIdentity] = useState("");
@@ -47,9 +49,10 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
   const otpRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (showIntro) return;
     const timer = window.setTimeout(() => identityRef.current?.focus(), 180);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [showIntro]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -114,6 +117,8 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
     } catch { setError("Could not turn off WhatsApp follow-ups. Please try again."); }
   }
 
+  if (showIntro) return <LoginOnboarding onLogin={() => setShowIntro(false)} onClose={onClose} />;
+
   const returnTo = typeof window === "undefined" ? "/" : (() => {
     const params = new URLSearchParams(window.location.search);
     ["profile", "auth", "mode", "social_error"].forEach((key) => params.delete(key));
@@ -124,7 +129,7 @@ export default function ProfileOtpLogin({ mode, onBack, onSuccess }: Props) {
   const title = step === "otp" ? (channel === "whatsapp" ? <>Verify your <em>number.</em></> : <>Verify your <em>email.</em></>) : step === "success" ? <>You&apos;re <em>in.</em></> : <>Your group trip is <em>waiting.</em></>;
 
   return <div className={`tp-auth-view is-${channel}${step === "otp" ? " is-otp" : ""}`}>
-    <header className="tp-auth-topbar"><button type="button" onClick={step === "identity" ? onBack : () => reset()} aria-label={step === "identity" ? "Back to profile" : "Change contact"}><ArrowIcon /></button></header>
+    <header className="tp-auth-topbar"><button type="button" onClick={step === "identity" ? (mode === "login" ? () => setShowIntro(true) : onBack) : () => reset()} aria-label={step === "identity" ? (mode === "login" ? "Back to welcome" : "Back to profile") : "Change contact"}><ArrowIcon /></button></header>
     <form className="tp-auth-card" onSubmit={step === "otp" ? verifyCode : sendCode} noValidate>
       <div className="tp-auth-kicker"><span>Back to group trips</span><b>{channel === "whatsapp" ? "WhatsApp OTP" : "Email OTP"}</b></div>
       <h2>{title}</h2>
