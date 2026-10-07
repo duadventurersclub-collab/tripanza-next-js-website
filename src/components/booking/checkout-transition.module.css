@@ -1,0 +1,72 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 520px;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+  padding: max(22px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  color: #fff;
+  background: radial-gradient(circle at 85% 13%, #496ce8 0, transparent 35%), linear-gradient(155deg, #3158d6 0%, #173cae 58%, #121f65 100%);
+  isolation: isolate;
+}
+
+.screen::before,
+.screen::after {
+  position: absolute;
+  z-index: -1;
+  width: min(74vw, 520px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.screen::before { top: -24%; right: -28%; box-shadow: 0 0 0 62px rgba(255, 255, 255, .025), 0 0 0 124px rgba(255, 255, 255, .018); }
+.screen::after { bottom: -49%; left: -31%; box-shadow: 0 0 0 70px rgba(215, 234, 99, .035), 0 0 0 140px rgba(215, 234, 99, .02); }
+
+.topline { display: flex; width: min(100%, 1100px); align-items: center; gap: 10px; }
+.brandMark { position: relative; display: grid; width: 35px; height: 35px; place-items: center; border-radius: 12px; color: #1b348e; background: #d7ea63; font-size: 19px; font-weight: 950; line-height: 1; }
+.brandMark span { position: absolute; margin: -20px 0 0 25px; color: #fff; font-size: 11px; }
+.brandName { font-size: 14px; font-weight: 950; letter-spacing: .17em; }
+.topTag { margin-left: auto; padding: 8px 11px; border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; color: rgba(255, 255, 255, .9); font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+
+.center { display: flex; width: min(100%, 530px); margin: auto 0; flex-direction: column; align-items: center; text-align: center; }
+.journey { position: relative; display: grid; width: 220px; height: 190px; margin-bottom: 8px; place-items: center; }
+.orbit, .orbitInner { position: absolute; width: 164px; height: 164px; border: 1px solid rgba(255, 255, 255, .22); border-radius: 50%; animation: breathe 2.8s ease-in-out infinite; }
+.orbitInner { width: 108px; height: 108px; border-color: rgba(215, 234, 99, .28); background: rgba(255, 255, 255, .055); animation-delay: .35s; }
+.route { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; color: #d7ea63; animation: routeDrift 7s linear infinite; }
+.routePoint { position: absolute; z-index: 1; width: 11px; height: 11px; border: 3px solid #d7ea63; border-radius: 50%; background: #173cae; box-shadow: 0 0 0 6px rgba(215, 234, 99, .12); }
+.routeStart { top: 72%; left: 10%; }
+.routeEnd { top: 20%; right: 9%; }
+.traveller { position: relative; z-index: 2; display: grid; width: 72px; height: 72px; place-items: center; border: 1px solid rgba(255, 255, 255, .7); border-radius: 23px; color: #1b348e; background: #d7ea63; box-shadow: 0 18px 45px rgba(7, 24, 105, .3); font-size: 42px; font-weight: 900; transform: rotate(-18deg); animation: float 2s ease-in-out infinite; }
+.eyebrow { margin: 0 0 13px; color: #d7ea63; font-size: 11px; font-weight: 900; letter-spacing: .23em; }
+.center h1 { margin: 0; font-size: clamp(40px, 10vw, 62px); font-weight: 950; letter-spacing: -.065em; line-height: 1.03; }
+.center h1 em { color: #d7ea63; font-style: normal; }
+.description { max-width: 390px; margin: 18px 0 0; color: rgba(255, 255, 255, .82); font-size: 15px; line-height: 1.55; }
+.progress { width: min(100%, 310px); margin-top: 39px; }
+.progressBar { position: relative; display: block; height: 5px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .22); }
+.progressBar::after { position: absolute; inset: 0 auto 0 0; width: 38%; border-radius: inherit; background: #d7ea63; content: ""; animation: progressSweep 1.55s ease-in-out infinite; }
+.progressLabel { display: block; margin-top: 13px; color: #fff; font-size: 12px; font-weight: 750; letter-spacing: .02em; }
+.ellipsis { display: inline-block; width: 18px; overflow: hidden; vertical-align: bottom; animation: dots 1.4s steps(4, end) infinite; }
+.exitLink { margin-top: 0; padding: 14px 4px; color: rgba(255, 255, 255, .78); font-size: 12px; font-weight: 750; text-decoration: underline; text-underline-offset: 4px; }
+.exitLink span { margin-left: 3px; text-decoration: none; }
+.exitLink:focus-visible, .errorBox button:focus-visible { outline: 3px solid #d7ea63; outline-offset: 4px; }
+.errorBox { width: min(100%, 390px); margin-top: 28px; padding: 17px; border: 1px solid rgba(255, 255, 255, .24); border-radius: 17px; background: rgba(13, 30, 99, .45); }
+.errorBox p { margin: 0; font-size: 13px; line-height: 1.5; }
+.errorBox button { display: flex; width: 100%; min-height: 46px; margin-top: 15px; padding: 0 15px; align-items: center; justify-content: space-between; border: 0; border-radius: 12px; color: #1b348e; background: #d7ea63; font: inherit; font-size: 13px; font-weight: 900; cursor: pointer; }
+
+@keyframes float { 0%, 100% { transform: translateY(3px) rotate(-18deg); } 50% { transform: translateY(-8px) rotate(-13deg); } }
+@keyframes breathe { 0%, 100% { transform: scale(.96); opacity: .55; } 50% { transform: scale(1.08); opacity: 1; } }
+@keyframes routeDrift { to { stroke-dashoffset: -100; } }
+@keyframes progressSweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(370%); } }
+@keyframes dots { 0% { width: 0; } 100% { width: 18px; } }
+
+@media (max-height: 690px) { .journey { width: 170px; height: 145px; margin-bottom: 0; } .orbit { width: 135px; height: 135px; } .orbitInner { width: 90px; height: 90px; } .traveller { width: 58px; height: 58px; font-size: 35px; } .progress { margin-top: 24px; } }
+@media (prefers-reduced-motion: reduce) { .orbit, .orbitInner, .route, .traveller, .progressBar::after, .ellipsis { animation: none; } .progressBar::after { width: 55%; } .ellipsis { width: 18px; } }
