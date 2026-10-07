@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { TourDetail } from "@/lib/wp";
 import { formatTourDate, formatTourDateWithOrdinal } from "@/lib/tour-date";
 import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
+import { journeyEvent, useJourneyPreference } from "@/lib/use-journey-preference";
 
 interface TourInformationProps {
   tour: TourDetail;
@@ -36,6 +37,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
   const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadFollowups, setLeadFollowups] = useState(false);
+  const leadPreference = useJourneyPreference(leadPhone);
   const [leadError, setLeadError] = useState("");
   const pdfFrameRef = useRef<HTMLIFrameElement>(null);
   const pdfTimerRef = useRef<number | null>(null);
@@ -104,17 +106,17 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
       if (controller.signal.aborted) return;
       if (!response.ok) throw new Error(result.error || "Your details could not be saved. Please try again.");
 
-      if (leadFollowups) {
-        // The PDF request is transactional; marketing consent is separate and optional.
-        void fetch("/api/journey", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event: "consent", consent: true, source: "itinerary", phone: leadPhone.trim(), email: leadEmail.trim(), tourId: tour.id }),
-        }).then((saved) => {
-          if (saved.ok) return fetch("/api/journey", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ event: "itinerary_downloaded", tourId: tour.id }),
-          });
-        }).catch(() => {});
+      if (leadPreference.state === "enabled" || (leadFollowups && leadPreference.state !== "opted_out")) {
+        // Downloading the PDF never depends on the optional follow-up request.
+        void (async () => {
+          if (leadPreference.state === "enabled") await journeyEvent("reuse", { phone: leadPhone.trim() });
+          else {
+            await journeyEvent("consent", { consent: true, source: "itinerary", phone: leadPhone.trim(), email: leadEmail.trim(), tourId: tour.id });
+            leadPreference.update("enabled");
+            setLeadFollowups(false);
+          }
+          await journeyEvent("itinerary_downloaded", { tourId: tour.id });
+        })().catch(() => {});
       }
 
       if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
@@ -134,6 +136,15 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
     if (pdfTimerRef.current) window.clearTimeout(pdfTimerRef.current);
     setLeadError("");
     setPdfStatus("form");
+  }
+
+  async function turnOffItineraryFollowups() {
+    try {
+      await journeyEvent("reuse", { phone: leadPhone.trim() });
+      await journeyEvent("withdraw");
+      leadPreference.update("disabled");
+      setLeadFollowups(false);
+    } catch { setLeadError("Could not turn off WhatsApp follow-ups. Please try again."); }
   }
 
   function closePdfStatus() {
@@ -351,8 +362,10 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
                 <label htmlFor="tp-itinerary-email">Email address</label>
                 <input id="tp-itinerary-email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={leadEmail} onChange={(event) => setLeadEmail(event.target.value)} required />
                 <label htmlFor="tp-itinerary-phone">Phone number</label>
-                <input id="tp-itinerary-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" value={leadPhone} onChange={(event) => setLeadPhone(event.target.value)} required />
-                <label className="tp-pdf-lead__consent"><input type="checkbox" checked={leadFollowups} onChange={(event) => setLeadFollowups(event.target.checked)} /> <span>Send me optional trip suggestions and follow-ups on WhatsApp. I can opt out anytime.</span></label>
+                <input id="tp-itinerary-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" value={leadPhone} onChange={(event) => { setLeadPhone(event.target.value); setLeadFollowups(false); }} required />
+                {leadPreference.state === "enabled" ? <div className="tp-pdf-lead__consent">Tripanza WhatsApp trip follow-ups are already on. <button type="button" onClick={() => { void turnOffItineraryFollowups(); }}>Turn off</button></div>
+                  : leadPreference.state === "opted_out" ? <p className="tp-pdf-lead__consent">WhatsApp follow-ups are off for this number.</p>
+                  : <label className="tp-pdf-lead__consent"><input type="checkbox" checked={leadFollowups} onChange={(event) => setLeadFollowups(event.target.checked)} /> <span>Send me optional Tripanza trip suggestions and follow-ups on WhatsApp. I can opt out anytime.</span></label>}
                 {leadError ? <span className="tp-pdf-lead__error" role="alert">{leadError}</span> : null}
                 <button type="submit" disabled={pdfStatus === "saving"}>
                   <span>{pdfStatus === "saving" ? "Saving your details…" : "Download itinerary"}</span>

@@ -17,6 +17,65 @@
     });
   }
 
+  function preference(phone) {
+    var data = new URLSearchParams({ action: 'tpj_web_preference', nonce: config.nonce, phone: phone });
+    return fetch(config.ajaxUrl, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: data.toString()
+    }).then(function (response) { return response.json(); }).then(function (result) {
+      if (!result.success) throw new Error('Could not load WhatsApp preference.');
+      return result.data && result.data.state || 'disabled';
+    });
+  }
+
+  function watchPreference(choice, phone, onEnabled, isActive) {
+    var status = document.createElement('small');
+    status.className = 'tpj-optin__status';
+    status.setAttribute('role', 'status');
+    choice.label.insertAdjacentElement('afterend', status);
+    var timer;
+    var generation = 0;
+    var state = 'disabled';
+    var lastDigits = '';
+    function display(next) {
+      state = next;
+      if (next === 'enabled' || next === 'opted_out') choice.input.checked = false;
+      choice.label.hidden = next === 'enabled' || next === 'opted_out' || next === 'checking' || (isActive && !isActive());
+      status.hidden = Boolean(isActive && !isActive());
+      status.textContent = '';
+      if (next === 'enabled') {
+        status.appendChild(document.createTextNode('Tripanza WhatsApp trip follow-ups are already on. '));
+        var off = document.createElement('button');
+        off.type = 'button';
+        off.textContent = 'Turn off';
+        off.addEventListener('click', function () {
+          send('reuse', { phone: phone.value.trim() }).then(function () { return send('withdraw'); })
+            .then(function () { choice.input.checked = false; display('disabled'); status.textContent = 'Tripanza WhatsApp follow-ups are off for this number.'; })
+            .catch(function () { status.textContent = 'Could not turn off WhatsApp follow-ups. Please try again.'; });
+        });
+        status.appendChild(off);
+        if (onEnabled) onEnabled();
+      } else if (next === 'opted_out') status.textContent = 'WhatsApp follow-ups are off for this number.';
+    }
+    function refresh() {
+      window.clearTimeout(timer);
+      var current = ++generation;
+      var digits = phone.value.replace(/\D/g, '');
+      if (digits !== lastDigits) choice.input.checked = false;
+      lastDigits = digits;
+      if ((isActive && !isActive()) || digits.length < 10 || digits.length > 15) { display('disabled'); return; }
+      display('checking');
+      timer = window.setTimeout(function () {
+        preference(phone.value.trim()).then(function (value) { if (current === generation) display(value); })
+          .catch(function () { if (current === generation) display('disabled'); });
+      }, 300);
+    }
+    phone.addEventListener('input', refresh);
+    refresh();
+    return { getState: function () { return state; }, display: display, refresh: refresh };
+  }
+
   function checkbox() {
     var label = document.createElement('label');
     label.className = 'tpj-optin';
@@ -40,13 +99,18 @@
     root.dataset.tpjReady = '1';
     var choice = checkbox();
     phone.insertAdjacentElement('afterend', choice.label);
+    var saved = watchPreference(choice, phone);
     button.addEventListener('click', function () {
-      if (!choice.input.checked || !email.checkValidity() || !email.value.trim() || phone.value.replace(/\D/g, '').length < 10) return;
+      if (!email.checkValidity() || !email.value.trim() || phone.value.replace(/\D/g, '').length < 10) return;
       var id = tourId || 0;
       if (!id && window.jQuery) id = Number(window.jQuery(button).data('postid')) || 0;
-      send('consent', { consent: 1, source: 'itinerary', phone: phone.value.trim(), email: email.value.trim(), tour_id: id })
-        .then(function () { return send('itinerary_downloaded', { tour_id: id }); })
-        .catch(function () {}); // The requested PDF must never depend on marketing delivery.
+      if (saved.getState() === 'enabled') {
+        send('reuse', { phone: phone.value.trim() }).then(function () { return send('itinerary_downloaded', { tour_id: id }); }).catch(function () {});
+      } else if (choice.input.checked && saved.getState() !== 'opted_out') {
+        send('consent', { consent: 1, source: 'itinerary', phone: phone.value.trim(), email: email.value.trim(), tour_id: id })
+          .then(function () { saved.display('enabled'); return send('itinerary_downloaded', { tour_id: id }); })
+          .catch(function () {}); // The requested PDF must never depend on marketing delivery.
+      }
     }, true);
   }
 
@@ -60,10 +124,15 @@
     root.dataset.tpjReady = '1';
     var choice = checkbox();
     target.appendChild(choice.label);
-    var status = document.createElement('small');
-    status.className = 'tpj-optin__status';
-    status.setAttribute('role', 'status');
-    target.appendChild(status);
+    var recordedPhone = '';
+    var saved = watchPreference(choice, phone, function () {
+      var digits = phone.value.replace(/\D/g, '');
+      if (recordedPhone === digits) return;
+      recordedPhone = digits;
+      optedHere = false;
+      send('reuse', { phone: phone.value.trim() }).then(function () { return send('checkout_started', { tour_id: config.cartTourId || 0 }); })
+        .catch(function () { recordedPhone = ''; });
+    });
     var timer;
     var generation = 0;
     var optedHere = false;
@@ -71,7 +140,6 @@
       window.clearTimeout(timer);
       var current = ++generation;
       if (!choice.input.checked) {
-        status.textContent = '';
         if (optedHere) send('withdraw').catch(function () {});
         optedHere = false;
         return;
@@ -82,14 +150,13 @@
         send('consent', { consent: 1, source: 'checkout', phone: phone.value.trim(), email: email.value.trim(), tour_id: config.cartTourId || 0 })
           .then(function () {
             if (current !== generation || !choice.input.checked) return send('withdraw');
-            return send('checkout_started', { tour_id: config.cartTourId || 0 });
+            saved.display('enabled');
           })
-          .then(function () { if (current === generation && choice.input.checked) status.textContent = 'WhatsApp follow-up preference saved.'; })
-          .catch(function () { if (current === generation) status.textContent = 'WhatsApp reminders could not be enabled right now.'; });
+          .catch(function () { if (current === generation) saved.display('disabled'); });
       }, 900);
     }
     choice.input.addEventListener('change', schedule);
-    phone.addEventListener('input', schedule);
+    phone.addEventListener('input', function () { optedHere = false; schedule(); });
     email.addEventListener('change', schedule);
   }
 
@@ -105,6 +172,7 @@
       choice.input.name = 'tpj_followups';
       choice.input.value = '1';
       phone.closest('label')?.insertAdjacentElement('afterend', choice.label) || phone.insertAdjacentElement('afterend', choice.label);
+      watchPreference(choice, phone);
     });
   }
 
@@ -124,17 +192,18 @@
       anchor.insertAdjacentElement('afterend', choice.label);
     }
     if (!choice.label) return;
-    function visible() { choice.label.hidden = form.dataset.authChannel !== 'whatsapp'; }
-    visible();
+    var saved = watchPreference(choice, identity, null, function () { return form.dataset.authChannel === 'whatsapp'; });
     var channelObserver = new MutationObserver(visible);
+    function visible() { saved.refresh(); }
     channelObserver.observe(form, { attributes: true, attributeFilter: ['data-auth-channel'] });
     window.jQuery(document).ajaxSuccess(function (_event, _xhr, settings, result) {
-      if (!choice.input.checked || !result || !result.success || !settings || !settings.data) return;
+      if (!result || !result.success || !settings || !settings.data) return;
       var params = new URLSearchParams(String(settings.data));
       if (params.get('action') !== 'sol_verify_otp' || params.get('channel') !== 'whatsapp') return;
       var phone = params.get('email') || '';
       if (phone.replace(/\D/g, '').length < 10) return;
-      send('consent', { consent: 1, source: 'signup', phone: phone }).catch(function () {});
+      if (choice.input.checked && saved.getState() !== 'opted_out') send('consent', { consent: 1, source: 'signup', phone: phone }).then(function () { saved.display('enabled'); }).catch(function () {});
+      else send('reuse', { phone: phone }).catch(function () {});
     });
   }
 

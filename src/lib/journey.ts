@@ -11,7 +11,7 @@ export function newJourneyId(): string {
   return randomUUID();
 }
 
-export async function recordJourney(payload: Record<string, unknown>): Promise<boolean> {
+export async function recordJourney(payload: Record<string, unknown>, sessionToken?: string): Promise<boolean> {
   const secret = process.env.TRIPANZA_JOURNEY_SECRET;
   if (!secret) return false;
   const origin = (process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
@@ -20,7 +20,11 @@ export async function recordJourney(payload: Record<string, unknown>): Promise<b
   try {
     const response = await fetch(`${origin}/wp-json/tripanza-journey/v1/event`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Tripanza-Journey-Secret": secret },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Tripanza-Journey-Secret": secret,
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+      },
       body: JSON.stringify(payload),
       cache: "no-store",
       signal: controller.signal,

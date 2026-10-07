@@ -68,10 +68,15 @@ export async function POST(req: Request) {
     }
     await setSessionCookie(sessionToken);
     const result = NextResponse.json({ user: data.user || data.data?.user || null }, { headers: { "Cache-Control": "no-store" } });
-    if (channel === "whatsapp" && body.followups === true) {
+    if (channel === "whatsapp") {
       const existingId = journeyIdFromRequest(req);
       const visitorId = existingId || newJourneyId();
-      after(() => recordJourney({ visitor_id: visitorId, event: "consent", phone: normalized, source: "signup" }));
+      if (body.followups === true) {
+        after(() => recordJourney({ visitor_id: visitorId, event: "consent", phone: normalized, source: "signup" }, sessionToken));
+      } else {
+        // Reuse only a preference already saved for this verified account.
+        after(() => recordJourney({ visitor_id: visitorId, event: "reuse", phone: normalized }, sessionToken));
+      }
       if (!existingId) result.cookies.set(JOURNEY_COOKIE, visitorId, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 90 });
     }
     return result;

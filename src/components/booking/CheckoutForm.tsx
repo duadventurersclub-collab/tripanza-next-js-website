@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BookingQuote, BookingTraveller } from "@/lib/booking";
 import type { TourDetail } from "@/lib/st-tours";
 import PaymentRedirectLoader from "./PaymentRedirectLoader";
+import { journeyEvent, useJourneyPreference } from "@/lib/use-journey-preference";
 
 type Contact = {
   first_name: string;
@@ -95,6 +96,10 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [followups, setFollowups] = useState(false);
   const [followupStatus, setFollowupStatus] = useState("");
+  const preference = useJourneyPreference(contact.phone);
+  const preferenceState = preference.state;
+  const updatePreference = preference.update;
+  const observedPhone = useRef("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [idempotencyKey] = useState(() =>
@@ -104,38 +109,52 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
   );
 
   useEffect(() => {
-    if (!followups || contact.phone.replace(/\D/g, "").length < 10) return;
+    if (!followups || contact.phone.replace(/\D/g, "").length < 10 || preferenceState === "checking" || preferenceState === "opted_out" || preferenceState === "enabled") return;
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       try {
-        const saved = await fetch("/api/journey", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event: "consent", consent: true, source: "checkout", phone: contact.phone, email: contact.email, tourId: quote.tour.id }),
-        });
-        if (!saved.ok) { if (!cancelled) setFollowupStatus("WhatsApp reminders could not be enabled right now."); return; }
+        await journeyEvent("consent", { consent: true, source: "checkout", phone: contact.phone, email: contact.email, tourId: quote.tour.id });
         if (cancelled) {
-          void fetch("/api/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "withdraw" }) });
+          void journeyEvent("withdraw").catch(() => {});
           return;
         }
-        const event = await fetch("/api/journey", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event: "checkout_started", tourId: quote.tour.id }),
-        });
-        if (!cancelled) setFollowupStatus(event.ok ? "Optional WhatsApp reminders enabled." : "WhatsApp reminders could not be enabled right now.");
+        updatePreference("enabled");
+        setFollowups(false);
+        setFollowupStatus("Tripanza WhatsApp follow-ups are on for this number.");
       } catch { if (!cancelled) setFollowupStatus("WhatsApp reminders could not be enabled right now."); }
     }, 900);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [followups, contact.phone, contact.email, quote.tour.id]);
+  }, [followups, contact.phone, contact.email, quote.tour.id, preferenceState, updatePreference]);
 
-  async function toggleFollowups(checked: boolean) {
+  useEffect(() => {
+    if (preferenceState !== "enabled") return;
+    const digits = contact.phone.replace(/\D/g, "");
+    const key = `${digits}:${quote.tour.id}`;
+    if (digits.length < 10 || observedPhone.current === key) return;
+    observedPhone.current = key;
+    void journeyEvent("reuse", { phone: contact.phone })
+      .then(() => journeyEvent("checkout_started", { tourId: quote.tour.id }))
+      .catch(() => { observedPhone.current = ""; setFollowupStatus("WhatsApp reminders could not be updated right now."); });
+  }, [preferenceState, contact.phone, quote.tour.id]);
+
+  function toggleFollowups(checked: boolean) {
     setFollowups(checked);
     setFollowupStatus("");
-    if (!checked) {
-      await fetch("/api/journey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "withdraw" }) }).catch(() => {});
-    }
+  }
+
+  async function turnOffFollowups() {
+    try {
+      await journeyEvent("reuse", { phone: contact.phone });
+      await journeyEvent("withdraw");
+      observedPhone.current = "";
+      setFollowups(false);
+      updatePreference("disabled");
+      setFollowupStatus("Tripanza WhatsApp follow-ups are off for this number.");
+    } catch { setFollowupStatus("Could not turn off WhatsApp follow-ups. Please try again."); }
   }
 
   function updateContact(key: keyof Contact, value: string) {
+    if (key === "phone") { setFollowups(false); setFollowupStatus(""); }
     setContact((current) => ({ ...current, [key]: value }));
   }
 
@@ -343,10 +362,12 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
               <input type="checkbox" required checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
               <span>I agree to Tripanza&apos;s <Link href="/tnc" target="_blank" className="font-black text-blue-600 hover:underline">terms and conditions</Link> and <Link href="/cancellation-policy" target="_blank" className="font-black text-blue-600 hover:underline">cancellation policy</Link>.</span>
             </label>
-            <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs leading-relaxed text-slate-600">
-              <input type="checkbox" checked={followups} onChange={(event) => { void toggleFollowups(event.target.checked); }} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
-              <span>Optional: WhatsApp me about this unfinished booking and relevant trips. I can opt out anytime.</span>
-            </label>
+            {preference.state === "enabled" ? <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-relaxed text-emerald-900">Tripanza WhatsApp trip follow-ups are already on for this number. <button type="button" onClick={() => { void turnOffFollowups(); }} className="font-bold underline">Turn off</button></div>
+              : preference.state === "opted_out" ? <p className="mt-3 text-xs text-slate-500">WhatsApp follow-ups are off for this number.</p>
+              : <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs leading-relaxed text-slate-600">
+                <input type="checkbox" checked={followups} onChange={(event) => toggleFollowups(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
+                <span>Optional: Tripanza may WhatsApp me about this unfinished booking and relevant trips. I can opt out anytime.</span>
+              </label>}
             {followupStatus ? <p className="mt-2 text-xs text-slate-500" role="status">{followupStatus}</p> : null}
 
             {error ? <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}

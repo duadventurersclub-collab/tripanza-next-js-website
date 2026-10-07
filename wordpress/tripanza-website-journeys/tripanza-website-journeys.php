@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Website Journeys
  * Description: Consent-aware website follow-up queue for the existing QR-linked WhatsApp bot.
- * Version: 0.2.1
+ * Version: 0.3.0
  * Requires PHP: 7.4
  */
 
@@ -73,6 +73,50 @@ function tpj_browser_id($create = false) {
     return $visitor;
 }
 
+function tpj_account_phone() {
+    $user_id = get_current_user_id();
+    if (!$user_id) return '';
+    $phone = tpj_phone(get_user_meta($user_id, 'st_phone', true) ?: get_user_meta($user_id, 'billing_phone', true));
+    if (!$phone) return '';
+    // A profile field alone is not proof that this account controls the phone.
+    if (tpj_phone(get_user_meta($user_id, 'tripanza_whatsapp_verified_phone', true)) === $phone) return $phone;
+    if (function_exists('sol_proof_key') && get_transient(sol_proof_key($user_id, 'whatsapp', $phone))) return $phone;
+    $authorization = isset($_SERVER['HTTP_AUTHORIZATION']) ? trim((string) $_SERVER['HTTP_AUTHORIZATION']) : '';
+    if ($authorization === '' && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) $authorization = trim((string) $_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
+    if (!preg_match('/^Bearer\s+([A-Fa-f0-9]{64})$/D', $authorization, $matches)) return '';
+    $session = get_transient('tripanza_headless_session_' . hash('sha256', strtolower($matches[1])));
+    return is_array($session) && (int) ($session['user_id'] ?? 0) === $user_id
+        && (int) ($session['expires'] ?? 0) >= time()
+        && tpj_phone($session['verified_phone'] ?? '') === $phone ? $phone : '';
+}
+
+function tpj_preference_state($visitor, $phone) {
+    global $wpdb;
+    $phone = tpj_phone($phone);
+    if (!$phone) return 'disabled';
+    $table = tpj_table();
+    $own = $visitor ? $wpdb->get_row($wpdb->prepare("SELECT phone, consent_at, opted_out FROM {$table} WHERE visitor_id = %s", $visitor)) : null;
+    $own_phone = $own && $own->phone === $phone;
+    // A verified account can reuse its choice on another browser or domain.
+    // Guests only inherit the choice attached to their first-party browser cookie.
+    if (!$own_phone && tpj_account_phone() !== $phone) return 'disabled';
+    $opted_out = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE phone = %s AND opted_out = 1 LIMIT 1", $phone));
+    if ($opted_out) return 'opted_out';
+    if ($own_phone && $own->consent_at) return 'enabled';
+    if (tpj_account_phone() !== $phone) return 'disabled';
+    $consented = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE phone = %s AND consent_at IS NOT NULL LIMIT 1", $phone));
+    return $consented ? 'enabled' : 'disabled';
+}
+
+add_action('wp_ajax_tpj_web_preference', 'tpj_web_preference');
+add_action('wp_ajax_nopriv_tpj_web_preference', 'tpj_web_preference');
+function tpj_web_preference() {
+    if (!check_ajax_referer('tpj_web_event', 'nonce', false)) wp_send_json_error(['message' => 'The form expired. Reload and try again.'], 403);
+    nocache_headers();
+    $phone = isset($_POST['phone']) ? sanitize_text_field(wp_unslash($_POST['phone'])) : '';
+    wp_send_json_success(['state' => tpj_preference_state(tpj_browser_id(), $phone)]);
+}
+
 // The native WordPress site writes to the same queue without exposing the
 // server-to-server secret used by Next.js. The nonce and same-origin AJAX route
 // are for CSRF protection; phone ownership is still not proven for guest forms.
@@ -81,18 +125,20 @@ add_action('wp_ajax_nopriv_tpj_web_event', 'tpj_web_event');
 function tpj_web_event() {
     if (!check_ajax_referer('tpj_web_event', 'nonce', false)) wp_send_json_error(['message' => 'The form expired. Reload and try again.'], 403);
     $event = isset($_POST['event']) ? sanitize_key(wp_unslash($_POST['event'])) : '';
-    if (!in_array($event, ['consent', 'itinerary_downloaded', 'checkout_started', 'cart_created', 'tour_view', 'withdraw'], true)) wp_send_json_error(['message' => 'Invalid event.'], 400);
+    if (!in_array($event, ['consent', 'reuse', 'itinerary_downloaded', 'checkout_started', 'cart_created', 'tour_view', 'withdraw'], true)) wp_send_json_error(['message' => 'Invalid event.'], 400);
     $source = isset($_POST['source']) ? sanitize_key(wp_unslash($_POST['source'])) : '';
     if ($event === 'consent' && (!in_array($source, ['signup', 'itinerary', 'checkout'], true) || (string) ($_POST['consent'] ?? '') !== '1')) wp_send_json_error(['message' => 'Consent is required.'], 400);
     if ($event === 'consent' && $source === 'signup') {
         $user_id = get_current_user_id();
         $submitted_phone = tpj_phone(isset($_POST['phone']) ? wp_unslash($_POST['phone']) : '');
         $account_phone = $user_id ? tpj_phone(get_user_meta($user_id, 'st_phone', true) ?: get_user_meta($user_id, 'billing_phone', true)) : '';
-        $verified_here = $user_id && $submitted_phone && function_exists('sol_contact_is_verified')
-            && sol_contact_is_verified($user_id, 'whatsapp', $submitted_phone);
-        if (!$user_id || !$submitted_phone || ($submitted_phone !== $account_phone && !$verified_here)) wp_send_json_error(['message' => 'Sign in with this number before enabling WhatsApp follow-ups.'], 403);
+        $verified_here = $user_id && $submitted_phone && (
+            tpj_phone(get_user_meta($user_id, 'tripanza_whatsapp_verified_phone', true)) === $submitted_phone
+            || (function_exists('sol_proof_key') && get_transient(sol_proof_key($user_id, 'whatsapp', $submitted_phone)))
+        );
+        if (!$user_id || !$submitted_phone || $submitted_phone !== $account_phone || !$verified_here) wp_send_json_error(['message' => 'Verify this WhatsApp number before enabling follow-ups.'], 403);
     }
-    $visitor = tpj_browser_id($event === 'consent');
+    $visitor = tpj_browser_id(in_array($event, ['consent', 'reuse'], true));
     if (!$visitor) wp_send_json_success(['ok' => true]);
     $request = new WP_REST_Request('POST', '/tripanza-journey/v1/event');
     foreach (['event', 'phone', 'email', 'source', 'tour_id'] as $key) {
@@ -152,14 +198,25 @@ add_action('user_register', function ($user_id) {
 }, 30);
 
 add_action('rest_api_init', function () {
+    $permission = function ($request) {
+        $secret = defined('TRIPANZA_JOURNEY_SECRET') ? (string) TRIPANZA_JOURNEY_SECRET : '';
+        $provided = (string) $request->get_header('X-Tripanza-Journey-Secret');
+        return $secret !== '' && $provided !== '' && hash_equals($secret, $provided);
+    };
     register_rest_route('tripanza-journey/v1', '/event', [
         'methods' => 'POST',
-        'permission_callback' => function ($request) {
-            $secret = defined('TRIPANZA_JOURNEY_SECRET') ? (string) TRIPANZA_JOURNEY_SECRET : '';
-            $provided = (string) $request->get_header('X-Tripanza-Journey-Secret');
-            return $secret !== '' && $provided !== '' && hash_equals($secret, $provided);
-        },
+        'permission_callback' => $permission,
         'callback' => 'tpj_record_event',
+    ]);
+    register_rest_route('tripanza-journey/v1', '/preference', [
+        'methods' => 'POST',
+        'permission_callback' => $permission,
+        'callback' => function ($request) {
+            nocache_headers();
+            $visitor = sanitize_text_field((string) $request->get_param('visitor_id'));
+            if (!preg_match('/^[a-f0-9-]{36}$/i', $visitor)) $visitor = '';
+            return ['state' => tpj_preference_state($visitor, $request->get_param('phone'))];
+        },
     ]);
 });
 
@@ -167,7 +224,7 @@ function tpj_record_event($request) {
     global $wpdb;
     $visitor = sanitize_text_field((string) $request->get_param('visitor_id'));
     $event = sanitize_key((string) $request->get_param('event'));
-    if (!preg_match('/^[a-f0-9-]{36}$/i', $visitor) || !in_array($event, ['consent', 'itinerary_downloaded', 'checkout_started', 'cart_created', 'tour_view', 'booking_created', 'withdraw', 'opt_out'], true)) {
+    if (!preg_match('/^[a-f0-9-]{36}$/i', $visitor) || !in_array($event, ['consent', 'reuse', 'itinerary_downloaded', 'checkout_started', 'cart_created', 'tour_view', 'booking_created', 'withdraw', 'opt_out'], true)) {
         return new WP_Error('tpj_invalid_event', 'Invalid journey event.', ['status' => 400]);
     }
     $table = tpj_table();
@@ -191,13 +248,33 @@ function tpj_record_event($request) {
         $data = ['phone' => $phone, 'email' => $email, 'consent_at' => $now, 'consent_source' => $source];
         if (get_transient('tpj_booked_' . hash('sha256', $phone))) $data['converted'] = 1;
         if ($row && $row->phone !== $phone) $data += ['due_at' => null, 'last_event' => '', 'tour_id' => 0];
-        if ($row) $wpdb->update($table, $data, ['id' => $row->id]);
-        else $wpdb->insert($table, ['visitor_id' => $visitor] + $data);
+        if ($row) $saved_ok = $wpdb->update($table, $data, ['id' => $row->id]);
+        else $saved_ok = $wpdb->insert($table, ['visitor_id' => $visitor] + $data);
+        if ($saved_ok === false) return new WP_Error('tpj_consent_failed', 'WhatsApp preference could not be saved.', ['status' => 500]);
+        if (tpj_account_phone() === $phone) update_user_meta(get_current_user_id(), 'tripanza_whatsapp_verified_phone', $phone);
+        return ['ok' => true];
+    }
+    if ($event === 'reuse') {
+        $phone = tpj_phone($request->get_param('phone'));
+        if (!$phone || tpj_preference_state($visitor, $phone) !== 'enabled') return new WP_Error('tpj_no_consent', 'No saved WhatsApp preference was found.', ['status' => 403]);
+        if ($row && $row->phone === $phone && $row->consent_at) return ['ok' => true];
+        $saved = $wpdb->get_row($wpdb->prepare("SELECT consent_at, consent_source, email FROM {$table} WHERE phone = %s AND consent_at IS NOT NULL AND opted_out = 0 ORDER BY consent_at DESC LIMIT 1", $phone));
+        if (!$saved) return new WP_Error('tpj_no_consent', 'No saved WhatsApp preference was found.', ['status' => 403]);
+        $data = ['phone' => $phone, 'email' => $saved->email, 'consent_at' => $saved->consent_at, 'consent_source' => $saved->consent_source, 'opted_out' => 0];
+        if ($row && $row->phone !== $phone) $data += ['due_at' => null, 'last_event' => '', 'tour_id' => 0];
+        if ($row) $saved_ok = $wpdb->update($table, $data, ['id' => $row->id]);
+        else $saved_ok = $wpdb->insert($table, ['visitor_id' => $visitor] + $data);
+        if ($saved_ok === false) return new WP_Error('tpj_reuse_failed', 'WhatsApp preference could not be reused.', ['status' => 500]);
+        if (tpj_account_phone() === $phone) update_user_meta(get_current_user_id(), 'tripanza_whatsapp_verified_phone', $phone);
         return ['ok' => true];
     }
     if (!$row) return new WP_Error('tpj_unknown_visitor', 'No journey was found.', ['status' => 404]);
     if ($event === 'withdraw') {
-        $wpdb->update($table, ['consent_at' => null, 'due_at' => null], ['id' => $row->id]);
+        if (!$row->phone) return new WP_Error('tpj_unknown_phone', 'No saved number was found.', ['status' => 404]);
+        // A withdrawal stops all queued messages to this number, even when
+        // earlier consent was recorded in another browser.
+        $updated = $wpdb->update($table, ['consent_at' => null, 'due_at' => null], ['phone' => $row->phone]);
+        if ($updated === false) return new WP_Error('tpj_withdraw_failed', 'WhatsApp preference could not be updated.', ['status' => 500]);
         return ['ok' => true];
     }
     if ($event === 'opt_out') {
