@@ -417,7 +417,7 @@ export default function TripanzaBottomMenu() {
       </ul>
     </nav>}
 
-    <section ref={modalRef} tabIndex={-1} id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
+    <section ref={modalRef} tabIndex={-1} id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}${!account.authenticated && !authMode ? " is-guest" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
       {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onClose={closeProfile} onSuccess={completeLogin} /> : walletOpen ? <WalletView wallet={account.wallet} onBack={() => setWalletOpen(false)} /> : profileEditOpen && account.profile ? <ProfileEditor profile={account.profile} onBack={() => setProfileEditOpen(false)} onSaved={(profile) => { setAccount((current) => { const next = { ...current, profile }; writeCachedAccount(next); return next; }); window.setTimeout(() => setProfileEditOpen(false), 700); }} /> : <>
         {!account.authenticated && <header className="tp-profile-guest-head"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => requireLogin("login")}><Icon name="wallet" /> ₹0</button></header>}
         <div className="tp-profile-shell">

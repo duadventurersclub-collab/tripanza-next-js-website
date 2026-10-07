@@ -19,7 +19,7 @@
 .tp-login-intro__badge--1{top:25%;right:max(3%,calc(50% - 206px));border-color:rgba(208,229,98,.9);animation-delay:.5s}
 .tp-login-intro__badge--2{bottom:28%;left:max(2%,calc(50% - 210px));animation-delay:1s}
 .tp-login-intro__badge--3{right:max(2%,calc(50% - 210px));bottom:14%;border-color:rgba(208,229,98,.9);animation-delay:1.5s}
-.tp-login-intro__phone{position:relative;z-index:2;width:214px;height:min(428px,57dvh);min-height:325px;overflow:hidden;border:7px solid var(--intro-ink);border-radius:30px;background:#fff;box-shadow:0 24px 55px rgba(32,61,166,.16)}
+.tp-login-intro__phone{position:relative;z-index:2;width:214px;height:clamp(405px,65dvh,428px);min-height:405px;overflow:hidden;border:7px solid var(--intro-ink);border-radius:30px;background:#fff;box-shadow:0 24px 55px rgba(32,61,166,.16)}
 .tp-login-intro__notch{position:absolute;z-index:5;top:0;left:50%;width:82px;height:17px;border-radius:0 0 13px 13px;background:var(--intro-ink);transform:translateX(-50%)}
 .tp-login-intro__status{position:absolute;z-index:4;top:6px;right:9px;left:11px;display:flex;justify-content:space-between;color:var(--intro-ink);font-size:6px;font-weight:850}
 .tp-login-intro__phone-content{height:100%;padding-top:24px;animation:tp-intro-appear .5s ease both}
@@ -58,8 +58,9 @@
 .tp-login-intro__bottom p{margin:10px 0 0;color:#8a95a8;font-size:11px;line-height:1.45}.tp-login-intro__bottom a{color:var(--intro-blue);font-weight:800;text-decoration:underline}
 .tp-login-intro button:focus-visible,.tp-login-intro a:focus-visible{outline:2px solid var(--intro-blue);outline-offset:3px}
 @keyframes tp-intro-fill{from{width:0}to{width:100%}}@keyframes tp-intro-appear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes tp-intro-orbit{to{transform:rotate(360deg)}}@keyframes tp-intro-float{50%{translate:0 -8px}}
-@media(max-height:700px){.tp-login-intro__headline{min-height:36px;margin-top:0}.tp-login-intro__phone{height:min(350px,52dvh);min-height:280px}.tp-login-intro__badge{width:60px;height:57px}.tp-login-intro__bottom{padding-top:4px}}
+@media(max-height:700px){.tp-login-intro__headline{min-height:36px;margin-top:0}.tp-login-intro__phone{height:405px;min-height:405px}.tp-login-intro__badge{width:60px;height:57px}.tp-login-intro__bottom{padding-top:4px}}
 @media(max-width:380px){.tp-login-intro__badge{width:60px;height:57px}.tp-login-intro__badge--0{left:0}.tp-login-intro__badge--1{right:0}.tp-login-intro__badge--2{left:0}.tp-login-intro__badge--3{right:0}.tp-login-intro__phone{width:198px}.tp-login-intro__progress button{width:29px}}
+@media(max-width:899px) and (max-height:640px){.tp-login-intro{height:auto;min-height:640px}}
 @media(min-width:900px){
   .tp-login-intro{width:100%;min-height:620px;padding:0 clamp(40px,6vw,120px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:80px minmax(0,1fr) minmax(0,1fr);column-gap:clamp(32px,5vw,100px);background:radial-gradient(circle at 76% 52%,rgba(208,229,98,.35),transparent 31%),radial-gradient(circle at 8% 85%,rgba(49,87,213,.08),transparent 34%),#f6f8fc;text-align:left}
   .tp-login-intro:before{top:10%;right:-95px;width:260px;height:260px;border-width:34px}
