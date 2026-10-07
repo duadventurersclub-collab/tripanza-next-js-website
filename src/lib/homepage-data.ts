@@ -5,6 +5,7 @@ import { getTourBySlug, transformStTour, type TourDetail } from "./st-tours";
 import { getPublicSiteSettings } from "./public-site-settings";
 import { getSiteSettings, wordpressOrigin } from "./site-settings";
 import type { SiteConfig } from "./wp";
+import { normalizeHomepageSections, type HomepageSections, type HomepageCatalog, type HomepageSection } from "./homepage-sections";
 
 export type HomeTour = Pick<TourDetail, "id" | "slug" | "title" | "featured_image" | "currency" | "price"> & {
   terms?: TourDetail["terms"];
@@ -70,19 +71,33 @@ async function cachedTour(slug: string, ttl: number): Promise<TourDetail> {
   return transformStTour(await response.json());
 }
 
-async function loadHomepage(featuredSlugs: string[], ttl: number): Promise<{ site: SiteConfig; tours: HomeTour[] }> {
-  const [listing, siteResult] = await Promise.all([
+async function loadHomepage(featuredSlugs: string[], sections: HomepageSections, ttl: number): Promise<{ site: SiteConfig; tours: HomeTour[]; automaticTourSlugs: string[]; categoryOrder: Partial<Record<HomepageSection, string[]>> }> {
+  const categoryRules = Object.values(sections).filter(rule => rule.mode === "category");
+  const [listing, siteResult, catalogResult] = await Promise.all([
     wordpressJson("tours?per_page=24&admin_only=1"),
     wordpressJson("site").catch(() => fallbackSite),
+    categoryRules.length ? wordpressJson("homepage/catalog").catch(() => null) : Promise.resolve(null),
   ]);
   const response = listing && typeof listing === "object" ? listing as { items?: unknown[]; admin_only?: boolean } : {};
   if (response.admin_only !== true || !Array.isArray(response.items)) throw new Error("The homepage tour listing is unavailable");
   const summaries = response.items.map(transformStTour);
+  const catalog = catalogResult as HomepageCatalog | null;
+  const termsBySlug = new Map(catalog?.tours.map(tour => [tour.slug, tour.terms] as const) || []);
+  const selectedSlugs = Object.values(sections).flatMap(rule => rule.mode === "manual" ? rule.slugs : []);
+  const categoryOrder: Partial<Record<HomepageSection, string[]>> = {};
+  for (const key of Object.keys(sections) as HomepageSection[]) {
+    const rule = sections[key];
+    if (rule.mode === "category") categoryOrder[key] = catalog?.tours.filter(tour =>
+      tour.terms?.[rule.taxonomy]?.some(term => term.slug === rule.term),
+    ).slice(0, 12).map(tour => tour.slug) || [];
+  }
+  const categorySlugs = Object.values(categoryOrder).flatMap(slugs => slugs || []);
+  const extraSlugs = [...new Set([...selectedSlugs, ...categorySlugs])];
   // Preserve rich content for all cards, but only bypass WordPress's CDN for
   // the first eight and featured trips. The other details reuse Next's data
   // cache instead of flooding the WordPress origin on every ISR rebuild.
   const prioritySlugs = new Set([...featuredSlugs, ...summaries.slice(0, 8).map(tour => tour.slug)]);
-  const detailSlugs = [...new Set([...featuredSlugs, ...summaries.map(tour => tour.slug)])];
+  const detailSlugs = [...new Set([...featuredSlugs, ...summaries.map(tour => tour.slug), ...extraSlugs])];
   const detailResults = await Promise.allSettled(detailSlugs.map(slug =>
     ttl === 0 || prioritySlugs.has(slug) ? getTourBySlug(slug, true) : cachedTour(slug, ttl),
   ));
@@ -95,7 +110,15 @@ async function loadHomepage(featuredSlugs: string[], ttl: number): Promise<{ sit
     return detail ? { ...detail, title: tour.title, featured_image: tour.featured_image, price: tour.price, currency: tour.currency } : tour;
   });
   const promoted = featuredSlugs.flatMap(slug => bySlug.has(slug) ? [bySlug.get(slug)!] : []);
-  const tours = [...promoted, ...base.filter(tour => !promoted.some(item => item.id === tour.id))];
+  const automaticTours = [...promoted, ...base.filter(tour => !promoted.some(item => item.id === tour.id))];
+  const known = new Set(automaticTours.map(tour => tour.id));
+  const extras = extraSlugs.flatMap(slug => {
+    const tour = bySlug.get(slug);
+    if (!tour || known.has(tour.id)) return [];
+    known.add(tour.id);
+    return [tour];
+  });
+  const tours = [...automaticTours, ...extras];
   const seenReviews = new Set<string>();
   const reviews = tours.flatMap(tour => tour.details.reviews).filter(review => {
     const key = `${review.author_name}|${review.text}`;
@@ -103,17 +126,20 @@ async function loadHomepage(featuredSlugs: string[], ttl: number): Promise<{ sit
     seenReviews.add(key);
     return true;
   }).slice(0, 8);
-  return { site: siteResult as SiteConfig, tours: tours.map((tour, index) => homeTour(tour, index === 0 ? reviews : [])) };
+  return { site: siteResult as SiteConfig, automaticTourSlugs: automaticTours.map(tour => tour.slug), categoryOrder, tours: tours.map((tour, index) => ({
+    ...homeTour(tour, index === 0 ? reviews : []), terms: termsBySlug.get(tour.slug) || tour.terms,
+  })) };
 }
 
 export const getHomepageData = cache(async (live = false) => {
   const settings = await (live ? getSiteSettings() : getPublicSiteSettings());
   const featuredSlugs = settings.featured_tour_slugs.split(",").map(slug => slug.trim()).filter(Boolean).slice(0, 12);
-  if (live) return loadHomepage(featuredSlugs, 0);
+  const sections = normalizeHomepageSections(settings.homepage_sections);
+  if (live) return loadHomepage(featuredSlugs, sections, 0);
   const ttl = Math.max(1, Math.min(settings.tour_cache_seconds, settings.site_cache_seconds));
   return unstable_cache(
-    () => loadHomepage(featuredSlugs, ttl),
-    ["homepage-v1", wordpressOrigin, settings.cache_revision, featuredSlugs.join(",")],
+    () => loadHomepage(featuredSlugs, sections, ttl),
+    ["homepage-v2", wordpressOrigin, settings.cache_revision, featuredSlugs.join(","), JSON.stringify(sections)],
     { revalidate: ttl, tags: ["public-data", "tours", "site", "homepage"] },
   )();
 });

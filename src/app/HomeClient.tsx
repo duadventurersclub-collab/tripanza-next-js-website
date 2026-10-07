@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import AutoplayReelVideo from "@/components/reels/AutoplayReelVideo";
 import { ReelsViewer } from "@/components/tour/TourReels";
 import type { HomeTour } from "@/lib/homepage-data";
+import { normalizeHomepageSections, type HomepageSections, type HomepageSection } from "@/lib/homepage-sections";
 import { useSiteSettings } from "@/components/settings/SiteSettingsProvider";
 
 const LOGO = "https://tripanza.com/wp-content/uploads/2026/04/Tripanza-Logo-3.png";
@@ -123,12 +124,31 @@ function revealAllTrips() {
   window.dispatchEvent(new Event("tripanza:show-all-trips"));
 }
 
-export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; siteName: string }) {
+export default function HomeClient({ tours, siteName, sections, categoryOrder, automaticTourSlugs }: { tours: HomeTour[]; siteName: string; sections?: HomepageSections; categoryOrder?: Partial<Record<HomepageSection, string[]>>; automaticTourSlugs?: string[] }) {
   const settings = useSiteSettings();
+  const sectionRules = useMemo(() => normalizeHomepageSections(sections), [sections]);
+  const automaticTours = useMemo(() => {
+    const slugs = new Set(automaticTourSlugs || tours.map(tour => tour.slug));
+    return tours.filter(tour => slugs.has(tour.slug));
+  }, [tours, automaticTourSlugs]);
+  const sectionTours = useCallback((section: HomepageSection) => {
+    const rule = sectionRules[section];
+    if (rule.mode === "manual") {
+      const bySlug = new Map(tours.map(tour => [tour.slug, tour]));
+      return rule.slugs.flatMap(slug => bySlug.has(slug) ? [bySlug.get(slug)!] : []);
+    }
+    if (rule.mode === "category") {
+      const bySlug = new Map(tours.map(tour => [tour.slug, tour]));
+      return (categoryOrder?.[section] || []).flatMap(slug => bySlug.has(slug) ? [bySlug.get(slug)!] : []);
+    }
+    return automaticTours;
+  }, [sectionRules, tours, categoryOrder, automaticTours]);
   const WHATSAPP = `https://wa.me/${settings.whatsapp_number}`;
   const router = useRouter();
-  const heroVideo = settings.reels_enabled ? tours.flatMap((tour) => tour.details.reels).find(Boolean) || "" : "";
-  const heroImage = tours.flatMap((tour) => tour.details.gallery.map((image) => image.url)).find(Boolean) || tours[0]?.featured_image || FALLBACKS[0];
+  const heroTours = sectionTours("hero");
+  const heroMediaTours = sectionRules.hero.mode === "automatic" ? heroTours : heroTours.slice(0, 1);
+  const heroVideo = settings.reels_enabled ? heroMediaTours.flatMap((tour) => tour.details.reels).find(Boolean) || "" : "";
+  const heroImage = heroMediaTours.flatMap((tour) => tour.details.gallery.map((image) => image.url)).find(Boolean) || heroMediaTours[0]?.featured_image || FALLBACKS[0];
   const [navScrolled, setNavScrolled] = useState(false);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
@@ -211,16 +231,16 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
   }, [showAll, catalog, catalogRetry, tours.length]);
 
   const gridTours = useMemo(() => {
-    if (!catalog) return tours;
+    if (!catalog) return sectionTours("trips");
     const rich = new Map(tours.map(tour => [tour.id, tour]));
     const listed = new Set(catalog.map(tour => tour.id));
     return [...catalog.map(tour => rich.get(tour.id) || tour), ...tours.filter(tour => !listed.has(tour.id))];
-  }, [catalog, tours]);
+  }, [catalog, tours, sectionTours]);
 
   const filters = useMemo(() => {
-    const names = Array.from(new Set(tours.flatMap(tourTerms))).filter(Boolean).slice(0, 6);
+    const names = Array.from(new Set(gridTours.flatMap(tourTerms))).filter(Boolean).slice(0, 6);
     return ["all", "saved", ...names];
-  }, [tours]);
+  }, [gridTours]);
 
   const searchMatches = search.trim().length >= 2
     ? gridTours.filter((tour) => `${tour.title} ${tour.details.destination}`.toLowerCase().includes(search.toLowerCase())).slice(0, 6)
@@ -234,20 +254,20 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
   });
   const visibleTours = showAll ? filteredTours : filteredTours.slice(0, 6);
 
-  const departures = useMemo(() => tours.flatMap((tour) => tour.details.departures.slice(0, 3).map((departure) => ({ tour, departure })))
-    .sort((a, b) => a.departure.date.localeCompare(b.departure.date)).slice(0, 12), [tours]);
+  const departures = sectionTours("departures").flatMap((tour) => tour.details.departures.slice(0, 3).map((departure) => ({ tour, departure })))
+    .sort((a, b) => a.departure.date.localeCompare(b.departure.date)).slice(0, 12);
   const departureMonths = Array.from(new Set(departures.map(({ departure }) => monthKey(departure.date)))).slice(0, 7);
 
-  const deals = tours.filter((tour) => numeric(tour.details.cashback) > 0 || tour.details.booking.discount_rate > 0 || tour.details.bulk_discounts.length || tour.details.offer.ends_at).slice(0, 6);
+  const deals = sectionTours("deals").filter((tour) => numeric(tour.details.cashback) > 0 || tour.details.booking.discount_rate > 0 || tour.details.bulk_discounts.length || tour.details.offer.ends_at).slice(0, 6);
   const reviews = tours.flatMap((tour) => tour.details.reviews.map((review) => ({ ...review, tour }))).filter((review, index, all) => all.findIndex((item) => item.author_name === review.author_name && item.text === review.text) === index).slice(0, 8);
-  const gallery = tours.flatMap((tour) => tour.details.gallery.slice(0, 2).map((image) => ({ ...image, tour }))).slice(0, 24);
-  const stays = tours.flatMap((tour) => tour.details.stays.map((stay) => ({ ...stay, tour }))).filter((stay) => stay.images.length).slice(0, 5);
-  const reels = settings.reels_enabled ? tours.filter((tour) => tour.details.reels.length).slice(0, 8) : [];
-  const underTen = tours.filter((tour) => saleAmount(tour) > 0 && saleAmount(tour) <= 10000).sort((a, b) => saleAmount(a) - saleAmount(b)).slice(0, 3);
-  const quickTrips = tours.filter((tour) => daysForTour(tour) > 0 && daysForTour(tour) <= 5 && !underTen.some((item) => item.id === tour.id)).slice(0, 3);
+  const gallery = sectionTours("gallery").flatMap((tour) => tour.details.gallery.slice(0, 2).map((image) => ({ ...image, tour }))).slice(0, 24);
+  const stays = sectionTours("stays").flatMap((tour) => tour.details.stays.map((stay) => ({ ...stay, tour }))).filter((stay) => stay.images.length).slice(0, 5);
+  const reels = settings.reels_enabled ? sectionTours("reels").filter((tour) => tour.details.reels.length).slice(0, 8) : [];
+  const underTen = sectionTours("budget").filter((tour) => saleAmount(tour) > 0 && saleAmount(tour) <= 10000).sort((a, b) => saleAmount(a) - saleAmount(b)).slice(0, 3);
+  const quickTrips = sectionTours("quick").filter((tour) => daysForTour(tour) > 0 && daysForTour(tour) <= 5 && (sectionRules.quick.mode !== "automatic" || !underTen.some((item) => item.id === tour.id))).slice(0, 3);
   const minAdvance = Math.min(...tours.map((tour) => tour.details.booking.deposit_percentage).filter((rate) => rate > 0 && rate < 100), 100);
 
-  const destinationCards = tours.slice(0, 8).map((tour) => {
+  const destinationCards = sectionTours("destinations").slice(0, 8).map((tour) => {
     const haystack = `${tour.title} ${tour.details.destination} ${tourTerms(tour).join(" ")}`.toLowerCase();
     const international = /(bali|vietnam|thailand|dubai|bhutan|japan|georgia|malaysia|singapore|international)/.test(haystack);
     const weekend = daysForTour(tour) > 0 && daysForTour(tour) <= 3;
@@ -371,7 +391,7 @@ export default function HomeClient({ tours, siteName }: { tours: HomeTour[]; sit
 
       <section className="tph-section tph-manifesto" id="why-tripanza"><div className="tph-shell tph-manifesto__grid"><div><div className="tph-eyebrow">Your kind of crowd</div><h2>People you&apos;ll actually click with.</h2><p>Join solo or with a friend. These trips are designed for an 18–28 community, with clear group plans, verified teams and captains who help strangers feel included.</p><div className="tph-manifesto__pills">{["Solo-friendly", "18–28 community", "Women-friendly", "Captain-supported"].map((item) => <span key={item}>{item}</span>)}</div></div><div className="tph-collage"><span><HomeImage src={gallery[0]?.url || FALLBACKS[0]} alt="Tripanza travellers" /></span><span><HomeImage src={gallery[1]?.url || FALLBACKS[1]} alt="Real trip moment" /></span><div>Strangers on day one. Inside jokes by day two.</div></div></div></section>
 
-      <section className="tph2-section tph2-shortcuts" id="quick-picks"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Pick your excuse</div><h2 className="tph2-title">Different plans. Same main-character energy.</h2></div></div><div className="tph2-shortcut-grid"><Shortcut title="Under ₹10K" kicker="Budget understood" tours={underTen.length ? underTen : tours.slice(0, 3)} /><Shortcut title="Quick escapes" kicker="Low leave balance?" tours={quickTrips.length ? quickTrips : tours.slice(3, 6)} /></div></div></section>
+      {(underTen.length || quickTrips.length || sectionRules.budget.mode === "automatic" || sectionRules.quick.mode === "automatic") && <section className="tph2-section tph2-shortcuts" id="quick-picks"><div className="tph-shell"><div className="tph2-head"><div><div className="tph2-kicker">Pick your excuse</div><h2 className="tph2-title">Different plans. Same main-character energy.</h2></div></div><div className="tph2-shortcut-grid">{(underTen.length || sectionRules.budget.mode === "automatic") && <Shortcut title="Under ₹10K" kicker="Budget understood" tours={underTen.length ? underTen : tours.slice(0, 3)} />}{(quickTrips.length || sectionRules.quick.mode === "automatic") && <Shortcut title="Quick escapes" kicker="Low leave balance?" tours={quickTrips.length ? quickTrips : tours.slice(3, 6)} />}</div></div></section>}
 
       <section className="tph2-section tph2-find" id="find-my-vibe"><div className="tph-shell"><div className="tph2-find__card"><div className="tph2-find__quiz"><div className="tph2-kicker">Three taps. Zero overthinking.</div><h2>Find the trip matching your current mood.</h2><MatchQuestion label="Your budget?" name="budget" values={[["10000", "Under ₹10K"], ["15000", "Under ₹15K"], ["any", "Worth it > cheap"]]} answers={answers} setAnswers={setAnswers} /><MatchQuestion label="How long can you disappear?" name="duration" values={[["short", "Weekend-ish"], ["long", "Proper escape"], ["any", "Flexible"]]} answers={answers} setAnswers={setAnswers} /><MatchQuestion label="Pick the energy." name="vibe" values={[["mountain", "Mountain chaos"], ["beach", "Beach energy"], ["any", "Surprise me"]]} answers={answers} setAnswers={setAnswers} /></div><div className="tph2-match">{match ? <article className="tph2-match__result"><span className="tph2-match__media"><HomeImage src={match.featured_image} alt={match.title} /><b>Found your vibe</b></span><div><small>Your trip match</small><strong>{match.title}</strong><span>{duration(match)} · {match.details.destination}</span><b>{money(saleAmount(match), match.currency)}</b><Link href={`/tours/${match.slug}`}>See this trip</Link></div></article> : <div className="tph2-match__empty"><span>Your trip moodboard</span><div>{tours.slice(0, 3).map((tour) => <span key={tour.id}><HomeImage src={tour.featured_image} alt="" /></span>)}</div><strong>Pick your mood. We will find the scene.</strong><small>Three choices. One trip that actually fits.</small></div>}</div></div></div></section>
 

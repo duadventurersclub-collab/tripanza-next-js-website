@@ -38,7 +38,11 @@ function load(file, overrides = {}, globals = {}) {
   vm.runInNewContext(output, context, { filename: file });
   return context.exports;
 }
-const types = load("src/lib/site-settings-types.ts");
+const homepageSections = load("src/lib/homepage-sections.ts");
+const types = load("src/lib/site-settings-types.ts", { "./homepage-sections": homepageSections });
+assert.equal(homepageSections.normalizeHomepageSections(null).deals.mode, "automatic");
+assert.deepEqual(homepageSections.normalizeHomepageSections({ deals: { mode: "manual", slugs: ["spiti-trip", 42], taxonomy: "", term: "" } }).deals.slugs, ["spiti-trip"]);
+assert.equal(homepageSections.normalizeHomepageSections({ stays: { mode: "category", taxonomy: "st_tour_type", term: "weekend" } }).stays.term, "weekend");
 const pageInvalidations = { paths: [], tags: [] };
 const pageCache = load("src/lib/page-cache.ts", { "next/cache": { revalidatePath: path => pageInvalidations.paths.push(path), revalidateTag: tag => pageInvalidations.tags.push(tag) } });
 assert.equal(pageCache.cachePagePath("/admin/settings"), null);
@@ -122,6 +126,16 @@ const mock = http.createServer(async (req, res) => {
       pricing: { quad: { amount: 10000, display: "₹10,000" } },
       itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] },
   });
+  if (relative === "tours/second-fixture-tour") return send({
+    id: 43, slug: "second-fixture-tour", title: "Second fixture trip", excerpt: "A category trip.",
+    currency: "INR", price: "8000", featured_image: null,
+    details: { origin: "Delhi", duration: { days: "2", nights: "1" },
+      pricing: { quad: { amount: 8000, display: "₹8,000" } } },
+  });
+  if (relative === "homepage/catalog") return send({ tours: [
+    { id: 43, slug: "second-fixture-tour", title: "Second fixture trip", terms: { st_tour_type: [{ id: 7, slug: "weekend", name: "Weekend" }] } },
+    { id: 42, slug: "fixture-tour", title: "Fixture mountain escape", terms: {} },
+  ], taxonomies: [{ slug: "st_tour_type", label: "Tour types", terms: [{ id: 7, slug: "weekend", name: "Weekend" }] }] });
   if (relative === "site") return send({ name: "Tripanza", description: "Fixture site", url: "http://fixture", admin_url: "", site_language: "en-IN", timezone: "Asia/Kolkata" });
   if (relative === "tours") {
     const first = { id: 42, slug: "fixture-tour", title: "Fixture mountain escape", currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" }, pricing: { quad: { amount: 10000, display: "₹10,000" } } } };
@@ -137,8 +151,8 @@ const mock = http.createServer(async (req, res) => {
     const accessFlag = access[relative] || (/^admin\/bookings\/[1-9][0-9]*\/editor$/.test(relative) ? "admin_booking_editor_enabled" : "");
     if (accessFlag && !settings[accessFlag]) return send({ message: "This admin page is disabled in Site Settings." }, 503);
     if (relative === "admin/workspace") return send(adminDashboardFixture());
-    const adminPayload = () => ({ settings, controls_version: "1.3.0", capabilities: { pdf: false, page_cache: false } });
-    if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.3.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
+    const adminPayload = () => ({ settings, controls_version: "1.4.0", capabilities: { pdf: false, page_cache: false } });
+    if (relative === "admin/operations") return send({ checked_at: new Date().toISOString(), health: { wordpress_version: "6.8", php_version: "8.3", database: true, monitoring_configured: false, plugins: [{ name: "Tripanza Site Controls", version: "1.4.0", active: true }] }, audit: [...audit].reverse(), errors: [] });
     if (req.method === "GET") return send(url.searchParams.has("_tripanza_live") ? adminPayload() : { ...adminPayload(), settings: staleSettings });
     let raw = ""; for await (const chunk of req) raw += chunk;
     const body = JSON.parse(raw);
@@ -306,6 +320,31 @@ try {
   await page.getByRole("button", { name: "Save page access" }).click();
   await page.getByRole("status").filter({ hasText: "Settings saved" }).waitFor();
   console.log("PASS: all native admin pages can be disabled and restored; their APIs are gated while settings remain accessible");
+  assert.equal((await fetch(`${origin}/api/admin/homepage-catalog`)).status, 401);
+  assert.equal((await fetch(`${origin}/api/admin/homepage-catalog`, { headers: { Cookie: "tripanza_session=fixture-user" } })).status, 403);
+  assert.equal((await fetch(`${origin}/api/admin/homepage-catalog`, { headers })).status, 200);
+  await page.getByLabel("Explore trips source").selectOption("manual");
+  await page.getByLabel("Find tours for Explore trips").fill("second");
+  await page.getByRole("button", { name: "+ Second fixture trip" }).click();
+  await page.getByRole("button", { name: "Save homepage sections" }).click();
+  await page.getByRole("status").filter({ hasText: "Settings saved" }).waitFor();
+  await page.goto(origin);
+  await page.locator(".tph-card__title").first().waitFor();
+  assert.deepEqual(await page.locator(".tph-card__title").allInnerTexts(), ["Second fixture trip"]);
+  await page.goto(`${origin}/admin/settings`);
+  await page.getByLabel("Explore trips source").selectOption("category");
+  await page.getByLabel("Explore trips taxonomy").selectOption("st_tour_type");
+  await page.getByLabel("Explore trips category").selectOption("weekend");
+  await page.getByRole("button", { name: "Save homepage sections" }).click();
+  await page.getByRole("status").filter({ hasText: "Settings saved" }).waitFor();
+  await page.goto(origin);
+  await page.locator(".tph-card__title").first().waitFor();
+  assert.deepEqual(await page.locator(".tph-card__title").allInnerTexts(), ["Second fixture trip"]);
+  await page.goto(`${origin}/admin/settings`);
+  await page.getByLabel("Explore trips source").selectOption("automatic");
+  await page.getByRole("button", { name: "Save homepage sections" }).click();
+  await page.getByRole("status").filter({ hasText: "Settings saved" }).waitFor();
+  console.log("PASS: admin-only homepage catalogue, manual and category section placement, persistence and automatic restoration");
   const hostTab = await context.newPage(); await hostTab.goto(`${origin}/host`);
   const menuTab = await context.newPage();
   await menuTab.goto(origin);

@@ -1,3 +1,5 @@
+import { defaultHomepageSections, type HomepageSections } from "./homepage-sections";
+
 export type SiteSettings = {
   host_enabled: boolean;
   ai_chat_enabled: boolean;
@@ -14,6 +16,7 @@ export type SiteSettings = {
   announcement_text: string;
   announcement_link: string;
   featured_tour_slugs: string;
+  homepage_sections: HomepageSections;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -55,6 +58,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   admin_dashboard_enabled: true, admin_booking_history_enabled: true, admin_booking_create_enabled: true, admin_booking_editor_enabled: true,
   maintenance_enabled: false, maintenance_message: "We are making Tripanza even better. Please check back shortly.",
   announcement_enabled: false, announcement_text: "", announcement_link: "", featured_tour_slugs: "",
+  homepage_sections: defaultHomepageSections(),
   contact_email: "hello@tripanza.com", contact_phone: "+918130117254", contact_address: "Dwarka, Delhi NCR, India",
   whatsapp_number: "918130117254", instagram_url: "", facebook_url: "", error_alerts_enabled: false, alert_email: "",
   seo_site_url: "", ga4_measurement_id: "", meta_pixel_id: "", google_site_verification: "",

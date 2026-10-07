@@ -7,6 +7,7 @@ import { DEFAULT_SETTINGS } from "@/lib/site-settings-types";
 import AdminAdvancedControls from "./AdminAdvancedControls";
 import AdminOperations from "./AdminOperations";
 import AdminPageCache from "./AdminPageCache";
+import AdminHomepageTours from "./AdminHomepageTours";
 
 const fields: { key: keyof SiteSettings; label: string; note: string; max: number }[] = [
   { key: "tour_cache_seconds", label: "Tour listings & details", note: "Public trip data and gallery lookups.", max: 86400 },
@@ -53,6 +54,7 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
   const [controlsMajor, controlsMinor] = (current.controls_version || "0.0").split(".").map(Number);
   const supportsAdminPages = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 2);
   const supportsDiscovery = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 3);
+  const supportsHomepageTours = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 4);
   const update = <K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) => setDraft(s => ({ ...s, [key]: value }));
   const changed = () => { window.dispatchEvent(new Event("tripanza:settings-changed")); router.refresh(); };
 
@@ -103,6 +105,7 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
       <div className="as-save"><button className="as-primary" onClick={save} disabled={!!busy || !dirty}>{busy === "save" ? "Saving…" : "Save page access →"}</button><small>Switches take effect only after saving.</small></div>
     </section>
     <AdminAdvancedControls draft={draft} update={update} disabled={!!busy} supported={controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 1)} />
+    <AdminHomepageTours draft={draft} update={update} disabled={!!busy} supported={supportsHomepageTours} save={() => { void save(); }} busy={busy === "save"} dirty={dirty} />
     <section className="as-card"><p className="as-eyebrow">SEARCH & MEASUREMENT</p><h2>Be discoverable. Measure responsibly.</h2><p>Set the exact public origin served by this Next.js site before publishing its sitemap and canonical URLs. Search Console verification proves ownership but does not submit or index pages automatically. GA4 and Meta Pixel load only after a visitor opts in to their respective cookie category.</p>
       {!supportsDiscovery && <p className="as-notice error">Update Tripanza Site Controls in WordPress to v1.3.0 to save these fields.</p>}
       <div className="as-content-fields">

@@ -18,6 +18,6 @@ export default async function HomePage({ live = false }: { live?: boolean }) {
         { "@type": "WebSite", "@id": `${origin}/#website`, name: "Tripanza", url: publicUrl(origin, "/"), publisher: { "@id": `${origin}/#organization` } },
       ],
     }) }} />}
-    <HomeClient siteName={data.site.name} tours={data.tours} />
+    <HomeClient siteName={data.site.name} tours={data.tours} sections={settings.homepage_sections} categoryOrder={data.categoryOrder} automaticTourSlugs={data.automaticTourSlugs} />
   </>;
 }

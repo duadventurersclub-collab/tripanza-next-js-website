@@ -1,5 +1,9 @@
 # Tripanza Site Controls
 
+## Version 1.4.0 upgrade
+
+Homepage tour placement is available in Next.js `/admin/settings#homepage-tours`. Each tour-driven section can stay automatic, use up to 12 published tours in a chosen order, or show up to 12 newest published tours from an existing public WordPress tour taxonomy/term. Existing settings remain automatic. The WordPress plugin supplies the published-tour/category catalogue and validates every saved selection; the Next.js site still renders the sections and rechecks booking prices and availability live. The existing global featured-slug setting still promotes tours in automatic sections; a section-specific manual/category rule overrides that section's selection. Install this plugin update before deploying the matching Next.js frontend. A previous plugin version disables the new controls rather than pretending a save succeeded. Saving rotates the existing homepage cache revision; old WordPress fallback settings screens preserve the placement rules.
+
 ## Version 1.3.1 upgrade
 
 Settings saves and cache purges also notify the Next.js revalidation webhook, including changes made in WordPress. Uses the existing `TRIPANZA_NEXT_REVALIDATE_URL` and `TRIPANZA_NEXT_REVALIDATE_SECRET` constants (or their lowercase option names). The matching Next.js `REVALIDATION_SECRET` must be configured. No saved settings, booking logic or authentication state are changed by upgrading.

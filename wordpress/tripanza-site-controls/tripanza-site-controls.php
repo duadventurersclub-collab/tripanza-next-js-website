@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Site Controls
  * Description: Administrator-only cache, feature, content, maintenance and operational controls for Tripanza Next.js.
- * Version: 1.3.1
+ * Version: 1.4.0
  * Requires PHP: 7.4
  */
 defined('ABSPATH') || exit;
@@ -10,7 +10,17 @@ defined('ABSPATH') || exit;
 final class Tripanza_Site_Controls {
     const OPTION = 'tripanza_site_controls_v1';
     const NS = 'tripanza-headless/v1';
-    const VERSION = '1.3.1';
+    const VERSION = '1.4.0';
+
+    private static function homepage_section_keys() {
+        return array('hero', 'departures', 'deals', 'trips', 'destinations', 'reels', 'budget', 'quick', 'gallery', 'stays');
+    }
+
+    private static function default_homepage_sections() {
+        $sections = array();
+        foreach (self::homepage_section_keys() as $key) $sections[$key] = array('mode' => 'automatic', 'slugs' => array(), 'taxonomy' => '', 'term' => '');
+        return $sections;
+    }
 
     public static function defaults() {
         return array('host_enabled' => true, 'public_cache_enabled' => true,
@@ -19,6 +29,7 @@ final class Tripanza_Site_Controls {
             'admin_booking_create_enabled' => true, 'admin_booking_editor_enabled' => true,
             'maintenance_enabled' => false, 'maintenance_message' => 'We are making Tripanza even better. Please check back shortly.',
             'announcement_enabled' => false, 'announcement_text' => '', 'announcement_link' => '', 'featured_tour_slugs' => '',
+            'homepage_sections' => self::default_homepage_sections(),
             'contact_email' => 'hello@tripanza.com', 'contact_phone' => '+918130117254', 'contact_address' => 'Dwarka, Delhi NCR, India',
             'whatsapp_number' => '918130117254', 'instagram_url' => '', 'facebook_url' => '', 'error_alerts_enabled' => false, 'alert_email' => '',
             'seo_site_url' => '', 'ga4_measurement_id' => '', 'meta_pixel_id' => '', 'google_site_verification' => '',
@@ -34,6 +45,9 @@ final class Tripanza_Site_Controls {
 
     public static function init() {
         add_action('rest_api_init', array(__CLASS__, 'routes'));
+        add_action('save_post_st_tours', array(__CLASS__, 'clear_homepage_catalog'));
+        add_action('before_delete_post', array(__CLASS__, 'clear_homepage_catalog_for_post'));
+        add_action('set_object_terms', array(__CLASS__, 'clear_homepage_catalog_for_terms'));
         add_filter('rest_pre_dispatch', array(__CLASS__, 'gate_rest'), 1000, 3);
         add_filter('rest_post_dispatch', array(__CLASS__, 'private_headers'), 1000, 3);
         add_action('template_redirect', array(__CLASS__, 'gate_pages'), -200);
@@ -52,6 +66,7 @@ final class Tripanza_Site_Controls {
 
     public static function routes() {
         register_rest_route(self::NS, '/settings/public', array('methods' => 'GET', 'callback' => array(__CLASS__, 'public_settings'), 'permission_callback' => '__return_true'));
+        register_rest_route(self::NS, '/homepage/catalog', array('methods' => 'GET', 'callback' => array(__CLASS__, 'homepage_catalog'), 'permission_callback' => '__return_true'));
         register_rest_route(self::NS, '/admin/settings', array(
             array('methods' => 'GET', 'callback' => array(__CLASS__, 'admin_settings'), 'permission_callback' => array(__CLASS__, 'require_admin')),
             array('methods' => 'POST', 'callback' => array(__CLASS__, 'save'), 'permission_callback' => array(__CLASS__, 'require_admin')),
@@ -77,6 +92,54 @@ final class Tripanza_Site_Controls {
             'pdf' => function_exists('tripanza_clear_post_pdf_cache'),
             'page_cache' => defined('LSCWP_V') || function_exists('rocket_clean_domain') || (bool) has_action('w3tc_flush_posts'),
         )));
+    }
+
+    public static function homepage_catalog() {
+        $cached = get_transient('tripanza_homepage_catalog_v1');
+        if (is_array($cached) && isset($cached['tours'], $cached['taxonomies'])) return self::response($cached);
+        $taxonomies = array_filter(get_object_taxonomies('st_tours', 'objects'), static function ($taxonomy) {
+            return !empty($taxonomy->public);
+        });
+        $taxonomy_names = array_keys($taxonomies);
+        $posts = get_posts(array('post_type' => 'st_tours', 'post_status' => 'publish', 'posts_per_page' => -1,
+            'orderby' => 'date', 'order' => 'DESC', 'fields' => 'ids', 'no_found_rows' => true));
+        $items = array();
+        foreach ($posts as $post_id) {
+            $terms = array();
+            foreach ($taxonomy_names as $taxonomy_name) {
+                $assigned = wp_get_post_terms($post_id, $taxonomy_name);
+                if (is_wp_error($assigned) || !$assigned) continue;
+                $terms[$taxonomy_name] = array_map(static function ($term) {
+                    return array('id' => (int) $term->term_id, 'slug' => $term->slug, 'name' => $term->name);
+                }, $assigned);
+            }
+            $items[] = array('id' => (int) $post_id, 'slug' => get_post_field('post_name', $post_id),
+                'title' => get_the_title($post_id), 'terms' => $terms);
+        }
+        $groups = array();
+        foreach ($taxonomies as $taxonomy) {
+            $terms = get_terms(array('taxonomy' => $taxonomy->name, 'hide_empty' => true));
+            if (is_wp_error($terms) || !$terms) continue;
+            $groups[] = array('slug' => $taxonomy->name, 'label' => $taxonomy->labels->name,
+                'terms' => array_map(static function ($term) {
+                    return array('id' => (int) $term->term_id, 'slug' => $term->slug, 'name' => $term->name);
+                }, $terms));
+        }
+        $result = array('tours' => $items, 'taxonomies' => $groups);
+        set_transient('tripanza_homepage_catalog_v1', $result, 5 * MINUTE_IN_SECONDS);
+        return self::response($result);
+    }
+
+    public static function clear_homepage_catalog() {
+        delete_transient('tripanza_homepage_catalog_v1');
+    }
+
+    public static function clear_homepage_catalog_for_post($post_id) {
+        if (get_post_type($post_id) === 'st_tours') self::clear_homepage_catalog();
+    }
+
+    public static function clear_homepage_catalog_for_terms($object_id) {
+        if (get_post_type($object_id) === 'st_tours') self::clear_homepage_catalog();
     }
 
     public static function save($request) {
@@ -130,6 +193,41 @@ final class Tripanza_Site_Controls {
                 $value = implode(', ', array_unique($slugs));
             }
             $settings[$key] = $value;
+        }
+        if (array_key_exists('homepage_sections', $input)) {
+            if (!is_array($input['homepage_sections']) || array_diff(array_keys($input['homepage_sections']), self::homepage_section_keys()))
+                return new WP_Error('tripanza_input', 'Invalid homepage sections.', array('status' => 400));
+            $rules = self::default_homepage_sections();
+            foreach ($rules as $key => $default_rule) {
+                $rule = $input['homepage_sections'][$key] ?? $default_rule;
+                if (!is_array($rule) || !in_array($rule['mode'] ?? '', array('automatic', 'manual', 'category'), true))
+                    return new WP_Error('tripanza_input', 'Invalid homepage mode: ' . $key, array('status' => 400));
+                $mode = $rule['mode'];
+                $slugs = $rule['slugs'] ?? array();
+                if (!is_array($slugs) || count($slugs) > 12) return new WP_Error('tripanza_input', 'Choose at most 12 tours per section.', array('status' => 400));
+                $clean_slugs = array();
+                foreach ($slugs as $slug) {
+                    if (!is_string($slug) || !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug))
+                        return new WP_Error('tripanza_input', 'Invalid tour slug.', array('status' => 400));
+                    $tour = get_page_by_path($slug, OBJECT, 'st_tours');
+                    if (!$tour || $tour->post_status !== 'publish') return new WP_Error('tripanza_input', 'Tour is not published: ' . $slug, array('status' => 400));
+                    $clean_slugs[] = $slug;
+                }
+                $taxonomy_name = $rule['taxonomy'] ?? '';
+                $term_slug = $rule['term'] ?? '';
+                if (!is_string($taxonomy_name) || !is_string($term_slug) || strlen($taxonomy_name) > 100 || strlen($term_slug) > 200)
+                    return new WP_Error('tripanza_input', 'Invalid homepage category.', array('status' => 400));
+                if ($mode === 'manual' && !$clean_slugs) return new WP_Error('tripanza_input', 'Select at least one tour for ' . $key . '.', array('status' => 400));
+                if ($mode === 'category') {
+                    $taxonomy = get_taxonomy($taxonomy_name);
+                    $term = $taxonomy ? get_term_by('slug', $term_slug, $taxonomy_name) : false;
+                    if (!$taxonomy || empty($taxonomy->public) || !is_object_in_taxonomy('st_tours', $taxonomy_name) || !$term)
+                        return new WP_Error('tripanza_input', 'Choose a valid tour category for ' . $key . '.', array('status' => 400));
+                }
+                $rules[$key] = array('mode' => $mode, 'slugs' => array_values(array_unique($clean_slugs)),
+                    'taxonomy' => $mode === 'category' ? $taxonomy_name : '', 'term' => $mode === 'category' ? $term_slug : '');
+            }
+            $settings['homepage_sections'] = $rules;
         }
         if ($settings['maintenance_enabled'] && $settings['maintenance_message'] === '') return new WP_Error('tripanza_input', 'Enter a maintenance message.', array('status' => 400));
         if ($settings['announcement_enabled'] && $settings['announcement_text'] === '') return new WP_Error('tripanza_input', 'Enter announcement text.', array('status' => 400));
@@ -370,6 +468,7 @@ final class Tripanza_Site_Controls {
         if (!current_user_can('manage_options')) wp_die('Administrator access required.', '', array('response' => 403));
         check_admin_referer('tripanza_site_controls');
         $input = self::settings(); // Preserve advanced settings not shown by the fallback form.
+        unset($input['homepage_sections']); // Preserve saved placement rules without revalidating hidden fields.
         foreach (self::defaults() as $key => $value) {
             if (substr($key, -8) === '_seconds') $input[$key] = (int) ($_POST[$key] ?? -1);
             if (is_bool($value)) $input[$key] = isset($_POST[$key]);
