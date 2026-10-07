@@ -779,7 +779,7 @@
   .tph2-social__stage { --tph-live-card: clamp(180px,14vw,220px); width: 100%; max-width: none; margin: 7px 0 0; }
   .tph2-social__stage:before,
   .tph2-social__stage:after { width: 32px; }
-  .tph2-social__rail { gap: 12px; padding-top: 14px; padding-right: calc((100% - var(--tph-live-card))/2); padding-bottom: 24px; padding-left: calc((100% - var(--tph-live-card))/2); scroll-padding-inline: calc((100% - var(--tph-live-card))/2); }
+  .tph2-social__rail { gap: 12px; padding-top: 14px; padding-right: calc((100% - var(--tph-live-card))/2); padding-bottom: 24px; padding-left: calc((100% - var(--tph-live-card))/2); scroll-padding-inline: calc((100% - var(--tph-live-card))/2); scroll-snap-type: none; }
   .tph2-social-card { display: block; width: var(--tph-live-card); height: clamp(305px,24.5vw,355px); flex-basis: var(--tph-live-card); border-radius: 23px; opacity: .84; transform: scale(.96); }
   .tph2-social-card.is-active { opacity: 1; transform: scale(1); }
   .tph2-social-card__copy { right: 14px; bottom: 14px; left: 14px; }

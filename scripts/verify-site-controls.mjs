@@ -124,13 +124,15 @@ const mock = http.createServer(async (req, res) => {
     currency: "INR", price: "10000", featured_image: null,
     details: { origin: "Delhi", duration: { days: "3", nights: "2" },
       pricing: { quad: { amount: 10000, display: "₹10,000" } },
+      departures: [1, 2, 3].map(offset => ({ date: new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10), status: "Available" })),
       itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] },
   });
   if (relative === "tours/second-fixture-tour") return send({
     id: 43, slug: "second-fixture-tour", title: "Second fixture trip", excerpt: "A category trip.",
     currency: "INR", price: "8000", featured_image: null,
     details: { origin: "Delhi", duration: { days: "2", nights: "1" },
-      pricing: { quad: { amount: 8000, display: "₹8,000" } } },
+      pricing: { quad: { amount: 8000, display: "₹8,000" } },
+      departures: [4, 5, 6].map(offset => ({ date: new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10), status: "Available" })) },
   });
   if (relative === "homepage/catalog") return send({ tours: [
     { id: 43, slug: "second-fixture-tour", title: "Second fixture trip", terms: { st_tour_type: [{ id: 7, slug: "weekend", name: "Weekend" }] } },
@@ -139,8 +141,9 @@ const mock = http.createServer(async (req, res) => {
   if (relative === "site") return send({ name: "Tripanza", description: "Fixture site", url: "http://fixture", admin_url: "", site_language: "en-IN", timezone: "Asia/Kolkata" });
   if (relative === "tours") {
     const first = { id: 42, slug: "fixture-tour", title: "Fixture mountain escape", currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" }, pricing: { quad: { amount: 10000, display: "₹10,000" } } } };
-    const extra = { ...first, id: 43, slug: "second-fixture-tour", title: "Second fixture trip" };
-    return send({ admin_only: true, total: 2, total_pages: 1, items: url.searchParams.get("per_page") === "100" ? [first, extra] : [first] });
+    first.details.departures = [1, 2, 3].map(offset => ({ date: new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10), status: "Available" }));
+    const extra = { ...first, id: 43, slug: "second-fixture-tour", title: "Second fixture trip", details: { ...first.details, departures: [4, 5, 6].map(offset => ({ date: new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10), status: "Available" })) } };
+    return send({ admin_only: true, total: 2, total_pages: 1, items: [first, extra] });
   }
   if (relative === "tours/fixture-missing") return send({ code: "tripanza_tour_not_found", message: "Tour not found." }, 404);
   if (relative.startsWith("admin/")) {
@@ -263,6 +266,27 @@ try {
   assert.equal(await page.getByRole("link", { name: "Site Settings", exact: true }).getAttribute("aria-current"), "page");
   await page.keyboard.press("Escape");
   console.log("PASS: native Next.js admin dashboard (no iframe), settings navigation, original drawer, guest/non-admin rejection and cross-origin write denial");
+  const carouselPage = await context.newPage();
+  await carouselPage.goto(origin);
+  await carouselPage.waitForFunction(() => {
+    const cards = [...document.querySelectorAll("#people-planning .tph2-social-card")];
+    return cards.length === 6 && cards[2].classList.contains("is-active") && cards[3].classList.contains("is-active");
+  });
+  await carouselPage.setViewportSize({ width: 390, height: 844 });
+  await carouselPage.waitForFunction(() => {
+    const cards = [...document.querySelectorAll("#people-planning .tph2-social-card")];
+    return cards.length === 6 && cards[1].classList.contains("is-active") && cards.filter(card => card.classList.contains("is-active")).length === 1;
+  });
+  const mobileCenterGap = await carouselPage.locator(".tph2-social__rail").evaluate(rail => {
+    const card = rail.querySelectorAll(".tph2-social-card")[1].getBoundingClientRect();
+    const viewport = rail.getBoundingClientRect();
+    return Math.abs(card.left + card.width / 2 - viewport.left - viewport.width / 2);
+  });
+  assert.ok(mobileCenterGap < 5, `Second mobile departure must be centered (gap ${mobileCenterGap}px)`);
+  await carouselPage.locator(".tph2-social__picks button").nth(2).click();
+  await carouselPage.waitForFunction(() => document.querySelectorAll("#people-planning .tph2-social-card")[2]?.classList.contains("is-active"));
+  await carouselPage.close();
+  console.log("PASS: desktop middle departures are active; mobile starts on the centered second departure and picks update it");
   await page.goto(`${origin}/tours/fixture-tour`);
   await page.getByRole("heading", { name: "Fixture mountain escape", exact: true }).waitFor();
   await page.reload();

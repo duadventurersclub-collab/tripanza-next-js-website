@@ -103,6 +103,26 @@ function monthLabel(value: string) {
   return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
+function centerDepartureCard(rail: HTMLElement, index: number, behavior: ScrollBehavior = "auto") {
+  const card = rail.querySelectorAll<HTMLElement>(".tph2-social-card")[index];
+  if (!card) return;
+  const railBox = rail.getBoundingClientRect();
+  const cardBox = card.getBoundingClientRect();
+  rail.scrollTo({
+    left: rail.scrollLeft + cardBox.left + cardBox.width / 2 - railBox.left - railBox.width / 2,
+    behavior,
+  });
+}
+
+function centeredDepartureIndexes(rail: HTMLElement, desktop: boolean) {
+  const center = rail.getBoundingClientRect().left + rail.clientWidth / 2;
+  return Array.from(rail.querySelectorAll<HTMLElement>(".tph2-social-card"))
+    .map((card, index) => ({ index, distance: Math.abs(card.getBoundingClientRect().left + card.clientWidth / 2 - center) }))
+    .sort((left, right) => left.distance - right.distance || right.index - left.index)
+    .slice(0, desktop ? 2 : 1)
+    .map(item => item.index);
+}
+
 function tourTerms(tour: HomeTour) {
   return Object.values(tour.terms || {}).flat().map((term) => term.name);
 }
@@ -118,6 +138,16 @@ function daysForTour(tour: HomeTour) {
 
 function HomeImage({ src, alt, className = "" }: { src?: string | null; alt: string; className?: string }) {
   return <Image src={src || FALLBACKS[0]} alt={alt} fill sizes="(max-width: 760px) 100vw, 520px" className={className} />;
+}
+
+function centerDeparturePair(rail: HTMLElement, leftIndex: number, rightIndex: number) {
+  const cards = rail.querySelectorAll<HTMLElement>(".tph2-social-card");
+  const left = cards[leftIndex]?.getBoundingClientRect();
+  const right = cards[rightIndex]?.getBoundingClientRect();
+  if (!left || !right) return;
+  const railBox = rail.getBoundingClientRect();
+  const pairCenter = (left.left + left.width / 2 + right.left + right.width / 2) / 2;
+  rail.scrollTo({ left: rail.scrollLeft + pairCenter - railBox.left - railBox.width / 2, behavior: "auto" });
 }
 
 function revealAllTrips() {
@@ -159,6 +189,7 @@ export default function HomeClient({ tours, siteName, sections, categoryOrder, a
   const [catalogRetry, setCatalogRetry] = useState(0);
   const [saved, setSaved] = useState<number[]>([]);
   const [departureMonth, setDepartureMonth] = useState("all");
+  const [activeDepartureIndexes, setActiveDepartureIndexes] = useState<number[]>([1]);
   const [destinationFilter, setDestinationFilter] = useState("all");
   const [answers, setAnswers] = useState<MatchAnswers>({});
   const [postcardKind, setPostcardKind] = useState<"state" | "country">("state");
@@ -166,6 +197,7 @@ export default function HomeClient({ tours, siteName, sections, categoryOrder, a
   const [videoPaused, setVideoPaused] = useState(false);
   const [reelTour, setReelTour] = useState<HomeTour | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const departureRailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 18);
@@ -257,6 +289,45 @@ export default function HomeClient({ tours, siteName, sections, categoryOrder, a
   const departures = sectionTours("departures").flatMap((tour) => tour.details.departures.slice(0, 3).map((departure) => ({ tour, departure })))
     .sort((a, b) => a.departure.date.localeCompare(b.departure.date)).slice(0, 12);
   const departureMonths = Array.from(new Set(departures.map(({ departure }) => monthKey(departure.date)))).slice(0, 7);
+  const visibleDepartures = departures.filter(({ departure }) => departureMonth === "all" || monthKey(departure.date) === departureMonth);
+  const visibleDepartureKey = visibleDepartures.map(({ tour, departure }) => `${tour.id}:${departure.date}`).join("|");
+
+  useEffect(() => {
+    const rail = departureRailRef.current;
+    if (!rail || !visibleDepartures.length) return;
+    const media = window.matchMedia("(min-width: 901px)");
+    const updateActive = () => {
+      const next = centeredDepartureIndexes(rail, media.matches);
+      setActiveDepartureIndexes(current => current.length === next.length && current.every((value, index) => value === next[index]) ? current : next);
+    };
+    const alignDefault = () => {
+      if (media.matches && visibleDepartures.length > 1) {
+        const leftIndex = Math.floor((visibleDepartures.length - 1) / 2);
+        centerDeparturePair(rail, leftIndex, leftIndex + 1);
+      } else {
+        centerDepartureCard(rail, Math.min(1, visibleDepartures.length - 1));
+      }
+      updateActive();
+    };
+    const frame = window.requestAnimationFrame(alignDefault);
+    rail.addEventListener("scroll", updateActive, { passive: true });
+    media.addEventListener("change", alignDefault);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      rail.removeEventListener("scroll", updateActive);
+      media.removeEventListener("change", alignDefault);
+    };
+  }, [visibleDepartureKey, visibleDepartures.length]);
+
+  function focusDeparture(index: number) {
+    const rail = departureRailRef.current;
+    if (!rail) return;
+    const desktop = window.matchMedia("(min-width: 901px)").matches;
+    setActiveDepartureIndexes(desktop && visibleDepartures.length > 1
+      ? [index, index < visibleDepartures.length - 1 ? index + 1 : index - 1]
+      : [index]);
+    centerDepartureCard(rail, index, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+  }
 
   const deals = sectionTours("deals").filter((tour) => numeric(tour.details.cashback) > 0 || tour.details.booking.discount_rate > 0 || tour.details.bulk_discounts.length || tour.details.offer.ends_at).slice(0, 6);
   const reviews = tours.flatMap((tour) => tour.details.reviews.map((review) => ({ ...review, tour }))).filter((review, index, all) => all.findIndex((item) => item.author_name === review.author_name && item.text === review.text) === index).slice(0, 8);
@@ -364,7 +435,7 @@ export default function HomeClient({ tours, siteName, sections, categoryOrder, a
 
       <section className="tph-proof"><div className="tph-shell tph-proof__inner">{[["2016", "Exploring since", "Building youth travel, one group at a time."], ["50K+", "Happy travellers", "People who turned plans into stories."], ["1000+", "Trips created", "Designed around people, not only destinations."]].map(([metric, title, copy]) => <div className="tph-proof__item" key={metric}><span className="tph-proof__metric">{metric}</span><div><strong>{title}</strong><small>{copy}</small></div></div>)}</div></section>
 
-      {departures.length ? <section className="tph2-social" id="people-planning"><div className="tph-shell"><div className="tph2-social__top"><div><div className="tph2-kicker"><span>⚡</span> Leaving soon</div><h2>Pick a date. <span>Meet your crew.</span></h2></div></div><div className="tph2-live-months">{["all", ...departureMonths].map((month) => <button key={month} className={departureMonth === month ? "is-active" : ""} onClick={() => setDepartureMonth(month)}>{month === "all" ? "All dates" : monthLabel(month)}</button>)}</div><div className="tph2-social__stage"><div className="tph2-social__rail">{departures.filter(({ departure }) => departureMonth === "all" || monthKey(departure.date) === departureMonth).map(({ tour, departure }, index) => <Link className={`tph2-social-card${index === 1 ? " is-active" : ""}${departure.promoted ? " is-promoted" : ""}`} href={`/tours/${tour.slug}`} prefetch={index < 2} key={`${tour.id}-${departure.date}`}><HomeImage src={tour.featured_image} alt={tour.title} /><span className="tph2-social-card__shade" /><span className="tph2-social-card__status">{departure.promoted ? departure.badge || "Recommended" : departure.status}</span><span className="tph2-social-card__copy"><h3>{tour.title}</h3><span>{dateLabel(departure.date, true)}{tour.details.origin ? ` / From ${tour.details.origin}` : ""}</span><span className="tph2-social-card__bottom"><small><strong>{money(saleAmount(tour), tour.currency)}</strong></small><b>View trip →</b></span></span></Link>)}</div></div><div className="tph2-social__picks">{departures.slice(0, 9).map(({ tour, departure }, index) => <button type="button" className={index === 1 ? "is-active" : ""} key={`pick-${tour.id}-${departure.date}`} onClick={() => document.querySelectorAll<HTMLElement>(".tph2-social-card")[index]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" })}><span><HomeImage src={tour.featured_image} alt="" /></span><small>{tour.details.destination || tour.title}</small></button>)}</div></div></section> : null}
+      {departures.length ? <section className="tph2-social" id="people-planning"><div className="tph-shell"><div className="tph2-social__top"><div><div className="tph2-kicker"><span>⚡</span> Leaving soon</div><h2>Pick a date. <span>Meet your crew.</span></h2></div></div><div className="tph2-live-months">{["all", ...departureMonths].map((month) => <button key={month} className={departureMonth === month ? "is-active" : ""} onClick={() => setDepartureMonth(month)}>{month === "all" ? "All dates" : monthLabel(month)}</button>)}</div><div className="tph2-social__stage"><div className="tph2-social__rail" ref={departureRailRef}>{visibleDepartures.map(({ tour, departure }, index) => <Link className={`tph2-social-card${activeDepartureIndexes.includes(index) ? " is-active" : ""}${departure.promoted ? " is-promoted" : ""}`} href={`/tours/${tour.slug}`} prefetch={index < 2} key={`${tour.id}-${departure.date}`}><HomeImage src={tour.featured_image} alt={tour.title} /><span className="tph2-social-card__shade" /><span className="tph2-social-card__status">{departure.promoted ? departure.badge || "Recommended" : departure.status}</span><span className="tph2-social-card__copy"><h3>{tour.title}</h3><span>{dateLabel(departure.date, true)}{tour.details.origin ? ` / From ${tour.details.origin}` : ""}</span><span className="tph2-social-card__bottom"><small><strong>{money(saleAmount(tour), tour.currency)}</strong></small><b>View trip →</b></span></span></Link>)}</div></div><div className="tph2-social__picks">{visibleDepartures.slice(0, 9).map(({ tour, departure }, index) => <button type="button" className={activeDepartureIndexes.includes(index) ? "is-active" : ""} key={`pick-${tour.id}-${departure.date}`} onClick={() => focusDeparture(index)} aria-label={`Show ${tour.title} on ${dateLabel(departure.date, true)}`}><span><HomeImage src={tour.featured_image} alt="" /></span><small>{tour.details.destination || tour.title}</small></button>)}</div></div></section> : null}
 
       {deals.length ? <section className="tph2-deals" id="deal-drops"><div className="tph-shell"><div className="tph2-deals__head"><div><div className="tph2-kicker">Deal drop</div><h2 className="tph2-title">Your budget just <span>caught a break.</span></h2></div></div><div className="tph2-deals__grid">{deals.map((tour) => { const base = startingAmount(tour); const sale = saleAmount(tour); const cashback = numeric(tour.details.cashback); const bulk = [...tour.details.bulk_discounts].sort((a, b) => a.from - b.from)[0]; const end = Date.parse(tour.details.offer.ends_at); const remaining = end - now; return <Link href={`/tours/${tour.slug}`} className={`tph2-deal${remaining > 0 ? " has-timer" : ""}`} key={tour.id}><span className="tph2-deal__media"><HomeImage src={tour.featured_image} alt={tour.title} /><i className="tph2-deal__flash">{cashback ? "₹" : tour.details.booking.discount_type === "percent" ? "%" : "⚡"}</i></span><span className="tph2-deal__body"><h3>{tour.title}</h3><span className="tph2-deal__meta"><span>{tour.details.destination || "Tripanza trip"}</span>{duration(tour) ? <span>{duration(tour)}</span> : null}</span><span className="tph2-deal__tags">{cashback ? <span className="tph2-deal__tag tph2-deal__tag--cashback">{money(cashback, tour.currency)} cashback / person</span> : null}{tour.details.booking.discount_rate ? <span className="tph2-deal__tag">{tour.details.booking.discount_type === "percent" ? `${tour.details.booking.discount_rate}% off` : `Save ${money(tour.details.booking.discount_rate, tour.currency)}`}</span> : null}{bulk ? <span className="tph2-deal__tag tph2-deal__tag--group">{bulk.type === "percent" ? `${bulk.value}%` : money(bulk.value, tour.currency)} off from {bulk.from} travellers</span> : null}</span>{remaining > 0 ? <span className="tph2-deal__timer"><span>{tour.details.offer.note || "Offer closes in"}</span><strong>{countdown(remaining)}</strong></span> : null}<span className="tph2-deal__bottom"><span className="tph2-deal__price"><small>Trip from</small><strong>{money(sale, tour.currency)}{base > sale ? <del>{money(base, tour.currency)}</del> : null}</strong></span><span className="tph2-deal__cta">See deal →</span></span></span></Link>; })}</div></div></section> : null}
 
