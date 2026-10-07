@@ -237,7 +237,10 @@ export default function TripanzaBottomMenu() {
     const frame = window.requestAnimationFrame(() => {
       const search = new URLSearchParams(window.location.search);
       setSavedView(search.get("tripanza_filter") === "saved");
-      if (search.get("profile") === "1") {
+      if (pathname === "/login") {
+        setModalOpen(true);
+        setAuthMode("login");
+      } else if (search.get("profile") === "1") {
         setModalOpen(true);
         if (search.get("auth") === "1") setAuthMode(search.get("mode") === "register" ? "register" : "login");
       }
@@ -331,6 +334,7 @@ export default function TripanzaBottomMenu() {
     setProfileEditOpen(false);
     setAuthMode(null);
     setModalOpen(false);
+    if (pathname === "/login") router.replace("/");
     window.setTimeout(() => profileButtonRef.current?.focus(), 30);
   }
 
@@ -362,8 +366,17 @@ export default function TripanzaBottomMenu() {
       return next;
     });
     setAccountLoading(false);
-    router.refresh();
-    window.setTimeout(() => setAuthMode(null), 700);
+    if (pathname === "/login") {
+      const requested = new URLSearchParams(window.location.search).get("next") || "";
+      const safeNext = requested.startsWith("/") && !requested.startsWith("//") && !requested.includes("\\") && !requested.startsWith("/login") ? requested : "/dashboard";
+      setAuthMode(null);
+      setModalOpen(false);
+      router.replace(safeNext);
+      router.refresh();
+    } else {
+      router.refresh();
+      window.setTimeout(() => setAuthMode(null), 700);
+    }
     void fetch("/api/account", { cache: "no-store" })
       .then(async (response) => response.ok ? response.json() as Promise<AccountPayload> : null)
       .then((payload) => {
@@ -393,7 +406,7 @@ export default function TripanzaBottomMenu() {
     }
   }
 
-  if (hiddenOnRoute && !hiddenOnHost) return null;
+  if (hiddenOnRoute && !hiddenOnHost && pathname !== "/login") return null;
 
   const active = modalOpen || pathname.startsWith("/account") || pathname.startsWith("/dashboard")
     ? "profile"
