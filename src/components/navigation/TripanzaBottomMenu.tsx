@@ -89,6 +89,14 @@ function Icon({ name }: { name: "home" | "people" | "explore" | "heart" | "profi
   return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{paths}</svg>;
 }
 
+function InstagramIcon() {
+  return <svg className="tp-profile-instagram-icon" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="tp-profile-instagram-gradient" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor="#ffd600" /><stop offset=".45" stopColor="#ff0169" /><stop offset="1" stopColor="#d300c5" /></linearGradient></defs><rect width="40" height="40" rx="9" fill="url(#tp-profile-instagram-gradient)" /><rect x="9" y="9" width="22" height="22" rx="7" fill="none" stroke="#fff" strokeWidth="2.5" /><circle cx="20" cy="20" r="5.2" fill="none" stroke="#fff" strokeWidth="2.5" /><circle cx="27.3" cy="12.8" r="1.6" fill="#fff" /></svg>;
+}
+
+function WhatsAppIcon() {
+  return <svg className="tp-profile-whatsapp-icon" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="240" fill="#25d366" /><path transform="translate(32 0)" fill="#fff" d="M380.9 97.1C339 55.1 283.2 32 223.9 32 101.5 32 2 131.5 2 253.9c0 39.1 10.2 77.3 29.6 111L.1 480l117.7-30.9c32.4 17.7 68.9 27 106 27h.1c122.3 0 224.1-99.5 224.1-221.9 0-59.3-25.2-115-67.1-157.1ZM223.9 438.7c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.6-68-4.4-7c-18.5-29.4-28.2-63.4-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.5-186.6 184.5Zm101.2-138.1c-5.5-2.8-32.8-16.1-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3s19.9 53.7 22.6 57.4c2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6Z" /></svg>;
+}
+
 function savedTripCount() {
   let count = 0;
   try {
@@ -194,6 +202,7 @@ export default function TripanzaBottomMenu() {
   const hiddenOnRoute = hiddenOnTourDetail || hiddenOnReels || hiddenOnHost || pathParts[0] === "login";
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const shouldFetchAccount = !hiddenOnRoute || modalOpen;
   const [walletOpen, setWalletOpen] = useState(false);
@@ -290,7 +299,7 @@ export default function TripanzaBottomMenu() {
     if (!modalOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    window.setTimeout(() => closeButtonRef.current?.focus(), 30);
+    window.setTimeout(() => modalRef.current?.focus(), 30);
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (walletOpen) setWalletOpen(false);
@@ -408,10 +417,11 @@ export default function TripanzaBottomMenu() {
       </ul>
     </nav>}
 
-    <section id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
+    <section ref={modalRef} tabIndex={-1} id="tripanzaProfileModal" className={`tp-profile-modal${modalOpen ? " show" : ""}`} role="dialog" aria-modal="true" aria-label="Profile" aria-hidden={!modalOpen}>
       {authMode ? <ProfileOtpLogin mode={authMode} onBack={() => setAuthMode(null)} onClose={closeProfile} onSuccess={completeLogin} /> : walletOpen ? <WalletView wallet={account.wallet} onBack={() => setWalletOpen(false)} /> : profileEditOpen && account.profile ? <ProfileEditor profile={account.profile} onBack={() => setProfileEditOpen(false)} onSaved={(profile) => { setAccount((current) => { const next = { ...current, profile }; writeCachedAccount(next); return next; }); window.setTimeout(() => setProfileEditOpen(false), 700); }} /> : <>
+        {!account.authenticated && <header className="tp-profile-guest-head"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => requireLogin("login")}><Icon name="wallet" /> ₹0</button></header>}
         <div className="tp-profile-shell">
-          {account.authenticated ? <div className="tp-profile-cover"><Image src={account.profile?.cover || DEFAULT_COVER} alt="" fill sizes="640px" unoptimized /><div className="tp-profile-cover__controls"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => setWalletOpen(true)} aria-label="Open wallet"><Icon name="wallet" /> {amount(account.wallet.balance, account.wallet.currency)}</button></div></div> : <header className="tp-profile-guest-head"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => requireLogin("login")}><Icon name="wallet" /> ₹0</button></header>}
+          {account.authenticated && <div className="tp-profile-cover"><Image src={account.profile?.cover || DEFAULT_COVER} alt="" fill sizes="640px" unoptimized /><div className="tp-profile-cover__controls"><button ref={closeButtonRef} type="button" onClick={closeProfile} aria-label="Close profile"><Icon name="back" /></button><button type="button" onClick={() => setWalletOpen(true)} aria-label="Open wallet"><Icon name="wallet" /> {amount(account.wallet.balance, account.wallet.currency)}</button></div></div>}
 
           <div className={`tp-profile-identity${account.authenticated ? " is-authenticated" : ""}`}>
             {account.authenticated ? <span className="tp-profile-avatar">{account.profile?.avatar ? <Image src={account.profile.avatar} alt={`${displayName} avatar`} width={60} height={60} unoptimized /> : displayName.slice(0, 1).toUpperCase()}</span> : null}
@@ -430,15 +440,14 @@ export default function TripanzaBottomMenu() {
           </div>
 
           <div className="tp-profile-quick-grid">
-            <a href="https://instagram.com/tripanza.co" target="_blank" rel="noreferrer"><span><strong>Follow Tripanza</strong><small>Follow us on Instagram</small></span><b className="tp-profile-instagram">◎</b></a>
-            <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" rel="noreferrer"><span><strong>Need help?</strong><small>Talk to us on WhatsApp</small></span><b className="tp-profile-whatsapp">◔</b></a>
+            <a href="https://instagram.com/tripanza.co" target="_blank" rel="noreferrer"><span><strong>Follow Tripanza</strong><small>Follow us on Instagram</small></span><InstagramIcon /></a>
+            <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" rel="noreferrer"><span><strong>Need help?</strong><small>Talk to us on WhatsApp</small></span><WhatsAppIcon /></a>
           </div>
 
           <nav className="tp-profile-legal" aria-label="Help, company and legal links">
             <strong>Help &amp; legal</strong>
             <div><Link href="/cancellation-policy" onClick={closeProfile}>Cancellation &amp; refunds</Link><Link href="/contact" onClick={closeProfile}>Contact Tripanza</Link><Link href="/tnc" onClick={closeProfile}>Terms &amp; conditions</Link><Link href="/privacy-policy" onClick={closeProfile}>Privacy policy</Link><Link href="/cookies-policy" onClick={closeProfile}>Cookie policy</Link><Link href="/disclaimer" onClick={closeProfile}>Disclaimer</Link><Link href="/about" onClick={closeProfile}>About Tripanza</Link></div>
           </nav>
-          <p className="tp-profile-signoff">Made for the group chat that actually travels.</p>
         </div>
       </>}
     </section>
