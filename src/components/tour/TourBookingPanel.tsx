@@ -66,7 +66,7 @@ export default function TourBookingPanel({
   const departure = tour.details.departures[departureIndex];
   const price = tour.details.pricing[sharing]?.amount || 0;
   const selectedExtras = tour.details.booking.extras.filter((extra) => extra.required || extras[extra.name]);
-  const extrasTotal = selectedExtras.reduce((total, extra) => total + extra.price * (extra.required ? travellers : 1), 0);
+  const extrasTotal = selectedExtras.reduce((total, extra) => total + extra.price * travellers, 0);
   const packageAmount = price * travellers;
   const discountRate = tour.details.booking.discount_rate;
   const saleDiscount = tour.details.booking.discount_type === "amount"
@@ -126,7 +126,7 @@ export default function TourBookingPanel({
       tour_slug: tour.slug,
       date: departure.date,
       counts,
-      extras: selectedExtras.map((extra) => ({ name: extra.name, quantity: extra.required ? travellers : 1 })),
+      extras: selectedExtras.map((extra) => ({ name: extra.name, quantity: travellers })),
     };
 
     setIsSubmitting(true);
@@ -208,8 +208,8 @@ export default function TourBookingPanel({
         <div className="tp-booking-price-card"><span><i className="fa-solid fa-check" />{labels[sharing].title}</span><strong>{saleDiscount > 0 ? <del>{money(price, tour.currency)}</del> : null}{money(discountedUnit, tour.currency)}<small>Per person</small></strong></div>
 
         {tour.details.booking.extras.length ? <section className="tp-booking-extras">
-          <button type="button" className="tp-booking-extras__toggle" onClick={() => setShowExtras((value) => !value)} aria-expanded={showExtras}><span><b>04</b><span><strong>Optional add-ons</strong><small>{selectedExtras.length ? `${selectedExtras.length} selected` : "Optional"}</small></span></span><i className={`fa-solid fa-chevron-${showExtras ? "up" : "down"}`} aria-hidden="true" /></button>
-          {showExtras ? <div className="tp-booking-extras__list">{tour.details.booking.extras.map((extra) => <label key={extra.name}><input type="checkbox" checked={extra.required || Boolean(extras[extra.name])} disabled={extra.required} onChange={(event) => setExtras((current) => ({ ...current, [extra.name]: event.target.checked }))} /><span><strong>{extra.name}</strong><small>{extra.required ? "Required for every traveller" : "Add to this booking"}</small></span><b>+{money(extra.price, tour.currency)}</b></label>)}</div> : null}
+          <button type="button" className="tp-booking-extras__toggle" onClick={() => setShowExtras((value) => !value)} aria-expanded={showExtras}><span><b>04</b><span><strong>Optional add-ons</strong><small>{selectedExtras.length ? `${selectedExtras.length} selected · priced per traveller` : "Priced per traveller"}</small></span></span><i className={`fa-solid fa-chevron-${showExtras ? "up" : "down"}`} aria-hidden="true" /></button>
+          {showExtras ? <div className="tp-booking-extras__list">{tour.details.booking.extras.map((extra) => { const selected = extra.required || Boolean(extras[extra.name]); return <label key={extra.name}><input type="checkbox" checked={selected} disabled={extra.required} onChange={(event) => setExtras((current) => ({ ...current, [extra.name]: event.target.checked }))} /><span><strong>{extra.name}</strong><small>{selected ? `${money(extra.price, tour.currency)} × ${travellers} ${travellers === 1 ? "traveller" : "travellers"}` : "Price per traveller"}{extra.required ? " · Required" : ""}</small></span><b>+{money(selected ? extra.price * travellers : extra.price, tour.currency)}</b></label>; })}</div> : null}
         </section> : null}
 
         <section className="tp-booking-total">

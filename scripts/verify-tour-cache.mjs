@@ -12,6 +12,7 @@ let settings = { host_enabled: false, public_cache_enabled: true, tour_cache_sec
   revision: "tour-test-1", cache_revision: "tour-test-1" };
 let title = "Cache fixture mountain escape", outage = false;
 const calls = { settings: 0, tours: 0, listings: 0, quotes: 0 };
+const quoteRequests = [];
 const mock = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://fixture");
   const route = url.pathname.replace("/wp-json/tripanza-headless/v1/", "");
@@ -31,10 +32,18 @@ const mock = http.createServer(async (req, res) => {
   }
   if (route === "booking/quote") {
     calls.quotes++;
+    let raw = ""; for await (const chunk of req) raw += chunk;
+    const selection = JSON.parse(raw);
+    quoteRequests.push(selection);
+    const travellers = Object.values(selection.counts).reduce((total, count) => total + count, 0);
+    const extras = (selection.extras || []).map((extra) => ({ ...extra, price: 500, required: false, total: extra.quantity * 500 }));
+    const extrasTotal = extras.reduce((total, extra) => total + extra.total, 0);
+    const packageAmount = travellers * 10000;
+    const grandTotal = packageAmount + extrasTotal;
     return send({ quote_id: `live-${calls.quotes}`, currency: "INR", tour: { id: 42, slug: "cache-fixture", title, image: "" },
       departure: { date: "2027-01-01", display_date: "1 Jan 2027", check_in: "2027-01-01", check_out: "2027-01-04", check_in_timestamp: 1798761600, check_out_timestamp: 1799020800 },
-      travellers: { quad: 1, triple: 0, twin: 0, total: 1 }, unit_prices: { quad: 10000, triple: 0, twin: 0 },
-      discount: { rate: 0, type: "percent" }, extras: [], amounts: { package: 10000, sale_discount: 0, group_discount: 0, extras: 0, tax: 0, trip_total: 10000, grand_total: 10000, pay_now: 10000, pay_later: 0 },
+      travellers: { ...selection.counts, total: travellers }, unit_prices: { quad: 10000, triple: 0, twin: 0 },
+      discount: { rate: 0, type: "percent" }, extras, amounts: { package: packageAmount, sale_discount: 0, group_discount: 0, extras: extrasTotal, tax: 0, trip_total: grandTotal, grand_total: grandTotal, pay_now: grandTotal, pay_later: 0 },
       deposit: { percentage: 100 }, expires_at: "2027-01-01T00:15:00Z" });
   }
   if (outage) return send({ message: "Upstream unavailable" }, 503);
@@ -49,7 +58,7 @@ const mock = http.createServer(async (req, res) => {
     await sleep(300);
     return send({ id: 42, slug: "cache-fixture", title: url.searchParams.has("_tripanza_live") ? title : "STALE CDN TOUR",
       content: "FULL_ITINERARY_SHOULD_NOT_SHIP",
-      currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" },
+      currency: "INR", price: "10000", details: { origin: "Delhi", duration: { days: "3", nights: "2" }, booking: { extras: [{ name: "Trip insurance", price: 500, required: false }] },
         pricing: { quad: { amount: 10000, display: "₹10,000" } }, departures: [{ date: "2027-01-01", status: "Seats available" }], itinerary: [{ day: 1, title: "Arrival", description: "Meet the crew." }] } });
   }
   if (route.startsWith("tours/")) return send({ code: "tripanza_tour_not_found" }, 404);
@@ -158,11 +167,19 @@ try {
       mobile.on("request", request => { if (request.url().endsWith("/api/cart") && request.method() === "POST") cartStartedFrom = mobile.url(); });
       await mobile.goto(origin + "/tours/cache-fixture");
       await mobile.getByRole("button", { name: /Check dates/i }).click();
-      await mobile.getByRole("dialog", { name: "Book this tour" }).getByRole("button", { name: /Continue to secure checkout/i }).click();
+      const modal = mobile.getByRole("dialog", { name: "Book this tour" });
+      await modal.getByRole("button", { name: "Add one traveller" }).click();
+      await modal.getByRole("button", { name: "Add one traveller" }).click();
+      await modal.getByRole("button", { name: /Optional add-ons/i }).click();
+      await modal.getByRole("checkbox", { name: /Trip insurance/i }).check();
+      assert.match(await modal.locator(".tp-booking-extras__list label").innerText(), /1,500/);
+      await modal.getByRole("button", { name: /Continue to secure checkout/i }).click();
       await mobile.getByRole("button", { name: /Confirm and pay/i }).waitFor({ timeout: 30_000 });
       assert.equal(new URL(cartStartedFrom).pathname, "/checkout", "Cart request starts after immediate mobile navigation");
       assert.equal(new URL(mobile.url()).pathname, "/checkout");
       assert.equal(calls.quotes, beforeDeferred + 2, "Mobile handoff quotes once before showing the form");
+      assert.deepEqual(quoteRequests.at(-1).extras, [{ name: "Trip insurance", quantity: 3 }], "Optional add-on is quoted for every traveller");
+      assert.equal(quoteRequests.at(-1).counts.quad, 3);
       await context.close();
     } finally { await browser.close(); }
   }

@@ -16,7 +16,7 @@ export default function CheckoutTransition({ error, onRetry }: CheckoutTransitio
       </div>
 
       <div className={styles.center}>
-        <div className={styles.journey} aria-hidden="true">
+        <div className={`${styles.journey} ${error ? styles.journeyError : ""}`} aria-hidden="true">
           <span className={styles.orbit} />
           <span className={styles.orbitInner} />
           <svg className={styles.route} viewBox="0 0 260 180" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -24,7 +24,18 @@ export default function CheckoutTransition({ error, onRetry }: CheckoutTransitio
           </svg>
           <span className={`${styles.routePoint} ${styles.routeStart}`} />
           <span className={`${styles.routePoint} ${styles.routeEnd}`} />
-          <span className={styles.traveller}>➜</span>
+          <span className={styles.landmark}>
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="35" cy="12" r="4" fill="currentColor" />
+              <path d="M5 37 18 20l8 9 5-6 12 14H5Z" stroke="currentColor" strokeWidth="2.6" strokeLinejoin="round" />
+              <path d="m14 25 4 4 4-5M28 27l3 3 3-3" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className={styles.plane}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22 2 9.5 14.5M22 2l-7.4 20-4.2-8.4L2 9.4 22 2Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
         </div>
 
         <p className={styles.eyebrow}>YOUR NEXT ADVENTURE</p>
