@@ -51,7 +51,7 @@ export default function LoginOnboarding({ onLogin, onClose }: Props) {
         <div className="tp-login-intro__phone" aria-label={`Story ${story + 1}: ${stories[story].title}`}>
           <div className="tp-login-intro__notch" aria-hidden="true" />
           <div className="tp-login-intro__status" aria-hidden="true"><b>9:41</b><span>● ᴡɪꜰɪ ▰</span></div>
-          <div className="tp-login-intro__phone-content" key={story}>
+          <div className={`tp-login-intro__phone-content${story === 1 || story === 3 ? " is-image" : ""}`} key={story}>
             {story === 0 ? <div className="tp-login-intro__date-screen">
               <span className="tp-login-intro__kicker">⚡ LEAVING SOON</span>
               <h2>Pick a date.<strong>Meet your crew.</strong></h2>

@@ -23,6 +23,7 @@
 .tp-login-intro__notch{position:absolute;z-index:5;top:0;left:50%;width:82px;height:17px;border-radius:0 0 13px 13px;background:var(--intro-ink);transform:translateX(-50%)}
 .tp-login-intro__status{position:absolute;z-index:4;top:6px;right:9px;left:11px;display:flex;justify-content:space-between;color:var(--intro-ink);font-size:6px;font-weight:850}
 .tp-login-intro__phone-content{height:100%;padding-top:24px;animation:tp-intro-appear .5s ease both}
+.tp-login-intro__phone-content.is-image{padding-top:0;animation:none}
 .tp-login-intro__date-screen{height:100%;overflow:hidden;background:linear-gradient(#fff,#fafbff);text-align:left}
 .tp-login-intro__kicker{display:inline-block;margin:4px 10px 7px;padding:5px 7px;border-radius:99px;background:#f1edff;color:var(--intro-blue);font-size:5.5px;font-weight:950;letter-spacing:.65px}
 .tp-login-intro__date-screen h2{margin:0 10px;color:var(--intro-ink);font-size:18px;font-weight:950;line-height:.95;letter-spacing:-.7px}
@@ -47,8 +48,8 @@
 .tp-login-intro__image-screen{position:relative;display:flex;height:100%;padding:18px 12px;justify-content:space-between;flex-direction:column;background-position:center;background-size:cover;color:#fff;text-align:left}
 .tp-login-intro__image-screen:before{position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.1) 35%,rgba(0,0,0,.78));content:""}
 .tp-login-intro__image-screen>*{position:relative}.tp-login-intro__image-screen span{align-self:start;padding:6px 8px;border-radius:99px;background:#fff;color:var(--intro-blue);font-size:6px;font-weight:900;letter-spacing:.5px}.tp-login-intro__image-screen strong{font-size:17px;font-weight:950;line-height:1.1}
-.tp-login-intro__image-screen--spiti{background-image:url('https://tripanza.com/wp-content/uploads/2026/09/tripanza-spiti-slide.png?v=e4baf535')}
-.tp-login-intro__image-screen--crew{background-image:url('https://tripanza.com/wp-content/uploads/2021/06/WhatsApp-Image-2021-07-12-at-2.28.22-AM-15-e1662666832961.jpeg')}
+.tp-login-intro__image-screen--spiti{background-color:#e7ad00;background-image:url('https://tripanza.com/wp-content/uploads/2026/09/tripanza-spiti-slide.png?v=e4baf535')}
+.tp-login-intro__image-screen--crew{background-color:#283543;background-image:url('https://tripanza.com/wp-content/uploads/2021/06/WhatsApp-Image-2021-07-12-at-2.28.22-AM-15-e1662666832961.jpeg')}
 .tp-login-intro__payment-screen{display:flex;height:100%;padding:40px 16px;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 38%,rgba(208,229,98,.34),transparent 115px),#fff}
 .tp-login-intro__payment-screen span{display:grid;width:56px;height:56px;margin-bottom:15px;place-items:center;border-radius:50%;background:var(--intro-lime);color:#294700;font-size:25px;font-weight:950}.tp-login-intro__payment-screen strong{font-size:15px;font-weight:900}.tp-login-intro__payment-screen b{margin-top:8px;color:var(--intro-blue);font-size:28px}.tp-login-intro__payment-screen small{margin-top:16px;padding:9px 12px;border:1px dashed #b9c6df;border-radius:8px;font-size:7px}.tp-login-intro__payment-screen p{margin-top:auto;color:var(--intro-blue);font-size:9px;font-weight:900;text-transform:uppercase}
 .tp-login-intro__bottom{position:relative;z-index:4;padding:12px 18px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,rgba(246,248,252,0),#f6f8fc 18%)}
@@ -59,4 +60,25 @@
 @keyframes tp-intro-fill{from{width:0}to{width:100%}}@keyframes tp-intro-appear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes tp-intro-orbit{to{transform:rotate(360deg)}}@keyframes tp-intro-float{50%{translate:0 -8px}}
 @media(max-height:700px){.tp-login-intro__headline{min-height:36px;margin-top:0}.tp-login-intro__phone{height:min(350px,52dvh);min-height:280px}.tp-login-intro__badge{width:60px;height:57px}.tp-login-intro__bottom{padding-top:4px}}
 @media(max-width:380px){.tp-login-intro__badge{width:60px;height:57px}.tp-login-intro__badge--0{left:0}.tp-login-intro__badge--1{right:0}.tp-login-intro__badge--2{left:0}.tp-login-intro__badge--3{right:0}.tp-login-intro__phone{width:198px}.tp-login-intro__progress button{width:29px}}
+@media(min-width:900px){
+  .tp-login-intro{width:100%;min-height:620px;padding:0 clamp(40px,6vw,120px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:80px minmax(0,1fr) minmax(0,1fr);column-gap:clamp(32px,5vw,100px);background:radial-gradient(circle at 76% 52%,rgba(208,229,98,.35),transparent 31%),radial-gradient(circle at 8% 85%,rgba(49,87,213,.08),transparent 34%),#f6f8fc;text-align:left}
+  .tp-login-intro:before{top:10%;right:-95px;width:260px;height:260px;border-width:34px}
+  .tp-login-intro__top{grid-column:1/-1;grid-row:1;height:80px;padding:20px 0;align-items:center}
+  .tp-login-intro__headline{grid-column:1;grid-row:2;align-self:end;min-height:0;max-width:650px;margin:0 0 28px;font-size:clamp(40px,4.2vw,76px);line-height:1.03;letter-spacing:-2px}
+  .tp-login-intro__visual{grid-column:2;grid-row:2/4;width:100%;height:100%;min-height:0}
+  .tp-login-intro__visual:before{width:420px;height:500px;filter:blur(100px)}
+  .tp-login-intro__orbit{width:min(450px,42vw);height:min(450px,42vw)}
+  .tp-login-intro__phone{width:250px;height:min(500px,68dvh);min-height:390px;border-radius:35px}
+  .tp-login-intro__badge{width:76px;height:72px;font-size:9px}
+  .tp-login-intro__badge b{max-width:68px}
+  .tp-login-intro__badge--0{top:13%;left:max(0%,calc(50% - 240px))}
+  .tp-login-intro__badge--1{top:26%;right:max(0%,calc(50% - 240px))}
+  .tp-login-intro__badge--2{bottom:26%;left:max(0%,calc(50% - 245px))}
+  .tp-login-intro__badge--3{right:max(0%,calc(50% - 245px));bottom:13%}
+  .tp-login-intro__bottom{grid-column:1;grid-row:3;align-self:start;width:min(100%,470px);padding:0;background:none}
+  .tp-login-intro__progress{justify-content:flex-start;margin-bottom:24px}
+  .tp-login-intro__progress button{width:48px;height:6px}
+  .tp-login-intro__login{min-height:56px;font-size:16px}
+  .tp-login-intro__bottom p{margin-top:16px;font-size:12px}
+}
 @media(prefers-reduced-motion:reduce){.tp-login-intro__orbit,.tp-login-intro__badge,.tp-login-intro__phone-content,.tp-login-intro__headline,.tp-login-intro__progress .is-active span{animation:none}.tp-login-intro__progress .is-active span{width:100%}}

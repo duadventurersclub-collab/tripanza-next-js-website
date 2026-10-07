@@ -266,6 +266,16 @@
   .tp-profile-menu { grid-template-columns: repeat(4,minmax(0,1fr)); }
 }
 
+@media (min-width: 900px) {
+  .tp-auth-view { width: 100%; min-height: 100dvh; padding: 0 clamp(40px,6vw,120px); display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: 80px minmax(0,1fr) 62px; column-gap: clamp(32px,5vw,100px); background: radial-gradient(circle at 87% 15%,rgba(208,229,98,.34),transparent 32%),radial-gradient(circle at 8% 75%,rgba(49,87,213,.1),transparent 33%),#f6f8fc; }
+  .tp-auth-view:before { position: relative; top: auto; right: auto; bottom: auto; left: auto; grid-column: 1; grid-row: 2; align-self: center; width: 100%; height: min(640px,72dvh); border: 0; border-radius: 32px; background: linear-gradient(180deg,rgba(13,21,40,.04) 20%,rgba(10,19,38,.78)),url('https://tripanza.com/wp-content/uploads/2021/06/WhatsApp-Image-2021-07-12-at-2.28.22-AM-15-e1662666832961.jpeg') center/cover,radial-gradient(circle at 76% 15%,#d0e562,transparent 29%),linear-gradient(145deg,#3157d5,#1a2c68); box-shadow: 0 30px 70px rgba(32,61,166,.16); }
+  .tp-auth-view:after { position: absolute; top: auto; right: auto; bottom: clamp(115px,17vh,190px); left: calc(clamp(40px,6vw,120px) + 36px); z-index: 2; width: min(37vw,470px); height: auto; border: 0; border-radius: 0; color: #fff; content: "GOOD TRIPS.\A GREAT PEOPLE."; font-size: clamp(32px,3.2vw,58px); font-weight: 950; line-height: 1.04; letter-spacing: -1.8px; white-space: pre; pointer-events: none; }
+  .tp-auth-topbar { grid-column: 1/-1; grid-row: 1; align-self: center; }
+  .tp-auth-card { grid-column: 2; grid-row: 2; align-self: center; width: min(100%,500px); margin: 0 auto; padding: clamp(32px,3vw,54px); border: 1px solid #e0e6f0; border-radius: 28px; background: #fff; box-shadow: 0 28px 70px rgba(32,61,166,.09); }
+  .tp-auth-card h2 { max-width: 440px; font-size: clamp(36px,3vw,50px); }
+  .tp-auth-legal { position: relative; right: auto; bottom: auto; left: auto; grid-column: 2; grid-row: 3; align-self: start; width: min(100%,500px); margin: 0 auto; font-size: 11px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tpybm-nav,
   .tpybm-nav__link,
