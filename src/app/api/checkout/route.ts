@@ -16,6 +16,7 @@ type CheckoutPayload = {
   travellers: BookingTraveller[];
   payment_method: "payu" | "upi";
   idempotency_key: string;
+  quote_id: string;
 };
 
 export async function POST(request: Request) {

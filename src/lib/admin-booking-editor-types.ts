@@ -10,7 +10,7 @@ export type EditorFields = {
   total_price: number; transaction_id: string; transaction_date: string; balance_transaction_id: string; balance_transaction_date: string;
 };
 export type ManualEntry = { id: string; type: "charge" | "credit"; amount: number; tax: number; total_effect: number; customer_reason: string; internal_note: string; created_at: string; user_name: string };
-export type EditorFinancials = { base_total: number; booking_fee: number; tax_percent: number; adjustment: number; adjustment_tax: number; raw_final_total: number; final_total: number; amount_paid: number; balance: number; overpayment: number; status: string };
+export type EditorFinancials = { base_total: number; booking_fee: number; tax_percent: number; gst_taxable_base: number; gst_cgst: number; gst_sgst: number; gst_igst: number; adjustment: number; adjustment_tax: number; raw_final_total: number; final_total: number; amount_paid: number; balance: number; overpayment: number; status: string };
 export type EditorPricing = { prices: { adult: number; child: number; infant: number }; sale_rate: number; sale_type: "percent" | "amount"; bulk_type: "percent" | "amount"; adult_rules: { key: number; value: number }[]; child_rules: { key: number; value: number }[]; saved_group_discount: number };
 export type BookingEditorData = {
   editor_api_version: string; user: { name: string }; nonce: string; revision: string; booking: AdminBooking;

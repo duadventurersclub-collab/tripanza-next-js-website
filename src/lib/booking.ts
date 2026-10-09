@@ -29,12 +29,14 @@ export type BookingQuote = {
   unit_prices: { quad: number; triple: number; twin: number };
   discount: { rate: number; type: "amount" | "percent" };
   extras: Array<{ name: string; price: number; required: boolean; quantity: number; total: number }>;
+  tax?: { rate: number; taxable_base: number; supplier_state: string };
   amounts: {
     package: number;
     sale_discount: number;
     group_discount: number;
     extras: number;
     tax: number;
+    booking_fee?: number;
     trip_total: number;
     grand_total: number;
     pay_now: number;

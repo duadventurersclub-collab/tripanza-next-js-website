@@ -27,6 +27,8 @@ export default async function CartPage() {
   }
 
   const { quote } = cart;
+  const gstBase = quote.tax?.taxable_base ?? quote.amounts.trip_total + (quote.amounts.booking_fee ?? 0);
+  const gstRate = quote.tax?.rate ?? (gstBase > 0 ? Math.round(quote.amounts.tax / gstBase * 10000) / 100 : 0);
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:py-16">
       <div className="mx-auto max-w-6xl">
@@ -43,7 +45,14 @@ export default async function CartPage() {
 
           <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl lg:sticky lg:top-6 lg:self-start">
             <h2 className="text-lg font-black text-slate-950">Fare summary</h2>
-            <dl className="mt-5 space-y-3 border-b border-slate-100 pb-5 text-sm"><div className="flex justify-between"><dt className="text-slate-500">Package amount</dt><dd className="font-bold">{formatBookingMoney(quote.amounts.package, quote.currency)}</dd></div>{quote.amounts.sale_discount > 0 ? <div className="flex justify-between text-emerald-700"><dt>Tripanza sale</dt><dd className="font-bold">− {formatBookingMoney(quote.amounts.sale_discount, quote.currency)}</dd></div> : null}{quote.amounts.group_discount > 0 ? <div className="flex justify-between text-emerald-700"><dt>Group discount</dt><dd className="font-bold">− {formatBookingMoney(quote.amounts.group_discount, quote.currency)}</dd></div> : null}{quote.amounts.extras > 0 ? <div className="flex justify-between"><dt className="text-slate-500">Add-ons</dt><dd className="font-bold">{formatBookingMoney(quote.amounts.extras, quote.currency)}</dd></div> : null}{quote.amounts.tax > 0 ? <div className="flex justify-between"><dt className="text-slate-500">Tax</dt><dd className="font-bold">{formatBookingMoney(quote.amounts.tax, quote.currency)}</dd></div> : null}</dl>
+            <dl className="mt-5 space-y-3 border-b border-slate-100 pb-5 text-sm">
+              <div className="flex justify-between"><dt className="text-slate-500">Package amount</dt><dd className="font-bold">{formatBookingMoney(quote.amounts.package, quote.currency)}</dd></div>
+              {quote.amounts.sale_discount > 0 ? <div className="flex justify-between text-emerald-700"><dt>Tripanza sale</dt><dd className="font-bold">− {formatBookingMoney(quote.amounts.sale_discount, quote.currency)}</dd></div> : null}
+              {quote.amounts.group_discount > 0 ? <div className="flex justify-between text-emerald-700"><dt>Group discount</dt><dd className="font-bold">− {formatBookingMoney(quote.amounts.group_discount, quote.currency)}</dd></div> : null}
+              {quote.amounts.extras > 0 ? <div className="flex justify-between"><dt className="text-slate-500">Add-ons</dt><dd className="font-bold">{formatBookingMoney(quote.amounts.extras, quote.currency)}</dd></div> : null}
+              {(quote.amounts.booking_fee ?? 0) > 0 ? <div className="flex justify-between"><dt className="text-slate-500">Platform fee</dt><dd className="font-bold">{formatBookingMoney(quote.amounts.booking_fee ?? 0, quote.currency)}</dd></div> : null}
+              {quote.amounts.tax > 0 ? <><div className="flex justify-between"><dt className="text-slate-500">GST taxable amount</dt><dd className="font-bold">{formatBookingMoney(gstBase, quote.currency)}</dd></div><div className="flex items-start justify-between gap-3"><dt className="text-slate-500">GST {gstRate}%<small className="block text-[11px]">{gstRate}% × {formatBookingMoney(gstBase, quote.currency)} =</small></dt><dd className="shrink-0 font-bold">{formatBookingMoney(quote.amounts.tax, quote.currency)}</dd></div><p className="text-xs text-slate-500">CGST/SGST or IGST is shown after you choose your billing state at checkout.</p></> : null}
+            </dl>
             <div className="mt-5 flex items-end justify-between"><span className="text-sm font-bold text-slate-600">Trip total</span><strong className="text-2xl font-black text-slate-950">{formatBookingMoney(quote.amounts.grand_total, quote.currency)}</strong></div>
             <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-3 text-xs"><span className="text-slate-500">Pay now<strong className="mt-1 block text-sm text-slate-950">{formatBookingMoney(quote.amounts.pay_now, quote.currency)}</strong></span><span className="text-slate-500">Pay later<strong className="mt-1 block text-sm text-slate-950">{formatBookingMoney(quote.amounts.pay_later, quote.currency)}</strong></span></div>
             {unavailable ? <button disabled className="mt-5 min-h-14 w-full rounded-2xl bg-slate-300 text-sm font-black text-white">Checkout unavailable</button> : <Link href="/checkout" className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 text-sm font-black text-white hover:bg-blue-700">Continue to checkout →</Link>}

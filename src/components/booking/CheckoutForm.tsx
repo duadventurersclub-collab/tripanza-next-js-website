@@ -41,11 +41,20 @@ const blankContact: Contact = {
   note: "",
 };
 
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa",
+  "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
+  "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
+];
+
 function money(value: number, currency: string) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: Math.round(value * 100) % 100 === 0 ? 0 : 2,
   }).format(value);
 }
 
@@ -92,7 +101,7 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
     Array.from({ length: quote.travellers.total }, () => ({ title: "Mr", name: "", age: undefined })),
   );
   const [paymentMethod, setPaymentMethod] = useState<"payu" | "upi">("payu");
-  const [billingOpen, setBillingOpen] = useState(false);
+  const [billingOpen, setBillingOpen] = useState(quote.amounts.tax > 0);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [followups, setFollowups] = useState(false);
   const [followupStatus, setFollowupStatus] = useState("");
@@ -170,6 +179,11 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (quote.amounts.tax > 0 && (!indianStates.includes(contact.province) || contact.country.trim().toLowerCase() !== "india")) {
+      setBillingOpen(true);
+      setError("Choose an Indian billing state to confirm the GST breakdown.");
+      return;
+    }
     if (requireGuestNames && travellers.some((traveller) => !traveller.name.trim())) {
       setError("Enter the full name of every traveller.");
       return;
@@ -189,10 +203,12 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
           travellers,
           payment_method: paymentMethod,
           idempotency_key: idempotencyKey,
+          quote_id: quote.quote_id,
         }),
       });
       const result = (await response.json()) as { booking_id?: number; order_token?: string; error?: string };
       if (!response.ok || !result.booking_id || !result.order_token) {
+        if (response.status === 409) router.refresh();
         throw new Error(result.error || "The payment handoff could not be prepared.");
       }
       router.push(
@@ -215,6 +231,12 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
     { label: "Twin sharing", count: quote.travellers.twin, unit: quote.unit_prices.twin },
   ].filter((line) => line.count > 0);
   const totalSavings = quote.amounts.sale_discount + quote.amounts.group_discount;
+  const gstRate = quote.tax?.rate ?? (quote.amounts.tax > 0
+    ? Math.round((quote.amounts.tax / Math.max(1, quote.amounts.trip_total + (quote.amounts.booking_fee ?? 0))) * 10000) / 100
+    : 0);
+  const cgst = contact.province === "Delhi" ? Math.round(quote.amounts.tax * 50) / 100 : 0;
+  const sgst = contact.province === "Delhi" ? Math.round((quote.amounts.tax - cgst) * 100) / 100 : 0;
+  const gstBase = quote.tax?.taxable_base ?? quote.amounts.trip_total + (quote.amounts.booking_fee ?? 0);
 
   return (
     <>
@@ -254,7 +276,7 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
               onClick={() => setBillingOpen((open) => !open)}
               className="mt-5 flex w-full items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-left text-sm font-bold text-slate-700"
             >
-              <span>Add billing information or a booking note</span>
+              <span>{quote.amounts.tax > 0 ? "Billing state for GST and optional details" : "Add billing information or a booking note"}</span>
               <span className="text-xl font-medium text-blue-600">{billingOpen ? "−" : "+"}</span>
             </button>
 
@@ -262,7 +284,7 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
               <div className="mt-5 grid gap-5 border-t border-dashed border-slate-200 pt-5 sm:grid-cols-2">
                 <label className="text-xs font-black uppercase tracking-wider text-slate-500 sm:col-span-2">Address<input className={inputClass} autoComplete="street-address" value={contact.address} onChange={(event) => updateContact("address", event.target.value)} /></label>
                 <label className="text-xs font-black uppercase tracking-wider text-slate-500">City<input className={inputClass} autoComplete="address-level2" value={contact.city} onChange={(event) => updateContact("city", event.target.value)} /></label>
-                <label className="text-xs font-black uppercase tracking-wider text-slate-500">State<input className={inputClass} autoComplete="address-level1" value={contact.province} onChange={(event) => updateContact("province", event.target.value)} /></label>
+                <label className="text-xs font-black uppercase tracking-wider text-slate-500">State {quote.amounts.tax > 0 ? "*" : ""}<select className={inputClass} required={quote.amounts.tax > 0} autoComplete="address-level1" value={contact.province} onChange={(event) => updateContact("province", event.target.value)}><option value="">Choose state</option>{indianStates.map((state) => <option key={state} value={state}>{state}</option>)}</select></label>
                 <label className="text-xs font-black uppercase tracking-wider text-slate-500">Postal code<input className={inputClass} autoComplete="postal-code" value={contact.postal_code} onChange={(event) => updateContact("postal_code", event.target.value)} /></label>
                 <label className="text-xs font-black uppercase tracking-wider text-slate-500">Country<input className={inputClass} autoComplete="country-name" value={contact.country} onChange={(event) => updateContact("country", event.target.value)} /></label>
                 <label className="text-xs font-black uppercase tracking-wider text-slate-500 sm:col-span-2">Booking note<textarea className={`${inputClass} min-h-24 py-3`} value={contact.note} onChange={(event) => updateContact("note", event.target.value)} placeholder="Dietary needs, pickup notes, or anything we should know" /></label>
@@ -347,7 +369,11 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
                 {quote.amounts.sale_discount > 0 ? <SummaryRow label="Sale discount" saving value={`− ${money(quote.amounts.sale_discount, quote.currency)}`} /> : null}
                 {quote.amounts.group_discount > 0 ? <SummaryRow label="Group discount" saving value={`− ${money(quote.amounts.group_discount, quote.currency)}`} /> : null}
                 {quote.amounts.extras > 0 ? <SummaryRow label="Add-ons" value={money(quote.amounts.extras, quote.currency)} /> : null}
-                {quote.amounts.tax > 0 ? <SummaryRow label="Taxes and fees" value={money(quote.amounts.tax, quote.currency)} /> : null}
+                {(quote.amounts.booking_fee ?? 0) > 0 ? <SummaryRow label="Platform fee" value={money(quote.amounts.booking_fee ?? 0, quote.currency)} /> : null}
+                {quote.amounts.tax > 0 ? <SummaryRow label="GST taxable amount" detail="Trip amount + platform fee" value={money(gstBase, quote.currency)} /> : null}
+                {quote.amounts.tax > 0 && contact.province === "Delhi" ? <><SummaryRow label={`CGST ${gstRate / 2}%`} detail={`${gstRate / 2}% × ${money(gstBase, quote.currency)} =`} value={money(cgst, quote.currency)} /><SummaryRow label={`SGST ${gstRate / 2}%`} detail={`${gstRate / 2}% × ${money(gstBase, quote.currency)} =`} value={money(sgst, quote.currency)} /></> : null}
+                {quote.amounts.tax > 0 && contact.province && contact.province !== "Delhi" ? <SummaryRow label={`IGST ${gstRate}%`} detail={`${gstRate}% × ${money(gstBase, quote.currency)} =`} value={money(quote.amounts.tax, quote.currency)} /> : null}
+                {quote.amounts.tax > 0 && !contact.province ? <SummaryRow label={`GST ${gstRate}%`} detail={`${gstRate}% × ${money(gstBase, quote.currency)} = · Choose your billing state for the split`} value={money(quote.amounts.tax, quote.currency)} /> : null}
                 <div className="border-t border-dashed border-slate-200 pt-3"><SummaryRow label="Trip total" strong value={money(quote.amounts.grand_total, quote.currency)} /></div>
                 {totalSavings > 0 ? <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">You save {money(totalSavings, quote.currency)} on this booking.</p> : null}
               </dl>
