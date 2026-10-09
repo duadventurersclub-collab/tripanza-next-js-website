@@ -96,7 +96,8 @@ function SummaryRow({
 
 export default function CheckoutForm({ quote, tour, requireGuestNames }: CheckoutFormProps) {
   const router = useRouter();
-  const [contact, setContact] = useState(blankContact);
+  const [contact, setContact] = useState(() => ({ ...blankContact, email: quote.wallet?.email || "" }));
+  const [useWallet, setUseWallet] = useState(false);
   const [travellers, setTravellers] = useState<BookingTraveller[]>(() =>
     Array.from({ length: quote.travellers.total }, () => ({ title: "Mr", name: "", age: undefined })),
   );
@@ -204,16 +205,18 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
           payment_method: paymentMethod,
           idempotency_key: idempotencyKey,
           quote_id: quote.quote_id,
+          use_wallet: useWallet && walletApplied > 0,
+          wallet_amount: useWallet ? walletApplied : 0,
         }),
       });
-      const result = (await response.json()) as { booking_id?: number; order_token?: string; error?: string };
+      const result = (await response.json()) as { booking_id?: number; order_token?: string; amount?: number; error?: string };
       if (!response.ok || !result.booking_id || !result.order_token) {
         if (response.status === 409) router.refresh();
         throw new Error(result.error || "The payment handoff could not be prepared.");
       }
-      router.push(
-        `/payment/${result.booking_id}?token=${encodeURIComponent(result.order_token)}&method=${paymentMethod}`,
-      );
+      router.push(result.amount === 0
+        ? `/payment/result?booking_id=${result.booking_id}&token=${encodeURIComponent(result.order_token)}&state=success`
+        : `/payment/${result.booking_id}?token=${encodeURIComponent(result.order_token)}&method=${paymentMethod}`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Checkout could not be started.");
       setSubmitting(false);
@@ -237,6 +240,12 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
   const cgst = contact.province === "Delhi" ? Math.round(quote.amounts.tax * 50) / 100 : 0;
   const sgst = contact.province === "Delhi" ? Math.round((quote.amounts.tax - cgst) * 100) / 100 : 0;
   const gstBase = quote.tax?.taxable_base ?? quote.amounts.trip_total + (quote.amounts.booking_fee ?? 0);
+  const walletMatchesEmail = Boolean(quote.wallet?.email && contact.email.trim().toLowerCase() === quote.wallet.email.toLowerCase());
+  const walletApplicable = walletMatchesEmail ? Math.max(0, quote.wallet?.applicable ?? 0) : 0;
+  const walletApplied = useWallet ? walletApplicable : 0;
+  const totalAfterWallet = Math.max(0, Math.round((quote.amounts.grand_total - walletApplied) * 100) / 100);
+  const payableNow = Math.round(totalAfterWallet * quote.deposit.percentage) / 100;
+  const payableLater = Math.max(0, Math.round((totalAfterWallet - payableNow) * 100) / 100);
 
   return (
     <>
@@ -375,13 +384,20 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
                 {quote.amounts.tax > 0 && contact.province && contact.province !== "Delhi" ? <SummaryRow label={`IGST ${gstRate}%`} detail={`${gstRate}% × ${money(gstBase, quote.currency)} =`} value={money(quote.amounts.tax, quote.currency)} /> : null}
                 {quote.amounts.tax > 0 && !contact.province ? <SummaryRow label={`GST ${gstRate}%`} detail={`${gstRate}% × ${money(gstBase, quote.currency)} = · Choose your billing state for the split`} value={money(quote.amounts.tax, quote.currency)} /> : null}
                 <div className="border-t border-dashed border-slate-200 pt-3"><SummaryRow label="Trip total" strong value={money(quote.amounts.grand_total, quote.currency)} /></div>
+                {walletApplied > 0 ? <><SummaryRow label="Wallet credit" detail="Applied after GST" saving value={`− ${money(walletApplied, quote.currency)}`} /><SummaryRow label="Total after wallet" strong value={money(totalAfterWallet, quote.currency)} /></> : null}
                 {totalSavings > 0 ? <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">You save {money(totalSavings, quote.currency)} on this booking.</p> : null}
               </dl>
             </section>
 
+            {quote.wallet && quote.wallet.available > 0 ? <section className="mb-5 rounded-2xl border border-lime-200 bg-lime-50 p-4 text-sm text-slate-800">
+              <label className="flex cursor-pointer items-start gap-3 font-bold"><input type="checkbox" checked={useWallet && walletApplicable > 0} disabled={walletApplicable <= 0} onChange={(event) => setUseWallet(event.target.checked)} className="mt-0.5 h-4 w-4 accent-blue-600" /><span>Use Tripanza Wallet<br /><small className="font-medium text-slate-600">{money(walletApplicable, quote.currency)} can be applied to this trip (cashback and admin-added credit only).</small></span></label>
+              {!walletMatchesEmail ? <p className="mt-2 text-xs text-amber-800">Use your signed-in email {quote.wallet.email} to apply wallet credit.</p> : null}
+              <p className="mt-2 text-xs text-slate-500">Your wallet is deducted after GST. Host commission cannot be spent here. A booking paid with wallet credit does not earn new cashback.</p>
+            </section> : null}
+
             <div className="rounded-2xl bg-slate-950 p-4 text-white">
-              <div className="flex items-start justify-between gap-3"><div><small className="text-slate-400">Pay securely now</small><strong className="mt-1 block text-3xl">{money(quote.amounts.pay_now, quote.currency)}</strong></div>{quote.deposit.percentage > 0 && quote.deposit.percentage < 100 ? <span className="rounded-full bg-lime-300 px-2.5 py-1 text-[10px] font-black text-slate-950">{quote.deposit.percentage}% advance</span> : null}</div>
-              {quote.amounts.pay_later > 0 ? <p className="mt-2 text-xs text-slate-400">Remaining balance {money(quote.amounts.pay_later, quote.currency)} is payable later.</p> : <p className="mt-2 text-xs text-slate-400">This completes the full trip payment.</p>}
+              <div className="flex items-start justify-between gap-3"><div><small className="text-slate-400">{payableNow > 0 ? "Pay securely now" : "Covered by wallet"}</small><strong className="mt-1 block text-3xl">{money(payableNow, quote.currency)}</strong></div>{quote.deposit.percentage > 0 && quote.deposit.percentage < 100 ? <span className="rounded-full bg-lime-300 px-2.5 py-1 text-[10px] font-black text-slate-950">{quote.deposit.percentage}% advance</span> : null}</div>
+              {payableLater > 0 ? <p className="mt-2 text-xs text-slate-400">Remaining balance {money(payableLater, quote.currency)} is payable later.</p> : <p className="mt-2 text-xs text-slate-400">This completes the full trip payment.</p>}
             </div>
 
             <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs font-semibold leading-relaxed text-slate-600">
@@ -397,7 +413,7 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
             {followupStatus ? <p className="mt-2 text-xs text-slate-500" role="status">{followupStatus}</p> : null}
 
             {error ? <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
-            <button disabled={submitting || !termsAccepted} type="submit" className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Creating secure booking…" : `Confirm and pay ${money(quote.amounts.pay_now, quote.currency)} →`}</button>
+            <button disabled={submitting || !termsAccepted} type="submit" className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Creating secure booking…" : payableNow > 0 ? `Confirm and pay ${money(payableNow, quote.currency)} →` : "Confirm with wallet credit →"}</button>
             <div className="mt-4 flex items-center justify-center gap-4 text-[10px] font-bold text-slate-500"><span>🔒 Encrypted payment</span><span>✓ Traveller protected</span></div>
             <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-500">Your ST Tours order is created only after WordPress revalidates the fare. Payment details stay with the selected provider.</p>
           </div>

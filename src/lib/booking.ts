@@ -43,6 +43,7 @@ export type BookingQuote = {
     pay_later: number;
   };
   deposit: { percentage: number };
+  wallet?: { available: number; applicable: number; email: string };
   expires_at: string;
 };
 
@@ -127,11 +128,15 @@ export class BookingApiError extends Error {
   }
 }
 
-async function wordpressPost<T>(path: string, payload: unknown): Promise<T> {
+async function wordpressPost<T>(path: string, payload: unknown, sessionToken?: string): Promise<T> {
   const response = await fetch(`${WORDPRESS_URL}/wp-json/tripanza-headless/v1/${path}`, {
     method: "POST",
     cache: "no-store",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+    },
     body: JSON.stringify(payload),
   }).catch(async error => { await reportOperationalError("upstream_error", path.includes("payment") ? "payment" : "booking"); throw error; });
   const data = (await response.json().catch(() => null)) as { message?: string } | T | null;
@@ -166,8 +171,8 @@ async function wordpressGet<T>(path: string, params: Record<string, string | num
   return data as T;
 }
 
-export function requestBookingQuote(selection: BookingSelection) {
-  return wordpressPost<BookingQuote>("booking/quote", selection);
+export function requestBookingQuote(selection: BookingSelection, sessionToken?: string) {
+  return wordpressPost<BookingQuote>("booking/quote", selection, sessionToken);
 }
 
 export function createWordPressBooking(payload: BookingSelection & {
@@ -175,8 +180,10 @@ export function createWordPressBooking(payload: BookingSelection & {
   travellers: BookingTraveller[];
   payment_method: "payu" | "upi";
   idempotency_key: string;
-}) {
-  return wordpressPost<BookingCreated>("booking", payload);
+  use_wallet?: boolean;
+  wallet_amount?: number;
+}, sessionToken?: string) {
+  return wordpressPost<BookingCreated>("booking", payload, sessionToken);
 }
 
 export function requestPaymentSession(payload: {

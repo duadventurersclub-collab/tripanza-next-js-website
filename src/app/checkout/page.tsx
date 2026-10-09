@@ -2,6 +2,7 @@ import Link from "next/link";
 import CheckoutForm from "@/components/booking/CheckoutForm";
 import CheckoutPreparation from "@/components/booking/CheckoutPreparation";
 import { getBookingCart, requestBookingQuote } from "@/lib/booking";
+import { getSessionToken } from "@/lib/session";
 import { getTourById, getTourBySlug } from "@/lib/wp";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
   let quote;
   let tourCandidate;
   try {
-    [quote, tourCandidate] = await Promise.all([requestBookingQuote(cart.selection), tourPromise]);
+    [quote, tourCandidate] = await Promise.all([getSessionToken().then((token) => requestBookingQuote(cart.selection, token)), tourPromise]);
   } catch (error) {
     return <main className="min-h-screen bg-slate-50 px-5 py-20"><div className="mx-auto max-w-xl rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black text-slate-950">Checkout needs attention</h1><p className="mt-3 text-red-700">{error instanceof Error ? error.message : "This fare is no longer available."}</p><Link href="/cart" className="mt-7 inline-flex rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white">Return to cart</Link></div></main>;
   }

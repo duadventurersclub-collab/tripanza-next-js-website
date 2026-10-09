@@ -10,6 +10,7 @@ import {
   type BookingTraveller,
   type CheckoutContact,
 } from "@/lib/booking";
+import { getSessionToken } from "@/lib/session";
 
 type CheckoutPayload = {
   contact: CheckoutContact;
@@ -17,6 +18,8 @@ type CheckoutPayload = {
   payment_method: "payu" | "upi";
   idempotency_key: string;
   quote_id: string;
+  use_wallet?: boolean;
+  wallet_amount?: number;
 };
 
 export async function POST(request: Request) {
@@ -27,9 +30,10 @@ export async function POST(request: Request) {
 
   try {
     const payload = (await request.json()) as CheckoutPayload;
-    const quote = await requestBookingQuote(cart.selection);
+    const sessionToken = await getSessionToken();
+    const quote = await requestBookingQuote(cart.selection, sessionToken);
     await setBookingCart({ ...cart, quote, updated_at: new Date().toISOString() });
-    const booking = await createWordPressBooking({ ...cart.selection, ...payload });
+    const booking = await createWordPressBooking({ ...cart.selection, ...payload }, sessionToken);
     const visitorId = journeyIdFromRequest(request);
     if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "booking_created", phone: payload.contact.phone }));
     return NextResponse.json(booking, { status: 201 });
