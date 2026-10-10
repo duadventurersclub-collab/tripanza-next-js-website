@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { safeAuthReturnTo } from "@/lib/auth-return-url";
 import { setSessionCookie } from "@/lib/session";
-
-function safeReturnTo(value: string | null) {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
-}
 
 function authModalUrl(request: NextRequest, returnTo: string, error?: string) {
   const target = new URL(returnTo, request.url);
@@ -16,7 +13,7 @@ function authModalUrl(request: NextRequest, returnTo: string, error?: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const returnTo = safeReturnTo(request.nextUrl.searchParams.get("returnTo"));
+  const returnTo = safeAuthReturnTo(request.nextUrl.searchParams.get("returnTo"), request.url);
   const providerError = request.nextUrl.searchParams.get("social_login_error");
   const ticket = request.nextUrl.searchParams.get("ticket");
   if (providerError || !ticket) {

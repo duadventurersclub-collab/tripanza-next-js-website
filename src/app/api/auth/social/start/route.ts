@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-function safeReturnTo(value: string | null) {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
-}
+import { safeAuthReturnTo } from "@/lib/auth-return-url";
 
 export async function GET(request: NextRequest) {
   const provider = request.nextUrl.searchParams.get("provider");
@@ -11,7 +8,7 @@ export async function GET(request: NextRequest) {
   }
 
   const callback = new URL("/api/auth/social/callback", request.url);
-  callback.searchParams.set("returnTo", safeReturnTo(request.nextUrl.searchParams.get("returnTo")));
+  callback.searchParams.set("returnTo", safeAuthReturnTo(request.nextUrl.searchParams.get("returnTo"), request.url));
   const wordpress = (process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "https://tripanza.com").replace(/\/$/, "");
   const endpoint = new URL(`${wordpress}/wp-json/tripanza-headless/v1/auth/oauth/start`);
   endpoint.searchParams.set("provider", provider);
