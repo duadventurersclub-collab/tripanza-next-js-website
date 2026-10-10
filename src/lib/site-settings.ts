@@ -7,7 +7,7 @@ export const wordpressOrigin = (process.env.WORDPRESS_URL || process.env.NEXT_PU
 
 export const LIVE_SETTINGS_HEADERS = { Accept: "application/json", "Cache-Control": "no-cache, no-store", Pragma: "no-cache" };
 
-export function liveSettingsUrl(path: "settings/public" | "admin/settings" | "admin/cache" | "admin/operations") {
+export function liveSettingsUrl(path: "settings/public" | "admin/settings" | "admin/cache" | "admin/operations" | "admin/seo") {
   const url = new URL(`${wordpressOrigin}/wp-json/tripanza-headless/v1/${path}`);
   // no-store only bypasses Next's cache, not an upstream CDN's existing entry.
   // A unique non-secret key avoids stale settings on Cloudflare/LiteSpeed.

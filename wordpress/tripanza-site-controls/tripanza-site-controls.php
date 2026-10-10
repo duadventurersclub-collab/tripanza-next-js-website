@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Site Controls
  * Description: Administrator-only cache, feature, content, maintenance and operational controls for Tripanza Next.js.
- * Version: 1.5.0
+ * Version: 1.6.0
  * Requires PHP: 7.4
  */
 defined('ABSPATH') || exit;
@@ -10,7 +10,8 @@ defined('ABSPATH') || exit;
 final class Tripanza_Site_Controls {
     const OPTION = 'tripanza_site_controls_v1';
     const NS = 'tripanza-headless/v1';
-    const VERSION = '1.5.0';
+    const VERSION = '1.6.0';
+    const SEO_OPTION = 'tripanza_site_seo_v1';
 
     private static function homepage_section_keys() {
         return array('hero', 'departures', 'deals', 'trips', 'destinations', 'reels', 'budget', 'quick', 'gallery', 'stays');
@@ -68,6 +69,11 @@ final class Tripanza_Site_Controls {
     public static function routes() {
         register_rest_route(self::NS, '/settings/public', array('methods' => 'GET', 'callback' => array(__CLASS__, 'public_settings'), 'permission_callback' => '__return_true'));
         register_rest_route(self::NS, '/homepage/catalog', array('methods' => 'GET', 'callback' => array(__CLASS__, 'homepage_catalog'), 'permission_callback' => '__return_true'));
+        register_rest_route(self::NS, '/seo/public', array('methods' => 'GET', 'callback' => array(__CLASS__, 'public_seo'), 'permission_callback' => '__return_true'));
+        register_rest_route(self::NS, '/admin/seo', array(
+            array('methods' => 'GET', 'callback' => array(__CLASS__, 'admin_seo'), 'permission_callback' => array(__CLASS__, 'require_admin')),
+            array('methods' => 'POST', 'callback' => array(__CLASS__, 'save_seo'), 'permission_callback' => array(__CLASS__, 'require_admin')),
+        ));
         register_rest_route(self::NS, '/admin/settings', array(
             array('methods' => 'GET', 'callback' => array(__CLASS__, 'admin_settings'), 'permission_callback' => array(__CLASS__, 'require_admin')),
             array('methods' => 'POST', 'callback' => array(__CLASS__, 'save'), 'permission_callback' => array(__CLASS__, 'require_admin')),
@@ -93,6 +99,77 @@ final class Tripanza_Site_Controls {
             'pdf' => function_exists('tripanza_clear_post_pdf_cache'),
             'page_cache' => defined('LSCWP_V') || function_exists('rocket_clean_domain') || (bool) has_action('w3tc_flush_posts'),
         )));
+    }
+
+    private static function seo_settings() {
+        return array_merge(array('revision' => 'initial', 'tours' => array(), 'redirects' => array()), (array) get_option(self::SEO_OPTION, array()));
+    }
+
+    public static function public_seo() {
+        $seo = self::seo_settings();
+        unset($seo['revision']);
+        return self::response($seo);
+    }
+
+    public static function admin_seo() {
+        return self::response(self::seo_settings());
+    }
+
+    public static function save_seo($request) {
+        $input = $request->get_json_params();
+        if (!is_array($input)) return new WP_Error('tripanza_input', 'Invalid SEO settings.', array('status' => 400));
+        $saved = self::seo_settings();
+        if (($input['revision'] ?? '') !== $saved['revision']) return new WP_Error('tripanza_conflict', 'SEO settings changed in another window. Reload before saving.', array('status' => 409));
+        $tours = $input['tours'] ?? null;
+        $redirects = $input['redirects'] ?? null;
+        if (!is_array($tours) || count($tours) > 1000 || !is_array($redirects) || count($redirects) > 300)
+            return new WP_Error('tripanza_input', 'Too many tour SEO rules or redirects.', array('status' => 400));
+        $clean_tours = array();
+        foreach ($tours as $id => $rule) {
+            $tour_id = filter_var((string) $id, FILTER_VALIDATE_INT, array('options' => array('min_range' => 1)));
+            $post = $tour_id ? get_post($tour_id) : null;
+            if (!$post || $post->post_type !== 'st_tours' || $post->post_status !== 'publish' || !is_array($rule))
+                return new WP_Error('tripanza_input', 'SEO settings require a published tour.', array('status' => 400));
+            $title = $rule['title'] ?? '';
+            $description = $rule['description'] ?? '';
+            $image = $rule['image_url'] ?? '';
+            $noindex = $rule['noindex'] ?? false;
+            if (!is_string($title) || strlen($title) > 140 || !is_string($description) || strlen($description) > 500 || !is_string($image) || strlen($image) > 1000 || !is_bool($noindex))
+                return new WP_Error('tripanza_input', 'Invalid SEO field for tour ' . $tour_id . '.', array('status' => 400));
+            $title = trim(sanitize_text_field($title));
+            $description = trim(sanitize_textarea_field($description));
+            $image = trim($image);
+            if ($image !== '') {
+                $url = wp_parse_url($image);
+                if (!$url || ($url['scheme'] ?? '') !== 'https' || empty($url['host']) || isset($url['user']) || isset($url['pass']) || isset($url['fragment']))
+                    return new WP_Error('tripanza_input', 'Social image must be a valid HTTPS URL.', array('status' => 400));
+                $image = esc_url_raw($image, array('https'));
+            }
+            if ($title !== '' || $description !== '' || $image !== '' || $noindex)
+                $clean_tours[(string) $tour_id] = array('title' => $title, 'description' => $description, 'image_url' => $image, 'noindex' => $noindex);
+        }
+        $clean_redirects = array();
+        $seen = array();
+        foreach ($redirects as $redirect) {
+            if (!is_array($redirect) || !is_string($redirect['from'] ?? null) || !is_string($redirect['to'] ?? null))
+                return new WP_Error('tripanza_input', 'Invalid tour redirect.', array('status' => 400));
+            $from = trim($redirect['from']);
+            $to = trim($redirect['to']);
+            if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $from) || !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $to) || $from === $to || isset($seen[$from]))
+                return new WP_Error('tripanza_input', 'Redirects need unique old tour slugs and distinct destinations.', array('status' => 400));
+            if (get_page_by_path($from, OBJECT, 'st_tours'))
+                return new WP_Error('tripanza_input', 'An old slug still belongs to a tour: ' . $from, array('status' => 400));
+            $target = get_page_by_path($to, OBJECT, 'st_tours');
+            if (!$target || $target->post_status !== 'publish')
+                return new WP_Error('tripanza_input', 'Redirect destination must be a published tour: ' . $to, array('status' => 400));
+            $seen[$from] = true;
+            $clean_redirects[] = array('from' => $from, 'to' => $to);
+        }
+        $next = array('revision' => wp_generate_uuid4(), 'tours' => $clean_tours, 'redirects' => $clean_redirects);
+        update_option(self::SEO_OPTION, $next, false);
+        self::audit('tour_seo_saved', array('tour_rules' => array('from' => count($saved['tours']), 'to' => count($clean_tours)), 'redirects' => array('from' => count($saved['redirects']), 'to' => count($clean_redirects))));
+        self::notify_next_revalidation();
+        return self::response($next);
     }
 
     public static function homepage_catalog() {

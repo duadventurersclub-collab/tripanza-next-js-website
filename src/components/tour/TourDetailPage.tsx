@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { getTourBySlug } from "@/lib/wp";
 import type { Metadata } from "next";
@@ -21,6 +21,8 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getPublicSiteSettings } from "@/lib/public-site-settings";
 import { getTourPageData } from "@/lib/tour-page-data";
 import { publicOrigin, publicUrl, safeJsonLd } from "@/lib/search-discovery";
+import { getTourSeoConfig } from "@/lib/tour-seo";
+import { EMPTY_TOUR_SEO, redirectedTourSlug } from "@/lib/tour-seo-types";
 
 // Scoped design CSS from PHP templates
 import "@/app/tours/[slug]/tour-design.css";
@@ -37,19 +39,24 @@ export async function generateMetadata({ params, live = false }: TourDetailPageP
   try {
     const tour = await (live ? getTourBySlug(slug, true) : getTourPageData(slug));
     if (!tour) return { title: "Tour Not Found", robots: { index: false } };
+    const seo = (await getTourSeoConfig().catch(() => EMPTY_TOUR_SEO)).tours[String(tour.id)];
     const origin = publicOrigin((await (live ? getSiteSettings() : getPublicSiteSettings())).seo_site_url);
     const url = origin ? publicUrl(origin, `/tours/${encodeURIComponent(tour.slug)}`) : undefined;
+    const title = seo?.title || tour.title;
+    const description = seo?.description || tour.excerpt || `Join the ${tour.title} trip with Tripanza — ${tour.details.duration.days} Days / ${tour.details.duration.nights} Nights from ${tour.details.origin}.`;
+    const image = seo?.image_url || tour.featured_image;
     return {
-      title: tour.title,
+      title: seo?.title ? { absolute: title } : title,
       alternates: url ? { canonical: url } : undefined,
-      description: tour.excerpt || `Join the ${tour.title} trip with Tripanza — ${tour.details.duration.days} Days / ${tour.details.duration.nights} Nights from ${tour.details.origin}.`,
+      description,
+      robots: seo?.noindex ? { index: false, follow: false } : undefined,
       openGraph: {
-        title: tour.title,
-        description: tour.excerpt,
+        title,
+        description,
         url,
-        images: tour.featured_image ? [{ url: tour.featured_image }] : [],
+        images: image ? [{ url: image }] : [],
       },
-      twitter: { card: tour.featured_image ? "summary_large_image" : "summary", title: tour.title, description: tour.excerpt, images: tour.featured_image ? [tour.featured_image] : undefined },
+      twitter: { card: image ? "summary_large_image" : "summary", title, description, images: image ? [image] : undefined },
     };
   } catch {
     return { title: "Tripanza Tour", robots: { index: false } };
@@ -61,6 +68,8 @@ export default async function TourDetailPage({ params, live = false }: TourDetai
   const tour = await (live ? getTourBySlug(slug, true) : getTourPageData(slug));
 
   if (!tour) {
+    const target = redirectedTourSlug(await getTourSeoConfig().catch(() => EMPTY_TOUR_SEO), slug);
+    if (target && await getTourBySlug(target, true)) permanentRedirect(`/tours/${encodeURIComponent(target)}`);
     notFound();
   }
 

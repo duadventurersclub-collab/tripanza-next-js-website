@@ -3,6 +3,8 @@ import { getAppTours } from "@/lib/wp";
 import { getSiteSettings } from "@/lib/site-settings";
 import { publicOrigin, publicUrl } from "@/lib/search-discovery";
 import { getPublicHostData, type HostSummary } from "@/lib/host";
+import { getTourSeoConfig } from "@/lib/tour-seo";
+import { EMPTY_TOUR_SEO } from "@/lib/tour-seo-types";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await getSiteSettings();
@@ -13,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (settings.host_enabled) paths.push("/host");
   const urls = paths.map(path => ({ url: publicUrl(origin, path) }));
   try {
+    const seo = await getTourSeoConfig().catch(() => EMPTY_TOUR_SEO);
     const first = await getAppTours({ page: 1, per_page: 100 });
     const totalPages = Math.min(499, Math.ceil(first.total / 100));
     const pages: Awaited<ReturnType<typeof getAppTours>>[] = [];
@@ -21,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
     const seen = new Set<string>();
     for (const tour of [first, ...pages].flatMap(page => page.items)) {
-      if (!tour.slug || seen.has(tour.slug)) continue;
+      if (!tour.slug || seen.has(tour.slug) || seo.tours[String(tour.id)]?.noindex) continue;
       seen.add(tour.slug);
       urls.push({ url: publicUrl(origin, `/tours/${encodeURIComponent(tour.slug)}`) });
     }

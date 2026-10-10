@@ -8,6 +8,7 @@ import AdminAdvancedControls from "./AdminAdvancedControls";
 import AdminOperations from "./AdminOperations";
 import AdminPageCache from "./AdminPageCache";
 import AdminHomepageTours from "./AdminHomepageTours";
+import AdminTourSeo from "./AdminTourSeo";
 
 const fields: { key: keyof SiteSettings; label: string; note: string; max: number }[] = [
   { key: "tour_cache_seconds", label: "Tour listings & details", note: "Public trip data and gallery lookups.", max: 86400 },
@@ -56,6 +57,7 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
   const supportsDiscovery = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 3);
   const supportsHomepageTours = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 4);
   const supportsCrawlerControls = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 5);
+  const supportsTourSeo = controlsMajor > 1 || (controlsMajor === 1 && controlsMinor >= 6);
   const update = <K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) => setDraft(s => ({ ...s, [key]: value }));
   const changed = () => { window.dispatchEvent(new Event("tripanza:settings-changed")); router.refresh(); };
 
@@ -124,6 +126,7 @@ export default function AdminSiteSettings({ initial }: { initial: AdminSettings 
       </div>
       <div className="as-save"><button className="as-primary" onClick={save} disabled={!!busy || !dirty}>{busy === "save" ? "Saving…" : "Save search settings →"}</button><small>Save first, then verify the live site and submit its sitemap.</small></div>
     </section>
+    <AdminTourSeo supported={supportsTourSeo} />
     <section className="as-card"><div className="as-section-head"><div><p className="as-eyebrow">CACHE POLICY</p><h2>Fast, without going stale.</h2><p>All values are in seconds. Set a lifetime to 0 to disable that cache.</p></div><label className="as-toggle"><input type="checkbox" checked={draft.public_cache_enabled} disabled={!!busy} onChange={e => update("public_cache_enabled", e.target.checked)} /><span /><b>Public data cache</b></label></div>
       <div className="as-fields">{fields.map(field => <label className="as-field" key={field.key}><span><strong>{field.label}</strong><small>{field.note}</small></span><div><input type="number" min={0} max={field.max} step={1} value={Number(draft[field.key])} disabled={!!busy} onChange={e => update(field.key, Number(e.target.value))} aria-label={`${field.label} seconds`} /><small>0–{field.max}s</small></div></label>)}</div>
       <p className="as-hint">The public-cache switch covers tours, reels, Host landing data, site metadata and the Host leaderboard. Authentication, payments, checkout and private Host requests always remain uncached. Browser previews always refresh from the server.</p>

@@ -7,9 +7,10 @@ export function invalidateAppCache(scope: CacheScope) {
   resetTourPageControls();
   revalidateTag("site-controls", { expire: 0 });
   if (scope === "all") {
-    for (const tag of ["public-data", "tours", "meta-reels", "hosts", "site"]) revalidateTag(tag, { expire: 0 });
+    for (const tag of ["public-data", "tours", "meta-reels", "hosts", "site", "tour-seo"]) revalidateTag(tag, { expire: 0 });
     revalidatePath("/", "layout");
     revalidatePath("/home-cache/home");
+    revalidatePath("/tours/[slug]", "page");
     return;
   }
   if (scope === "tours") {

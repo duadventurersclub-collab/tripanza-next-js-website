@@ -1,5 +1,11 @@
 # Tripanza Site Controls
 
+## Version 1.6.0 upgrade
+
+Install this WordPress plugin version before deploying the matching Next.js frontend. The Next.js `/admin/settings#tour-seo` section then lets administrators override each published tour's search title, description and social preview image, or mark it noindex. Noindex removes the tour from the Next.js sitemap and adds a page-level robots directive; existing search results can take time to disappear. Blank fields retain the tour's current title, excerpt and featured image. The optional social image must be an HTTPS URL.
+
+The same section manages permanent redirects from an unused old `/tours/<slug>` URL to a currently published tour. Sources cannot be active WordPress tour slugs, destinations cannot be arbitrary URLs, and duplicate/self redirects are rejected. The destination is rechecked before redirecting, so an unpublished destination does not silently lead visitors to a dead page. These settings affect only the Next.js domain, not WordPress tour URLs or any third-party SEO plugin. Saving rotates the separate SEO revision and requests Next.js cache revalidation. The old plugin version disables this section in Next.js instead of accepting unsaved changes.
+
 ## Version 1.5.0 upgrade
 
 Install this WordPress plugin version before deploying the matching Next.js frontend. Next.js `/admin/settings` adds separate AI search and model-training crawler switches; the old plugin version leaves them disabled in the UI. Both default to allowed to preserve the existing robots.txt behavior. Saving either switch changes the Next.js domain's robots.txt on subsequent requests, without changing the sitemap or ordinary Googlebot access. Search covers OAI-SearchBot, Claude-SearchBot and PerplexityBot; training covers GPTBot, ClaudeBot and Google-Extended (which also controls some Gemini grounding). Google AI features within Search use Googlebot and cannot be switched off separately from Google Search. User-requested fetchers and crawlers that ignore robots.txt are not blocked. The WordPress domain has its own robots.txt and is not affected by these switches.

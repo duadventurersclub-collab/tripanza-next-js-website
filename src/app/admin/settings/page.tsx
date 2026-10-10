@@ -8,6 +8,7 @@ import { wordpressOrigin } from "@/lib/site-settings";
 import "@/components/admin/admin-settings.css";
 import "@/components/admin/admin-homepage-tours.css";
 import "@/components/admin/admin-page-cache.css";
+import "@/components/admin/admin-tour-seo.css";
 
 export const metadata = { title: "Site Settings | Tripanza Admin", robots: { index: false, follow: false } };
 export default async function AdminSettingsPage() {

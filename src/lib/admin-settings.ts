@@ -2,7 +2,7 @@ import { getSessionToken } from "./session";
 import { LIVE_SETTINGS_HEADERS, liveSettingsUrl, wordpressOrigin } from "./site-settings";
 import { reportOperationalError } from "./error-monitoring";
 
-export async function adminRequest(path: "settings" | "cache" | "operations", body?: unknown) {
+export async function adminRequest(path: "settings" | "cache" | "operations" | "seo", body?: unknown) {
   const token = await getSessionToken();
   if (!token) return Response.json({ message: "Please sign in." }, { status: 401 });
   try {
