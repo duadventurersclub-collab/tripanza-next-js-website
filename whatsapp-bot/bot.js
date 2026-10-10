@@ -14,6 +14,7 @@ const { createWhatsAppConnection } = require('./business/whatsappConnection');
 const { safeRequestHandler, configureHttpServer } = require('./business/httpServer');
 const { startRuntimeDiagnostics } = require('./business/runtimeDiagnostics');
 const { createAccountManager } = require('./business/accounts');
+const { loadTripanzaPdf, tripanzaPdfUrl } = require('./outboundDocument');
 try { process.loadEnvFile(); } catch (error) { if (error.code !== 'ENOENT') throw error; }
 const memoryDiagnostics = startRuntimeDiagnostics();
 let businessWorkspace = null;
@@ -574,9 +575,23 @@ const server = http.createServer(safeRequestHandler(async (req, res) => {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
                     return res.end(JSON.stringify({ success: false, error: 'Message must contain 1 to 4000 characters' }));
                 }
+                if (data.document_url) {
+                    try { tripanzaPdfUrl(data.document_url); }
+                    catch {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        return res.end(JSON.stringify({ success: false, error: 'Invalid itinerary PDF URL' }));
+                    }
+                }
 
                 const jid = `${phone}@s.whatsapp.net`;
-                await sendTextWithLinkCta(targetSocket, jid, message, useCRM);
+                if (data.document_url) {
+                    const pdf = await loadTripanzaPdf(data.document_url);
+                    const fileName = typeof data.document_name === 'string' && /^[a-zA-Z0-9_-]{1,80}\.pdf$/.test(data.document_name)
+                        ? data.document_name : 'Tripanza_Itinerary.pdf';
+                    await targetSocket.sendMessage(jid, { document: pdf, mimetype: 'application/pdf', fileName, caption: message });
+                } else {
+                    await sendTextWithLinkCta(targetSocket, jid, message, useCRM);
+                }
                 console.log(`📤 Outbound ${botName} message sent to [${phone}]`);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });

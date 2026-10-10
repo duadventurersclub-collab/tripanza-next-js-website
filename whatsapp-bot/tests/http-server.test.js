@@ -68,3 +68,28 @@ test('outbound oversized bodies stop buffering and never send a WhatsApp message
     req.emit('data', { toString() { assert.fail('Excess input was buffered'); } });
     await req.listeners('end')[0](); assert.equal(status, 413); assert.equal(body.success, false);
 });
+
+test('outbound itinerary request sends a PDF document on the notifications account', async () => {
+    const source = fs.readFileSync(path.join(__dirname, '../bot.js'), 'utf8'); let handler; let sent;
+    vm.runInNewContext(source.slice(source.indexOf('const server = http.createServer'), source.indexOf('workspaceReady = initializeWorkspace')), {
+        http: { createServer(callback) { handler = callback; return {}; } }, safeRequestHandler, configureHttpServer, Buffer,
+        API_KEY: 'test', safeKeyMatch: key => key === 'test', sockNotifications: { async sendMessage(jid, content) { sent = { jid, content }; } },
+        isConnectedNotifications: true, sockCRM: null, isConnectedCRM: false,
+        tripanzaPdfUrl: require('../outboundDocument').tripanzaPdfUrl,
+        async loadTripanzaPdf() { return Buffer.from('%PDF-1.7'); },
+        console: { log() {}, error() {} },
+    });
+    const request = new EventEmitter(); request.method = 'POST'; request.url = '/api/send';
+    const reply = new Promise(resolve => {
+        handler(request, { writeHead(status) { this.status = status; }, end(body) { resolve({ status: this.status, body: JSON.parse(body) }); } });
+    });
+    request.emit('data', JSON.stringify({ api_key: 'test', bot: 'notifications', phone: '9876543210',
+        message: 'Your itinerary', document_url: 'https://tripanza.com/tours/test/?generate_pdf=1&pdf_ready=1',
+        document_name: 'test-itinerary.pdf' }));
+    request.emit('end');
+    assert.equal((await reply).status, 200);
+    assert.equal(sent.jid, '919876543210@s.whatsapp.net');
+    assert.equal(sent.content.mimetype, 'application/pdf');
+    assert.equal(sent.content.fileName, 'test-itinerary.pdf');
+    assert.equal(sent.content.document.toString(), '%PDF-1.7');
+});

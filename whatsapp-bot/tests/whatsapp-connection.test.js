@@ -333,6 +333,7 @@ test('root startup and the workspace use the same managed CRM connection, with n
             if (name === './business/httpServer') return require('../business/httpServer');
             if (name === './business/runtimeDiagnostics') return { startRuntimeDiagnostics() { return { report() {} }; } };
             if (name === './business/accounts') return require('../business/accounts');
+            if (name === './outboundDocument') return require('../outboundDocument');
             if (name === 'http') return { createServer() { return { listen(port, host, callback) { assert.equal(host, '0.0.0.0'); callback(); } }; } };
             if (name === 'axios' || name === 'qrcode') return {};
             return require(name);

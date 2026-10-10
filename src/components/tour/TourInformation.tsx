@@ -85,7 +85,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
     if (pdfStatus === "saving") return;
 
     const phoneDigits = leadPhone.replace(/\D/g, "");
-    if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
       setLeadError("Enter a valid phone number, including your country code if needed.");
       return;
     }
@@ -99,7 +99,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
       const response = await fetch("/api/itinerary-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tourId: tour.id, email: leadEmail.trim(), phone: leadPhone.trim() }),
+        body: JSON.stringify({ tourId: tour.id, email: leadEmail.trim(), phone: leadPhone.trim(), sendWhatsappPdf: true }),
         signal: controller.signal,
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };
@@ -356,8 +356,8 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
               <button type="button" className="tp-pdf-status__close" onClick={closePdfStatus} aria-label="Close" autoFocus>×</button>
               <span className="tp-pdf-lead__icon" aria-hidden="true"><i className="fa-solid fa-route" /></span>
               <span className="tp-pdf-status__eyebrow">Your trip plan, ready to go</span>
-              <h2 id="tp-pdf-status-title">Where should we send updates?</h2>
-              <p>Enter your details to download the itinerary and receive relevant trip information.</p>
+              <h2 id="tp-pdf-status-title">Get your trip itinerary</h2>
+              <p>Download your PDF now. We’ll also send a copy to your WhatsApp number.</p>
               <form className="tp-pdf-lead__form" onSubmit={submitItineraryLead}>
                 <label htmlFor="tp-itinerary-email">Email address</label>
                 <input id="tp-itinerary-email" name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={leadEmail} onChange={(event) => setLeadEmail(event.target.value)} required />
@@ -368,7 +368,7 @@ export default function TourInformation({ tour, whatsappUrl }: TourInformationPr
                   : <label className="tp-pdf-lead__consent"><input type="checkbox" checked={leadFollowups} onChange={(event) => setLeadFollowups(event.target.checked)} /> <span>Send me optional Tripanza trip suggestions and follow-ups on WhatsApp. I can opt out anytime.</span></label>}
                 {leadError ? <span className="tp-pdf-lead__error" role="alert">{leadError}</span> : null}
                 <button type="submit" disabled={pdfStatus === "saving"}>
-                  <span>{pdfStatus === "saving" ? "Saving your details…" : "Download itinerary"}</span>
+                  <span>{pdfStatus === "saving" ? "Saving your details…" : "Download and send to WhatsApp"}</span>
                   <i className={`fa-solid ${pdfStatus === "saving" ? "fa-spinner fa-spin" : "fa-arrow-right"}`} aria-hidden="true" />
                 </button>
               </form>

@@ -14,10 +14,11 @@ export async function POST(request: Request) {
   const tourId = Number(body?.tourId);
   const email = typeof body?.email === "string" ? body.email.trim() : "";
   const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
+  const sendWhatsappPdf = body?.sendWhatsappPdf === true;
   const phoneDigits = phone.replace(/\D/g, "");
 
   if (!Number.isSafeInteger(tourId) || tourId <= 0 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    || phone.length > 50 || phoneDigits.length < 7 || phoneDigits.length > 15) {
+    || phone.length > 50 || phoneDigits.length < 10 || phoneDigits.length > 15) {
     return NextResponse.json({ error: "Enter a valid email address and phone number." }, { status: 400 });
   }
 
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const upstream = await fetch(`${WORDPRESS_URL}/wp-json/tripanza-headless/v1/itinerary-lead`, {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify({ post_id: tourId, email, phone }),
+      body: JSON.stringify({ post_id: tourId, email, phone, send_whatsapp_pdf: sendWhatsappPdf }),
       cache: "no-store",
       signal: controller.signal,
     });
