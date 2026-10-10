@@ -130,7 +130,7 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
         }
         updatePreference("enabled");
         setFollowups(false);
-        setFollowupStatus("Tripanza WhatsApp follow-ups are on for this number.");
+        setFollowupStatus("WhatsApp booking updates and trip suggestions are on for this number.");
       } catch { if (!cancelled) setFollowupStatus("WhatsApp reminders could not be enabled right now."); }
     }, 900);
     return () => { cancelled = true; window.clearTimeout(timer); };
@@ -159,7 +159,7 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
       observedPhone.current = "";
       setFollowups(false);
       updatePreference("disabled");
-      setFollowupStatus("Tripanza WhatsApp follow-ups are off for this number.");
+      setFollowupStatus("WhatsApp booking updates and trip suggestions are off for this number.");
     } catch { setFollowupStatus("Could not turn off WhatsApp follow-ups. Please try again."); }
   }
 
@@ -355,15 +355,15 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
             <section className="border-b border-slate-100 py-5">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-950">Trip details</h3>
               <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                <div><dt className="text-xs text-slate-500">Check-in</dt><dd className="mt-1 font-bold text-slate-950">{displayDate(quote.departure.check_in || quote.departure.date, quote.departure.display_date)}</dd></div>
-                <div><dt className="text-xs text-slate-500">Check-out</dt><dd className="mt-1 font-bold text-slate-950">{displayDate(quote.departure.check_out)}</dd></div>
+                <div><dt className="text-xs text-slate-500">Departure date</dt><dd className="mt-1 font-bold text-slate-950">{displayDate(quote.departure.check_in || quote.departure.date, quote.departure.display_date)}</dd></div>
+                <div><dt className="text-xs text-slate-500">Return date</dt><dd className="mt-1 font-bold text-slate-950">{displayDate(quote.departure.check_out)}</dd></div>
                 {duration ? <div><dt className="text-xs text-slate-500">Duration</dt><dd className="mt-1 font-bold text-slate-950">{duration}</dd></div> : null}
                 <div><dt className="text-xs text-slate-500">Travellers</dt><dd className="mt-1 font-bold text-slate-950">{quote.travellers.total} {quote.travellers.total === 1 ? "person" : "people"}</dd></div>
               </dl>
             </section>
 
             <section className="border-b border-slate-100 py-5">
-              <div className="flex items-end justify-between gap-3"><h3 className="text-xs font-black uppercase tracking-wider text-slate-950">Booking items</h3><small className="text-[10px] font-semibold text-slate-400">Server validated</small></div>
+              <div className="flex items-end justify-between gap-3"><h3 className="text-xs font-black uppercase tracking-wider text-slate-950">Booking items</h3><small className="text-[10px] font-semibold text-slate-400">Fare checked</small></div>
               <dl className="mt-4 space-y-3.5">
                 {sharingLines.map((line) => <SummaryRow key={line.label} label={line.label} detail={`${line.count} × ${money(line.unit, quote.currency)}`} value={money(line.count * line.unit, quote.currency)} />)}
                 {quote.extras.map((extra) => <SummaryRow key={extra.name} label={extra.name} detail={`${extra.quantity} × ${money(extra.price, quote.currency)}${extra.required ? " · Required" : ""}`} value={money(extra.total, quote.currency)} />)}
@@ -404,18 +404,18 @@ export default function CheckoutForm({ quote, tour, requireGuestNames }: Checkou
               <input type="checkbox" required checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
               <span>I agree to Tripanza&apos;s <Link href="/tnc" target="_blank" className="font-black text-blue-600 hover:underline">terms and conditions</Link> and <Link href="/cancellation-policy" target="_blank" className="font-black text-blue-600 hover:underline">cancellation policy</Link>.</span>
             </label>
-            {preference.state === "enabled" ? <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-relaxed text-emerald-900">Tripanza WhatsApp trip follow-ups are already on for this number. <button type="button" onClick={() => { void turnOffFollowups(); }} className="font-bold underline">Turn off</button></div>
-              : preference.state === "opted_out" ? <p className="mt-3 text-xs text-slate-500">WhatsApp follow-ups are off for this number.</p>
+            {preference.state === "enabled" ? <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-relaxed text-emerald-900">WhatsApp booking updates and trip suggestions are on for this number. <button type="button" onClick={() => { void turnOffFollowups(); }} className="font-bold underline">Turn off</button></div>
+              : preference.state === "opted_out" ? <p className="mt-3 text-xs text-slate-500">WhatsApp booking updates and trip suggestions are off for this number.</p>
               : <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs leading-relaxed text-slate-600">
                 <input type="checkbox" checked={followups} onChange={(event) => toggleFollowups(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
-                <span>Optional: Tripanza may WhatsApp me about this unfinished booking and relevant trips. I can opt out anytime.</span>
+                <span>Send me booking updates and relevant trip suggestions on WhatsApp. I can opt out anytime.</span>
               </label>}
             {followupStatus ? <p className="mt-2 text-xs text-slate-500" role="status">{followupStatus}</p> : null}
 
             {error ? <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
             <button disabled={submitting || !termsAccepted} type="submit" className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Creating secure booking…" : payableNow > 0 ? `Confirm and pay ${money(payableNow, quote.currency)} →` : "Confirm with wallet credit →"}</button>
             <div className="mt-4 flex items-center justify-center gap-4 text-[10px] font-bold text-slate-500"><span>🔒 Encrypted payment</span><span>✓ Traveller protected</span></div>
-            <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-500">Your ST Tours order is created only after WordPress revalidates the fare. Payment details stay with the selected provider.</p>
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-500">We&apos;ll check the final fare and availability before creating your booking. Your payment is handled by your chosen provider.</p>
           </div>
         </aside>
       </form>

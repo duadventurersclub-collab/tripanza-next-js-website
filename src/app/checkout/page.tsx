@@ -29,7 +29,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-end justify-between gap-5"><div><p className="text-xs font-black uppercase tracking-[.2em] text-blue-600">Secure checkout</p><h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950">Complete your booking</h1><p className="mt-2 text-sm text-slate-500">Traveller details and your preferred ST Tours payment method.</p></div><Link href="/cart" className="hidden text-sm font-bold text-slate-500 sm:block">← Back to cart</Link></div>
+        <div className="mb-8 flex items-end justify-between gap-5"><div><p className="text-xs font-black uppercase tracking-[.2em] text-blue-600">Secure checkout</p><h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950">Complete your booking</h1><p className="mt-2 text-sm text-slate-500">Add traveller details and choose how you&apos;d like to pay.</p></div><Link href="/cart" className="hidden text-sm font-bold text-slate-500 sm:block">← Back to cart</Link></div>
         <CheckoutForm quote={quote} tour={tour} requireGuestNames={tour?.details.booking.require_guest_names ?? true} />
       </div>
     </main>
