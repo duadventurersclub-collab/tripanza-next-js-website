@@ -1,0 +1,7 @@
+.tp-cart-reminder{position:fixed;z-index:99989;right:20px;bottom:24px;display:flex;min-width:210px;min-height:58px;align-items:center;gap:11px;padding:8px 10px;border:1px solid #dfe5ef;border-radius:17px;color:#151925;background:#fff;box-shadow:0 10px 30px rgba(21,25,37,.18);font-family:Inter,ui-sans-serif,sans-serif;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}
+.tp-cart-reminder:hover,.tp-cart-reminder:focus-visible{transform:translateY(-2px);box-shadow:0 14px 34px rgba(21,25,37,.22)}
+.tp-cart-reminder:focus-visible{outline:3px solid #3157d5;outline-offset:3px}
+.tp-cart-reminder__icon{display:grid;width:39px;height:39px;flex:0 0 39px;place-items:center;border-radius:12px;color:#3157d5;background:#e9eeff;font-size:20px}
+.tp-cart-reminder strong,.tp-cart-reminder small{display:block;line-height:1.3}.tp-cart-reminder strong{font-size:12px;font-weight:850}.tp-cart-reminder small{margin-top:2px;color:#566277;font-size:11px;font-weight:650}
+.tp-cart-reminder__arrow{display:grid;width:29px;height:29px;margin-left:auto;place-items:center;border-radius:9px;color:#151925;background:#d0e562;font-size:17px;font-weight:900}
+@media(max-width:700px){.tp-cart-reminder{right:14px;bottom:calc(78px + env(safe-area-inset-bottom));min-width:195px;min-height:54px;padding:7px 9px}.tp-cart-reminder__icon{width:36px;height:36px;flex-basis:36px}}

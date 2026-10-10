@@ -64,14 +64,14 @@ export async function POST(request: Request) {
       const cart = { selection, updated_at: new Date().toISOString() };
       await setBookingCart(cart);
       const visitorId = journeyIdFromRequest(request);
-      if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "cart_created", tour_id: selection.tour_id }));
+      if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "cart_created", tour_id: selection.tour_id, selection }));
       return NextResponse.json({ cart }, { status: 201 });
     }
     const quote = await requestBookingQuote(selection);
     const cart = { selection, quote, updated_at: new Date().toISOString() };
     await setBookingCart(cart);
     const visitorId = journeyIdFromRequest(request);
-    if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "cart_created", tour_id: selection.tour_id }));
+    if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "cart_created", tour_id: selection.tour_id, selection }));
     return NextResponse.json({ cart }, { status: 201 });
   } catch (error) {
     if (error instanceof BookingApiError) {
@@ -81,7 +81,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   await clearBookingCart();
+  const visitorId = journeyIdFromRequest(request);
+  if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "cart_cleared" }));
   return new NextResponse(null, { status: 204 });
 }

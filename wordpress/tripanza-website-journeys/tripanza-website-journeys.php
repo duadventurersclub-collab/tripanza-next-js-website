@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Website Journeys
  * Description: Consent-aware website follow-up queue for the existing QR-linked WhatsApp bot.
- * Version: 0.3.0
+ * Version: 0.4.0
  * Requires PHP: 7.4
  */
 
@@ -218,13 +218,66 @@ add_action('rest_api_init', function () {
             return ['state' => tpj_preference_state($visitor, $request->get_param('phone'))];
         },
     ]);
+    register_rest_route('tripanza-journey/v1', '/resume', [
+        'methods' => 'POST',
+        'permission_callback' => $permission,
+        'callback' => 'tpj_resume_cart',
+    ]);
 });
+
+function tpj_cart_selection($input) {
+    if (!is_array($input)) return null;
+    $tour_id = isset($input['tour_id']) ? (int) $input['tour_id'] : 0;
+    $date = isset($input['date']) && is_string($input['date']) ? $input['date'] : '';
+    $slug = isset($input['tour_slug']) && is_string($input['tour_slug']) ? $input['tour_slug'] : '';
+    $counts = isset($input['counts']) && is_array($input['counts']) ? $input['counts'] : [];
+    $extras = isset($input['extras']) && is_array($input['extras']) ? $input['extras'] : null;
+    if (get_post_type($tour_id) !== 'st_tours' || get_post_status($tour_id) !== 'publish' || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date)
+        || ($slug !== '' && !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug)) || $extras === null || count($extras) > 30) return null;
+    $parsed_date = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+    if (!$parsed_date || $parsed_date->format('Y-m-d') !== $date) return null;
+    $clean_counts = [];
+    foreach (['quad', 'triple', 'twin'] as $key) {
+        $value = $counts[$key] ?? null;
+        if (!is_int($value) || $value < 0 || $value > 30) return null;
+        $clean_counts[$key] = $value;
+    }
+    if (array_sum($clean_counts) < 1) return null;
+    $clean_extras = [];
+    foreach ($extras as $extra) {
+        if (!is_array($extra) || !isset($extra['name'], $extra['quantity']) || !is_string($extra['name'])
+            || strlen($extra['name']) > 100 || !is_int($extra['quantity']) || $extra['quantity'] < 0 || $extra['quantity'] > 30) return null;
+        $clean_extras[] = ['name' => $extra['name'], 'quantity' => $extra['quantity']];
+    }
+    return ['tour_id' => $tour_id, 'tour_slug' => $slug, 'date' => $date, 'counts' => $clean_counts, 'extras' => $clean_extras];
+}
+
+function tpj_resume_cart($request) {
+    nocache_headers();
+    $token = (string) $request->get_param('token');
+    if (!preg_match('/^[a-f0-9]{64}$/D', $token)) return new WP_Error('tpj_bad_resume', 'Invalid or expired booking link.', ['status' => 404]);
+    $key = 'tpj_resume_' . hash('sha256', $token);
+    $saved = get_transient($key);
+    if (!is_array($saved) || empty($saved['visitor_id']) || empty($saved['selection'])) {
+        return new WP_Error('tpj_bad_resume', 'Invalid or expired booking link.', ['status' => 404]);
+    }
+    delete_transient($key);
+    global $wpdb;
+    $row = $wpdb->get_row($wpdb->prepare('SELECT consent_at, opted_out, converted, last_event FROM ' . tpj_table() . ' WHERE visitor_id = %s', $saved['visitor_id']));
+    $selection = tpj_cart_selection($saved['selection']);
+    $current = get_transient('tpj_cart_' . hash('sha256', $saved['visitor_id']));
+    if (!$row || !$row->consent_at || $row->opted_out || $row->converted || $row->last_event === 'cart_cleared'
+        || !$selection || wp_json_encode($selection) !== wp_json_encode($current)) {
+        return new WP_Error('tpj_bad_resume', 'This booking link is no longer available.', ['status' => 410]);
+    }
+    return ['selection' => $selection];
+}
 
 function tpj_record_event($request) {
     global $wpdb;
     $visitor = sanitize_text_field((string) $request->get_param('visitor_id'));
     $event = sanitize_key((string) $request->get_param('event'));
-    if (!preg_match('/^[a-f0-9-]{36}$/i', $visitor) || !in_array($event, ['consent', 'reuse', 'itinerary_downloaded', 'checkout_started', 'cart_created', 'tour_view', 'booking_created', 'withdraw', 'opt_out'], true)) {
+    if (!preg_match('/^[a-f0-9-]{36}$/i', $visitor) || !in_array($event, ['consent', 'reuse', 'itinerary_downloaded', 'checkout_started', 'cart_created', 'cart_cleared', 'tour_view', 'booking_created', 'withdraw', 'opt_out'], true)) {
         return new WP_Error('tpj_invalid_event', 'Invalid journey event.', ['status' => 400]);
     }
     $table = tpj_table();
@@ -282,6 +335,7 @@ function tpj_record_event($request) {
         return ['ok' => true];
     }
     if ($event === 'booking_created') {
+        delete_transient('tpj_cart_' . hash('sha256', $visitor));
         $phone = tpj_phone($request->get_param('phone')) ?: $row->phone;
         if ($phone) {
             set_transient('tpj_booked_' . hash('sha256', $phone), 1, DAY_IN_SECONDS);
@@ -289,7 +343,18 @@ function tpj_record_event($request) {
         }
         return ['ok' => true];
     }
+    if ($event === 'cart_cleared') {
+        delete_transient('tpj_cart_' . hash('sha256', $visitor));
+        $wpdb->update($table, ['due_at' => null, 'last_event' => 'cart_cleared'], ['id' => $row->id]);
+        return ['ok' => true];
+    }
     if (!$row->consent_at || $row->opted_out || $row->converted) return ['ok' => true];
+    if ($event === 'cart_created') {
+        $selection = tpj_cart_selection($request->get_param('selection'));
+        if ($selection && $selection['tour_id'] === $tour_id) {
+            set_transient('tpj_cart_' . hash('sha256', $visitor), $selection, DAY_IN_SECONDS);
+        }
+    }
     if ($event === 'tour_view') {
         $wpdb->update($table, [
             'last_view_at' => $now,
@@ -363,11 +428,22 @@ function tpj_process_due() {
         $title = $row->tour_id ? wp_strip_all_tags(get_the_title($row->tour_id)) : 'your Tripanza trip';
         $frontend = defined('TRIPANZA_NEXT_APP_URL') ? untrailingslashit((string) TRIPANZA_NEXT_APP_URL) : home_url();
         $link = $row->tour_id ? $frontend . '/tours/' . get_post_field('post_name', $row->tour_id) : $frontend . '/tours';
+        $resume = false;
+        if (in_array($row->last_event, ['cart_created', 'checkout_started'], true)
+            && defined('TRIPANZA_NEXT_APP_URL') && wp_parse_url($frontend, PHP_URL_SCHEME) === 'https' && wp_http_validate_url($frontend)) {
+            $selection = tpj_cart_selection(get_transient('tpj_cart_' . hash('sha256', $row->visitor_id)));
+            if ($selection && $selection['tour_id'] === (int) $row->tour_id) {
+                $resume_token = bin2hex(random_bytes(32));
+                set_transient('tpj_resume_' . hash('sha256', $resume_token), ['visitor_id' => $row->visitor_id, 'selection' => $selection], DAY_IN_SECONDS);
+                $link = $frontend . '/resume-booking#token=' . $resume_token;
+                $resume = true;
+            }
+        }
         $token = hash_hmac('sha256', $row->visitor_id, wp_salt('auth'));
         $stop = add_query_arg(['tpj_stop' => $row->visitor_id, 'token' => $token], home_url('/'));
         $message = $row->last_event === 'itinerary_downloaded'
             ? "Thanks for exploring {$title}. Questions about dates or the itinerary? We're here to help: {$link}"
-            : "Still planning {$title}? Your selection is saved for now. See available dates: {$link}";
+            : ($resume ? "Still planning {$title}? Continue your booking here: {$link}" : "Still planning {$title}? See available dates: {$link}");
         $message .= "\n\nStop these updates: {$stop}";
         $response = wp_remote_post($bot . '/api/send', [
             'timeout' => 15,

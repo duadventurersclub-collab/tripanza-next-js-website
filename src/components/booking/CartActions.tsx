@@ -10,6 +10,7 @@ export default function CartActions() {
   async function remove() {
     setRemoving(true);
     await fetch("/api/cart", { method: "DELETE" });
+    window.dispatchEvent(new Event("tripanza:cart-changed"));
     router.refresh();
   }
 

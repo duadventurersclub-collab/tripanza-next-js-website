@@ -3,6 +3,7 @@ import { featureUnavailable } from "@/lib/feature-access";
 import { journeyIdFromRequest, recordJourney } from "@/lib/journey";
 import {
   BookingApiError,
+  clearBookingCart,
   createWordPressBooking,
   getBookingCart,
   requestBookingQuote,
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
     const quote = await requestBookingQuote(cart.selection, sessionToken);
     await setBookingCart({ ...cart, quote, updated_at: new Date().toISOString() });
     const booking = await createWordPressBooking({ ...cart.selection, ...payload }, sessionToken);
+    await clearBookingCart();
     const visitorId = journeyIdFromRequest(request);
     if (visitorId) after(() => recordJourney({ visitor_id: visitorId, event: "booking_created", phone: payload.contact.phone }));
     return NextResponse.json(booking, { status: 201 });

@@ -7,6 +7,7 @@ import SiteSettingsProvider from "@/components/settings/SiteSettingsProvider";
 import { getPublicSiteSettings } from "@/lib/public-site-settings";
 import SiteAnnouncement from "@/components/settings/SiteAnnouncement";
 import CookieConsent from "@/components/settings/CookieConsent";
+import CartReminder from "@/components/booking/CartReminder";
 import { publicOrigin } from "@/lib/search-discovery";
 import "./globals.css";
 import "@/components/navigation/tripanza-bottom-menu.css";
@@ -47,6 +48,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <SiteAnnouncement />
           {children}
           <TripanzaBottomMenu />
+          <CartReminder />
           <CookieConsent />
         </SiteSettingsProvider>
       </body>
