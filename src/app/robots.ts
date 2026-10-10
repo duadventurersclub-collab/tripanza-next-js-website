@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
 import { publicOrigin, publicUrl } from "@/lib/search-discovery";
+import { buildRobotsRules } from "@/lib/robots-policy";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const origin = publicOrigin((await getSiteSettings()).seo_site_url);
+  const settings = await getSiteSettings();
+  const origin = publicOrigin(settings.seo_site_url);
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: ["/api/", "/admin", "/account", "/checkout", "/cart", "/payment", "/booking", "/login", "/dashboard", "/host-dashboard", "/host-wallet", "/host-payout-details", "/host-customer-booking-history", "/host-reels", "/crm", "/poster-download", "/add-your-own-trip"] }],
+    rules: buildRobotsRules(settings.ai_search_crawlers_enabled, settings.ai_training_crawlers_enabled),
     sitemap: origin ? publicUrl(origin, "/sitemap.xml") : undefined,
   };
 }

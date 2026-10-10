@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { getPublicSiteSettings } from "./public-site-settings";
 import type { SiteSettings } from "./site-settings-types";
 
+// The WordPress setting is optional while the site uses its Vercel production domain.
+// Never infer a canonical origin from the request host (which may be a preview URL).
+export const DEFAULT_PUBLIC_SITE_ORIGIN = "https://tripanza-next-js-website.vercel.app";
+
 export function publicOrigin(value: string): string | null {
   try {
-    const url = new URL(value);
+    const url = new URL(value.trim() || process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_PUBLIC_SITE_ORIGIN);
     if (url.protocol !== "https:" || url.username || url.password || url.pathname !== "/" || url.search || url.hash) return null;
     return url.origin;
   } catch { return null; }

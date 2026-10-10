@@ -1,5 +1,9 @@
 # Tripanza Site Controls
 
+## Version 1.5.0 upgrade
+
+Install this WordPress plugin version before deploying the matching Next.js frontend. Next.js `/admin/settings` adds separate AI search and model-training crawler switches; the old plugin version leaves them disabled in the UI. Both default to allowed to preserve the existing robots.txt behavior. Saving either switch changes the Next.js domain's robots.txt on subsequent requests, without changing the sitemap or ordinary Googlebot access. Search covers OAI-SearchBot, Claude-SearchBot and PerplexityBot; training covers GPTBot, ClaudeBot and Google-Extended (which also controls some Gemini grounding). Google AI features within Search use Googlebot and cannot be switched off separately from Google Search. User-requested fetchers and crawlers that ignore robots.txt are not blocked. The WordPress domain has its own robots.txt and is not affected by these switches.
+
 ## Version 1.4.0 upgrade
 
 Homepage tour placement is available in Next.js `/admin/settings#homepage-tours`. Each tour-driven section can stay automatic, use up to 12 published tours in a chosen order, or show up to 12 newest published tours from an existing public WordPress tour taxonomy/term. Existing settings remain automatic. The WordPress plugin supplies the published-tour/category catalogue and validates every saved selection; the Next.js site still renders the sections and rechecks booking prices and availability live. The existing global featured-slug setting still promotes tours in automatic sections; a section-specific manual/category rule overrides that section's selection. Install this plugin update before deploying the matching Next.js frontend. A previous plugin version disables the new controls rather than pretending a save succeeded. Saving rotates the existing homepage cache revision; old WordPress fallback settings screens preserve the placement rules.
@@ -12,7 +16,7 @@ Tour detail HTML is now cached by Next.js with background regeneration. Public d
 
 ## Version 1.3.0 upgrade
 
-Search & Measurement settings add an optional canonical Next.js HTTPS origin, GA4 Measurement ID, Meta Pixel ID and Google Search Console HTML-tag verification token. All default blank. The origin must be a domain actually serving the Next.js site; leaving it blank prevents the sitemap and canonical tags from claiming an unverified WordPress domain. Analytics and Pixel scripts are gated by separate visitor choices. Installing this plugin does not create Analytics/Meta/Search Console accounts, verify ownership, submit a sitemap or guarantee search/AI placement. Upload `tripanza-site-controls-1.3.0.zip` before using the new admin fields.
+Search & Measurement settings add an optional canonical Next.js HTTPS origin, GA4 Measurement ID, Meta Pixel ID and Google Search Console HTML-tag verification token. All default blank. While the origin is blank, the Next.js site uses its known Vercel production domain for the sitemap and canonical tags; set the field when a custom domain serves the Next.js site. Never enter the WordPress domain while WordPress still serves it. Analytics and Pixel scripts are gated by separate visitor choices. Installing this plugin does not create Analytics/Meta/Search Console accounts, verify ownership, submit a sitemap or guarantee search/AI placement. Upload `tripanza-site-controls-1.3.0.zip` before using the new admin fields.
 
 ## Version 1.2.0 upgrade
 

@@ -24,6 +24,8 @@ export type SiteSettings = {
   instagram_url: string;
   facebook_url: string;
   seo_site_url: string;
+  ai_search_crawlers_enabled: boolean;
+  ai_training_crawlers_enabled: boolean;
   ga4_measurement_id: string;
   meta_pixel_id: string;
   google_site_verification: string;
@@ -61,7 +63,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   homepage_sections: defaultHomepageSections(),
   contact_email: "hello@tripanza.com", contact_phone: "+918130117254", contact_address: "Dwarka, Delhi NCR, India",
   whatsapp_number: "918130117254", instagram_url: "", facebook_url: "", error_alerts_enabled: false, alert_email: "",
-  seo_site_url: "", ga4_measurement_id: "", meta_pixel_id: "", google_site_verification: "",
+  seo_site_url: "", ai_search_crawlers_enabled: true, ai_training_crawlers_enabled: true,
+  ga4_measurement_id: "", meta_pixel_id: "", google_site_verification: "",
   reel_cache_seconds: 300, host_cache_seconds: 60, site_cache_seconds: 3600,
   leaderboard_cache_seconds: 600, booking_cache_seconds: 15, browser_cache_seconds: 3300,
   cache_revision: "initial", revision: "initial", updated_at: "",

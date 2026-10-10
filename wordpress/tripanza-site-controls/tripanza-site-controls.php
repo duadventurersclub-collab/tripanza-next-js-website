@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Tripanza Site Controls
  * Description: Administrator-only cache, feature, content, maintenance and operational controls for Tripanza Next.js.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Requires PHP: 7.4
  */
 defined('ABSPATH') || exit;
@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 final class Tripanza_Site_Controls {
     const OPTION = 'tripanza_site_controls_v1';
     const NS = 'tripanza-headless/v1';
-    const VERSION = '1.4.0';
+    const VERSION = '1.5.0';
 
     private static function homepage_section_keys() {
         return array('hero', 'departures', 'deals', 'trips', 'destinations', 'reels', 'budget', 'quick', 'gallery', 'stays');
@@ -32,7 +32,8 @@ final class Tripanza_Site_Controls {
             'homepage_sections' => self::default_homepage_sections(),
             'contact_email' => 'hello@tripanza.com', 'contact_phone' => '+918130117254', 'contact_address' => 'Dwarka, Delhi NCR, India',
             'whatsapp_number' => '918130117254', 'instagram_url' => '', 'facebook_url' => '', 'error_alerts_enabled' => false, 'alert_email' => '',
-            'seo_site_url' => '', 'ga4_measurement_id' => '', 'meta_pixel_id' => '', 'google_site_verification' => '',
+            'seo_site_url' => '', 'ai_search_crawlers_enabled' => true, 'ai_training_crawlers_enabled' => true,
+            'ga4_measurement_id' => '', 'meta_pixel_id' => '', 'google_site_verification' => '',
             'tour_cache_seconds' => 300, 'availability_cache_seconds' => 60, 'reel_cache_seconds' => 300, 'host_cache_seconds' => 60,
             'site_cache_seconds' => 3600, 'leaderboard_cache_seconds' => 600,
             'booking_cache_seconds' => 15, 'browser_cache_seconds' => 3300,
@@ -155,7 +156,7 @@ final class Tripanza_Site_Controls {
             if (!isset($input[$key]) || !is_bool($input[$key])) return new WP_Error('tripanza_input', 'Invalid toggle: ' . $key, array('status' => 400));
             $settings[$key] = $input[$key];
         }
-        foreach (array('ai_chat_enabled', 'reels_enabled', 'pdf_downloads_enabled', 'new_bookings_enabled', 'maintenance_enabled', 'announcement_enabled', 'error_alerts_enabled', 'admin_dashboard_enabled', 'admin_booking_history_enabled', 'admin_booking_create_enabled', 'admin_booking_editor_enabled') as $key) {
+        foreach (array('ai_chat_enabled', 'ai_search_crawlers_enabled', 'ai_training_crawlers_enabled', 'reels_enabled', 'pdf_downloads_enabled', 'new_bookings_enabled', 'maintenance_enabled', 'announcement_enabled', 'error_alerts_enabled', 'admin_dashboard_enabled', 'admin_booking_history_enabled', 'admin_booking_create_enabled', 'admin_booking_editor_enabled') as $key) {
             if (!array_key_exists($key, $input)) continue; // Older clients preserve new settings.
             if (!is_bool($input[$key])) return new WP_Error('tripanza_input', 'Invalid toggle: ' . $key, array('status' => 400));
             $settings[$key] = $input[$key];
@@ -450,7 +451,11 @@ final class Tripanza_Site_Controls {
         echo '<input type="hidden" name="action" value="tripanza_site_controls"><input type="hidden" name="revision" value="' . esc_attr($s['revision']) . '"><table class="form-table">';
         foreach (self::defaults() as $key => $default) {
             if (!is_bool($default)) continue;
-            echo '<tr><th>' . esc_html(ucwords(str_replace('_', ' ', $key))) . '</th><td><input type="checkbox" name="' . esc_attr($key) . '" value="1" ' . checked($s[$key], true, false) . '></td></tr>';
+            $label = $key === 'ai_search_crawlers_enabled' ? 'Allow AI search crawlers' : ($key === 'ai_training_crawlers_enabled' ? 'Allow AI training crawlers' : ucwords(str_replace('_', ' ', $key)));
+            echo '<tr><th>' . esc_html($label) . '</th><td><input type="checkbox" name="' . esc_attr($key) . '" value="1" ' . checked($s[$key], true, false) . '>';
+            if ($key === 'ai_search_crawlers_enabled') echo '<p class="description">Controls documented automatic ChatGPT, Claude and Perplexity search bots on the Next.js domain. Google Search and its AI features use Googlebot and are not affected.</p>';
+            if ($key === 'ai_training_crawlers_enabled') echo '<p class="description">Controls GPTBot, ClaudeBot and Google-Extended on the Next.js domain. Robots.txt is voluntary, not a security barrier.</p>';
+            echo '</td></tr>';
         }
         foreach (array('maintenance_message', 'announcement_text', 'announcement_link', 'featured_tour_slugs', 'contact_email', 'contact_phone', 'contact_address', 'whatsapp_number', 'instagram_url', 'facebook_url', 'alert_email', 'seo_site_url', 'ga4_measurement_id', 'meta_pixel_id', 'google_site_verification') as $key) {
             echo '<tr><th><label for="' . esc_attr($key) . '">' . esc_html(ucwords(str_replace('_', ' ', $key))) . '</label></th><td><input class="regular-text" id="' . esc_attr($key) . '" name="' . esc_attr($key) . '" value="' . esc_attr($s[$key]) . '"></td></tr>';
