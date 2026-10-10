@@ -1,5 +1,11 @@
 # Tripanza WhatsApp bots and team workspace
 
+## Administrator-only WhatsApp pairing
+
+The bot dashboard (`/`), `/qr-crm` and `/qr-notifications` require an active workspace administrator session. Visitors with no valid session go to the workspace login; agents cannot view pairing pages. After signing in as an administrator, open **Admin > Gateway > View CRM QR / View OTP QR**. Existing sessions are checked against account status, current role and logout revocation on every request. QR responses are private and must not be cached.
+
+Both QR pages remain locked if the workspace is disabled or cannot start. QR/status API responses require administrator login, integration API keys do not receive pairing QR images, and shared status broadcasts contain connection state only. Existing OTP and booking/PDF sends still use the separately authenticated `/api/send` endpoint.
+
 ## CRM AI replies and weekly schedule
 
 In **Admin > Bot > CRM AI replies**, switch **Enable AI auto replies** off for human-only conversations. Incoming CRM messages are still saved in the inbox and unclaimed enquiries enter the waiting queue. Agents can claim and send messages normally. AI answers, keyword replies and automatic chat acknowledgements stop; OTPs, booking/status notifications, explicitly requested itinerary PDFs and manually scheduled outbound campaigns remain available.

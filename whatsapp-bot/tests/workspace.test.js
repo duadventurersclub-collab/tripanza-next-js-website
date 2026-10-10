@@ -448,12 +448,12 @@ test('team workspace: AI, inbox ownership, media, ratings, access, and live upda
     });
 });
 
-test('original dashboard, QR pages, and workspace entry routes remain available', () => {
+test('dashboard and QR templates remain available through authenticated workspace routes', () => {
     const { renderDashboard, renderBotPage } = require('../frontend');
     const { isWorkspaceRequest } = require('../business/runtime');
     const html = renderDashboard(true, false);
     assert(html.includes('href="/qr-notifications"')); assert(html.includes('href="/qr-crm"')); assert(html.includes('href="/workspace"'));
-    assert(!isWorkspaceRequest('/api/send')); assert(!isWorkspaceRequest('/')); assert(!isWorkspaceRequest('/qr-crm'));
+    assert(!isWorkspaceRequest('/api/send')); assert(isWorkspaceRequest('/')); assert(isWorkspaceRequest('/qr-crm')); assert(isWorkspaceRequest('/qr-notifications/?refresh=1'));
     for (const crm of [true, false]) {
         assert(renderBotPage(crm, 'qr', 'data:image/png;base64,mock').includes('location.reload(), 30000'));
         assert(renderBotPage(crm, 'starting').includes('location.reload(), 5000'));

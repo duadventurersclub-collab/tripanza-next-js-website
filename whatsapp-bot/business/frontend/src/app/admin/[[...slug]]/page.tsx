@@ -1600,6 +1600,11 @@ function GatewayPanel() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-3 mb-5">
+        <a href="/qr-crm" className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">View CRM QR</a>
+        <a href="/qr-notifications" className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">View OTP QR</a>
+      </div>
+
       <div className={"rounded-xl border bg-gradient-to-b p-6 " + current.color}>
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl bg-slate-50/50 flex items-center justify-center border border-slate-200/50">

@@ -43,9 +43,9 @@ const endpoint = (handler: (req: AuthRequest) => Promise<any>, mutation?: string
     res.status(400).json({ error: allowed ? message : "Action failed. Check the account connection and try again." });
   }
 };
-router.get("/overview", endpoint(async () => ({ accounts: await automation.accounts(), campaigns: await automation.campaignSummaries(), rules: await automation.listRecords("rule"),
+router.get("/overview", endpoint(async req => ({ accounts: await automation.accounts(!req.headers["x-api-key"]), campaigns: await automation.campaignSummaries(), rules: await automation.listRecords("rule"),
   webhooks: (await automation.listRecords("webhook")).map(({ secret, ...item }) => ({ ...item, secretConfigured: !!secret })), buttons: await automation.buttonSettings(), jobs: await automation.listJobs(), events: await automation.listEvents() })));
-router.get("/accounts", endpoint(automation.accounts));
+router.get("/accounts", endpoint(req => automation.accounts(!req.headers["x-api-key"])));
 router.post("/accounts", requireRole("super_admin"), endpoint(req => automation.saveAccount(req.body).then(id => ({ id })), "create_whatsapp_account"));
 router.put("/accounts/:id", requireRole("super_admin"), endpoint(req => automation.saveAccount(req.body, String(req.params.id)).then(id => ({ id })), "update_whatsapp_account"));
 router.delete("/accounts/:id", requireRole("super_admin"), endpoint(req => automation.deleteRecord(String(req.params.id), "account"), "delete_whatsapp_account"));

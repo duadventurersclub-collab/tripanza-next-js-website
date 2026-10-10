@@ -14,7 +14,7 @@ import { startStockSync, stopStockSync } from "./services/stock.js";
 import { startUploadCleanup, stopUploadCleanup } from "./services/uploadCleanup.js";
 import { startSessionTimeoutCheck, stopSessionTimeoutCheck } from "./services/sessionTimeout.js";
 import { apiRateLimitPassthrough } from "./middleware/rateLimit.js";
-import { authenticate } from "./middleware/auth.js";
+import { authenticate, authenticateGatewayPage, requireRole } from "./middleware/auth.js";
 import { startDashboardPeriodic, stopDashboardPeriodic } from "./services/dashboard.js";
 import authRoutes from "./routes/auth.js";
 import conversationRoutes from "./routes/conversations.js";
@@ -29,7 +29,11 @@ import automationRoutes, { cloudHooks } from "./routes/automation.js";
 import { initAutomation, stopAutomation, handleAccountIncoming, publishEvent } from "./services/automation.js";
 import { getCrmReplyState } from "./services/crmReplyControls.js";
 
-export async function createBusinessWorkspace(server: Server, adapter: GatewayAdapter) {
+interface GatewayPages {
+  renderDashboard(notificationsConnected: boolean, crmConnected: boolean): string;
+  renderBotPage(crm: boolean, state: string, qr?: string): string;
+}
+export async function createBusinessWorkspace(server: Server, adapter: GatewayAdapter, pages?: GatewayPages) {
   await runMigrations(); await bootstrapWorkspace(); setGatewayAdapter(adapter);
   const app = express();
   app.disable("x-powered-by"); app.set("trust proxy", 1);
@@ -47,6 +51,21 @@ export async function createBusinessWorkspace(server: Server, adapter: GatewayAd
     next();
   });
   app.use("/api", apiRateLimitPassthrough);
+  // Read/encode pairing data only after checking the current administrator session.
+  app.get(["/", "/qr-crm", "/qr-notifications"], authenticateGatewayPage, requireRole("super_admin", "admin"), async (req, res) => {
+    try {
+      if (!pages) { res.status(503).type("text/plain").send("Pairing pages are unavailable."); return; }
+      const account = async (id: string) => adapter.accountStatus ? adapter.accountStatus(id)
+        : id === "crm" ? adapter.status() : { status: "disconnected", qr: null };
+      if (req.path === "/") {
+        const [notifications, crm] = await Promise.all([account("notifications"), account("crm")]);
+        res.type("html").send(pages.renderDashboard(notifications.status === "connected", crm.status === "connected")); return;
+      }
+      const crm = req.path.replace(/\/$/, "") === "/qr-crm";
+      const status = await account(crm ? "crm" : "notifications");
+      res.type("html").send(pages.renderBotPage(crm, status.status === "connected" ? "connected" : status.qr ? "qr" : "starting", status.qr || ""));
+    } catch { res.status(503).type("text/plain").send("Could not load the WhatsApp connection. Please try again."); }
+  });
   app.use("/api/auth", authRoutes); app.use("/api/conversations", conversationRoutes);
   app.use("/api/customers", customerRoutes); app.use("/api/admin", adminRoutes);
   app.use("/api/notifications", notificationRoutes); app.use("/api/gateway", gatewayRoutes);
@@ -70,7 +89,7 @@ export async function createBusinessWorkspace(server: Server, adapter: GatewayAd
   const io = initWebSocket(server);
   initOrchestrator();
   await refreshGatewayStatus();
-  const timer = setInterval(() => { refreshGatewayStatus().then(status => broadcast("gateway:status", status)).catch(console.error); }, 5000); timer.unref();
+  const timer = setInterval(() => { refreshGatewayStatus().then(status => broadcast("gateway:status", { status: status.status })).catch(console.error); }, 5000); timer.unref();
   startStockSync(); startUploadCleanup(); startSessionTimeoutCheck(); startDashboardPeriodic();
   startWebsiteSync();
   await initAutomation({ recordOutgoing: recordOutgoingMessage });

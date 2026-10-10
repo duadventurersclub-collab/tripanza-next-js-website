@@ -72,11 +72,14 @@ export function validatePayload(value: any): MessagePayload {
   if (!payload.text && !payload.media && !payload.template) throw new Error("Enter message text, media or approved template");
   return payload;
 }
-export async function accounts() {
+export async function accounts(includeQr = true) {
   const stored = await listRecords("account");
   const all: Data[] = [{ id: "crm", name: "CRM / AI assistant", type: "qr" }, { id: "notifications", name: "Notifications / OTP", type: "qr" }, ...stored];
-  return Promise.all(all.map(async item => ({ ...item, ...(item.type === "cloud" ? { status: item.accessToken ? "configured" : "disconnected", qr: null }
-    : await getGatewayAdapter()?.accountStatus?.(item.id) || { status: item.id === "crm" ? (await getGatewayAdapter()?.status())?.status || "disconnected" : "disconnected", qr: null }), accessToken: undefined, appSecret: undefined, verifyToken: undefined, configured: !!item.accessToken })));
+  return Promise.all(all.map(async item => {
+    const connection = item.type === "cloud" ? { status: item.accessToken ? "configured" : "disconnected", qr: null }
+      : await getGatewayAdapter()?.accountStatus?.(item.id) || { status: item.id === "crm" ? (await getGatewayAdapter()?.status())?.status || "disconnected" : "disconnected", qr: null };
+    return { ...item, ...connection, qr: includeQr ? connection.qr : null, accessToken: undefined, appSecret: undefined, verifyToken: undefined, configured: !!item.accessToken };
+  }));
 }
 export async function saveAccount(value: any, key?: string) {
   const previous = key ? await record(key) : null;

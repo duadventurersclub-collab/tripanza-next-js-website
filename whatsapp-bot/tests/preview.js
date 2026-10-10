@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { renderDashboard, renderBotPage } = require('../frontend');
 const { initializeWorkspace, isWorkspaceRequest } = require('../business/runtime');
 
 (async () => {
@@ -17,8 +16,6 @@ const { initializeWorkspace, isWorkspaceRequest } = require('../business/runtime
     process.env.WEBSITE_KNOWLEDGE_ENABLED ||= 'false';
     let workspace;
     const server = http.createServer((req, res) => {
-        if (req.url === '/') { res.setHeader('Content-Type', 'text/html'); return res.end(renderDashboard(true, true)); }
-        if (req.url.startsWith('/qr-')) { res.setHeader('Content-Type', 'text/html'); return res.end(renderBotPage(req.url.startsWith('/qr-crm'), 'connected')); }
         if (workspace && isWorkspaceRequest(req.url)) return workspace.handleRequest(req, res);
         res.writeHead(404); res.end();
     });

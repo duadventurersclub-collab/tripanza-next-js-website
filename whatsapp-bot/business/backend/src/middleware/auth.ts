@@ -48,17 +48,9 @@ export function canModifyUser(
   return getRoleLevel(actorRole) > getRoleLevel(targetRole);
 }
 
-export async function authenticate(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+async function authenticatedUser(req: AuthRequest): Promise<{ user: { sub: string; role: string }; error?: never } | { error: string; user?: never }> {
   const token = extractToken(req);
-  if (!token) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
+  if (!token) return { error: "Unauthorized" };
   try {
     const payload = verifyAccessToken(token);
     if (await isAccessTokenRevoked(token)) throw new Error("Session ended");
@@ -74,15 +66,28 @@ export async function authenticate(
       .limit(1);
 
     if (rows.length === 0 || !rows[0].is_active) {
-      res.status(401).json({ error: "Account inactive or not found" });
-      return;
+      return { error: "Account inactive or not found" };
     }
 
-    req.user = { sub: payload.sub, role: rows[0].role };
-    next();
+    return { user: { sub: payload.sub, role: rows[0].role } };
   } catch {
-    res.status(401).json({ error: "Invalid or expired token" });
+    return { error: "Invalid or expired token" };
   }
+}
+
+export async function authenticate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  const result = await authenticatedUser(req);
+  if (!result.user) { res.status(401).json({ error: result.error }); return; }
+  req.user = result.user; next();
+}
+
+/** Pairing pages use the same live account and revoked-session checks as the API. */
+export async function authenticateGatewayPage(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.vary("Cookie").vary("Authorization");
+  const result = await authenticatedUser(req);
+  if (!result.user) { res.redirect(303, "/login?return_to=%2Fadmin%2Fgateway"); return; }
+  req.user = result.user; next();
 }
 
 export function requireRole(...roles: string[]) {

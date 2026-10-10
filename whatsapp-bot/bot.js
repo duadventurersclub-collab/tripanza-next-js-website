@@ -8,7 +8,6 @@ const pino = require('pino');
 const axios = require('axios');
 const http = require('http');
 const crypto = require('crypto');
-const { renderDashboard, renderBotPage } = require('./frontend');
 const { initializeWorkspace, isWorkspaceRequest, workspaceUnavailable } = require('./business/runtime');
 const { createWhatsAppConnection } = require('./business/whatsappConnection');
 const { safeRequestHandler, configureHttpServer } = require('./business/httpServer');
@@ -616,44 +615,6 @@ const server = http.createServer(safeRequestHandler(async (req, res) => {
         const workspace = businessWorkspace;
         if (workspace) return workspace.handleRequest(req, res);
         return workspaceUnavailable(res);
-    }
-
-    // B) NOTIFICATIONS QR PAGE
-    // ------------------------------------------
-    if (req.method === 'GET' && req.url === '/qr-notifications') {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        if (isConnectedNotifications) {
-            return res.end(renderBotPage(false, 'connected'));
-        } else if (qrNotifications) {
-            const qrImageDataURL = await QRCode.toDataURL(qrNotifications, { scale: 8 });
-            return res.end(renderBotPage(false, 'qr', qrImageDataURL));
-        } else {
-            return res.end(renderBotPage(false, 'starting'));
-        }
-    }
-
-    // ------------------------------------------
-    // C) CRM QR PAGE
-    // ------------------------------------------
-    if (req.method === 'GET' && req.url === '/qr-crm') {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        if (isConnectedCRM) {
-            return res.end(renderBotPage(true, 'connected'));
-        } else if (qrCRM) {
-            const qrImageDataURL = await QRCode.toDataURL(qrCRM, { scale: 8 });
-            return res.end(renderBotPage(true, 'qr', qrImageDataURL));
-        } else {
-            return res.end(renderBotPage(true, 'starting'));
-        }
-    }
-
-    // ------------------------------------------
-    // D) MAIN DASHBOARD
-    // ------------------------------------------
-    if (req.method === 'GET' && req.url === '/') {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(renderDashboard(isConnectedNotifications, isConnectedCRM));
-        return;
     }
 
     // 404 for other routes

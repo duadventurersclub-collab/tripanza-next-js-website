@@ -2,9 +2,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { pathToFileURL } = require('node:url');
+const { renderDashboard, renderBotPage } = require('../frontend');
 
 const workspaceRoutes = /^\/(?:workspace|login|admin|cs|_next|uploads)(?:\/|\?|$)|^\/(?:sw\.js|manifest\.json|favicon\.ico|icon-[^/]+)(?:\?|$)|^\/api\/(?:auth|conversations|customers|admin|notifications|gateway|health|automation)(?:\/|\?|$)/;
-function isWorkspaceRequest(url = '') { return workspaceRoutes.test(url); }
+const gatewayPages = /^\/(?:qr-(?:crm|notifications)\/?)?(?:\?|$)/;
+function isWorkspaceRequest(url = '') { return workspaceRoutes.test(url) || gatewayPages.test(url); }
 
 function prepareEnvironment() {
     const dataDir = process.env.BUSINESS_DATA_DIR || path.join(__dirname, 'data');
@@ -38,7 +40,7 @@ async function initializeWorkspace(server, adapter, { apiOnly = false } = {}) {
     if (!fs.existsSync(entry)) throw new Error('Run npm run install:business and npm run build to prepare the team workspace.');
     const secretFile = prepareEnvironment();
     const { createBusinessWorkspace } = await import(pathToFileURL(entry).href);
-    const backend = await createBusinessWorkspace(server, adapter);
+    const backend = await createBusinessWorkspace(server, adapter, { renderDashboard, renderBotPage });
     let nextApp;
     let nextHandler;
     if (!apiOnly) {
@@ -56,7 +58,7 @@ async function initializeWorkspace(server, adapter, { apiOnly = false } = {}) {
             if (req.url === '/workspace' || req.url === '/workspace/') {
                 res.writeHead(302, { Location: '/login' }); res.end(); return;
             }
-            if (req.url.startsWith('/api/') || req.url.startsWith('/uploads/')) return backend.app(req, res);
+            if (gatewayPages.test(req.url) || req.url.startsWith('/api/') || req.url.startsWith('/uploads/')) return backend.app(req, res);
             if (nextHandler) return nextHandler(req, res);
             res.writeHead(503); res.end('Frontend is not running.');
         },
