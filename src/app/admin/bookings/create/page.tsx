@@ -9,9 +9,9 @@ export const metadata = { title: "Create & Manage Bookings | Tripanza Admin", ro
 export default async function BookingCreatePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   if (!(await getSiteSettings()).admin_booking_create_enabled) redirect("/admin/settings");
   const response = await requestBookingCreate();
-  if ([401, 403].includes(response.status)) redirect("/");
+  if ([401, 403].includes(response.status)) redirect("/admin/login");
   const data = await response.json().catch(() => null);
   if (response.ok && data?.create_api_version === "1.0.0" && Array.isArray(data.tours)) return <AdminBookingCreate initial={data} initialMode={(await searchParams).tab === "create_custom" ? "custom" : "standard"} wordpressOrigin={wordpressOrigin} />;
-  const admin = await getAdminIdentity(); if ([401, 403].includes(admin.status)) redirect("/");
+  const admin = await getAdminIdentity(); if ([401, 403].includes(admin.status)) redirect("/admin/login");
   return <><AdminMenu name={admin.name} wordpressOrigin={wordpressOrigin} /><main className="admin-settings"><p className="as-eyebrow">TRIPANZA / ADMIN</p><h1>Booking manager is unavailable.</h1><p>{data?.message || "Update Tripanza Native Admin API to v2.3.2 in WordPress."} No booking was created.</p><Link href="/admin/bookings/create">Reload booking manager →</Link></main></>;
 }
