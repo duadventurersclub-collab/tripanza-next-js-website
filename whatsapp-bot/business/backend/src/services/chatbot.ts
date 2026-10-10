@@ -10,6 +10,7 @@ import { readMemory } from "./memory.js";
 import { getAiClient } from "./aiSettings.js";
 import { assistantVoice } from "./assistantVoice.js";
 import { formatWhatsAppReply } from "./replyFormatting.js";
+import { crmAutoRepliesAllowed } from "./crmReplyControls.js";
 import { selectedTourRoutes } from "./website.js";
 import { casualRedirect, claimsTeamTransfer, explicitlyRequestsTeam, handoffInstructions, matchesEscalationKeyword, teamAssistanceRelevant, teamHandoffMessage } from "./handoffPolicy.js";
 
@@ -43,6 +44,7 @@ function providerFailure(error: unknown) {
   return error && typeof error === "object" && "status" in error && typeof error.status === "number" ? `HTTP ${error.status}` : "Request failed";
 }
 export async function generateBotResponse(conversationId: string, waNumber: string, customerMessage: string, currentMessageId?: string): Promise<GroundedReply> {
+  if (!await crmAutoRepliesAllowed()) return { response: "", shouldEscalate: false };
   const routes = config.website.enabled ? await selectedTourRoutes().catch(() => []) : [];
   let history: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
   const recovery = (): GroundedReply => teamAssistanceRelevant(customerMessage, routes, history)

@@ -14,6 +14,8 @@ import { getCsConfig, updateCsConfig, validateCsConfigFields } from "../services
 import { getActiveUserIds } from "../ws/index.js";
 import { aiProviderStatus, saveAiApiKey, removeSavedAiKey, testAiConnection } from "../services/aiSettings.js";
 import { wordpressStatus, saveWordpressSettings, disconnectWordpress, testWordpressConnection, wordpressPluginZip } from "../services/wordpress.js";
+import { getCrmReplyState, saveCrmReplyControls, validateCrmReplyControls } from "../services/crmReplyControls.js";
+import { broadcast } from "../ws/index.js";
 
 const ALLOWED_BOT_CONFIG_FIELDS = [
   "persona_name",
@@ -110,6 +112,20 @@ router.post("/ai-provider/test", requireRole("super_admin"), async (_req, res) =
 });
 
 // ── Bot Config ──────────────────────────────────────────────
+router.get("/crm-replies", async (_req, res) => {
+  try { res.json(await getCrmReplyState()); }
+  catch { res.status(500).json({ error: "Could not load CRM reply settings." }); }
+});
+router.put("/crm-replies", async (req: AuthRequest, res) => {
+  try { validateCrmReplyControls(req.body); }
+  catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid CRM reply settings." }); return; }
+  try {
+    const state = await saveCrmReplyControls(req.body);
+    await createAuditLog({ userId: req.user!.sub, action: "update_crm_reply_controls", entityType: "bot_config", entityId: "crm" });
+    broadcast("crm:reply-controls", state);
+    res.json(state);
+  } catch (error) { logger.error("[admin] CRM reply settings failed:", error); res.status(500).json({ error: "Could not save CRM reply settings." }); }
+});
 
 router.get("/bot-config", async (_req, res) => {
   try {

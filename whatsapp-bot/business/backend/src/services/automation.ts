@@ -5,6 +5,7 @@ import { config } from "../config.js";
 import { getGatewayAdapter, sendWaMessage } from "./waGateway.js";
 import { publicUrl, publicRequest } from "./automationTransport.js";
 import type { proto } from "@whiskeysockets/baileys";
+import { crmAutoRepliesAllowed } from "./crmReplyControls.js";
 
 type Data = Record<string, any>;
 export interface MessagePayload {
@@ -183,9 +184,11 @@ class CanceledReply extends Error {}
 async function replyAllowed(payload: MessagePayload) {
   if (payload.ruleId) {
     const rule = await record(payload.ruleId);
+    if (rule?.gatewayId === "crm" && !await crmAutoRepliesAllowed()) return false;
     if (!rule?.enabled || rule.revision !== payload.ruleRevision) return false;
   }
   if (!payload.conversationId) return true;
+  if (!await crmAutoRepliesAllowed()) return false;
   const [chat] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, payload.conversationId)).limit(1);
   return !!chat && !chat.ai_paused && chat.status === "bot" && chat.ai_revision === payload.revision && !chat.claimed_by;
 }
@@ -302,6 +305,7 @@ async function sendCloud(gatewayId: string, account: Data, jid: string, payload:
   return { key: { remoteJid: jid, id: result.messages[0].id, fromMe: true }, message: { conversation: payload.text } };
 }
 export async function keywordReply(gatewayId: string, jid: string, message: string, guard?: { conversationId: string; revision: number }, senderJid?: string) {
+  if (gatewayId === "crm" && !await crmAutoRepliesAllowed()) return false;
   const list = (await listRecords("rule")).sort((a, b) => b.priority - a.priority);
   const normalized = message.trim().toLowerCase(), group = jid.endsWith("@g.us");
   for (const rule of list) {

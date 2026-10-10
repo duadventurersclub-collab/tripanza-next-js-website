@@ -344,6 +344,8 @@ async function handleCRMMessages(sock, { messages, type }) {
             console.log(`\n📩 Incoming to CRM from [${senderPhone}]: ${userText}`);
 
             try {
+                const replyState = await businessWorkspace?.getCrmReplyState();
+                if (replyState && !replyState.allowed) continue;
                 await sock.sendPresenceUpdate('composing', senderJid);
                 const response = await axios.post(WP_WEBHOOK_URL, {
                     phone: senderPhone,
@@ -359,6 +361,8 @@ async function handleCRMMessages(sock, { messages, type }) {
                 await sock.sendPresenceUpdate('paused', senderJid);
 
                 const data = response.data;
+                const currentReplyState = await businessWorkspace?.getCrmReplyState();
+                if (currentReplyState && (!currentReplyState.allowed || currentReplyState.revision !== replyState?.revision)) continue;
 
                 // 1. Send text reply (with optional interactive buttons)
                 if (data.reply) {

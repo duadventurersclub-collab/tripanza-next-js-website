@@ -1,5 +1,15 @@
 # Tripanza WhatsApp bots and team workspace
 
+## CRM AI replies and weekly schedule
+
+In **Admin > Bot > CRM AI replies**, switch **Enable AI auto replies** off for human-only conversations. Incoming CRM messages are still saved in the inbox and unclaimed enquiries enter the waiting queue. Agents can claim and send messages normally. AI answers, keyword replies and automatic chat acknowledgements stop; OTPs, booking/status notifications, explicitly requested itinerary PDFs and manually scheduled outbound campaigns remain available.
+
+Enable **Schedule AI replies** to choose weekdays, start/end times and a timezone (India defaults to `Asia/Calcutta`). AI runs from the start time up to, but excluding, the end time. An end earlier than the start continues into the following day; selected weekdays refer to when the window starts. The master switch takes priority over the schedule. Disabling the schedule while keeping AI enabled allows replies at any time. Changes take effect after **Save reply settings** and survive restarts on the persistent workspace disk.
+
+Outside AI hours, enquiries wait for the team without an automatic away message. Opening the schedule does not replay missed replies or take chats away from agents. A waiting chat can return to AI using the existing Resume AI control or a customer request to talk to the bot once AI is available. Saving controls invalidates replies and guarded tools already being generated. These controls apply to both workspace AI and the legacy WordPress reply path when the team workspace is enabled.
+
+Deploy the updated bot source on Render using the existing `npm ci` build and `npm start` start commands. No WordPress plugin replacement is needed for these controls. Keep the persistent disk and the existing paired CRM and OTP accounts.
+
 The original notifications/OTP bot, CRM number, dashboard, QR pages, and
 `POST /api/send` remain available. The team workspace adds the features adapted
 from [WA-AKG-business](https://github.com/mrifqidaffaaditya/WA-AKG-business).

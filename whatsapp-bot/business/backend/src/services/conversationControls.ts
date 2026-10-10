@@ -4,11 +4,13 @@ import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { config } from "../config.js";
 import { logger } from "../utils/logger.js";
+import { crmAutoRepliesAllowed } from "./crmReplyControls.js";
 
 export class ConversationControlError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 export async function canGenerateReply(id: string, revision: number) {
+  if (!await crmAutoRepliesAllowed()) return false;
   const [chat] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, id)).limit(1);
   return !!chat && chat.status === "bot" && !chat.claimed_by && !chat.ai_paused && chat.ai_revision === revision;
 }

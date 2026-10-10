@@ -2,6 +2,7 @@
 import WebsiteKnowledgePanel from "@/components/WebsiteKnowledgePanel";
 import PrivateTripsPanel from "@/components/PrivateTripsPanel";
 import AIProviderSettings from "@/components/AIProviderSettings";
+import CrmReplySettings from "@/components/CrmReplySettings";
 import WordpressSettings from "@/components/WordpressSettings";
 import AutomationPanel from "@/components/AutomationPanel";
 
@@ -641,6 +642,7 @@ function BotConfigPanel() {
         </div>
       </div>
 
+      <CrmReplySettings />
       <AIProviderSettings />
       <WordpressSettings />
       <div className="rounded-xl border border-brand-600/20 bg-brand-600/5 p-4 mb-5 text-sm text-slate-700">

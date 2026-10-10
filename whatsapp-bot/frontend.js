@@ -150,7 +150,7 @@ function botCard({ crm, connected }) {
             <div class="card-top"><span class="bot-icon ${crm ? 'crm' : ''}">${icon(crm ? 'spark' : 'bell')}</span><span class="status ${connected ? 'online' : 'offline'}">${connected ? 'Online' : 'Offline / awaiting QR'}</span></div>
             <p class="bot-number">Bot ${crm ? '02' : '01'} &middot; ${crm ? 'Customer conversations' : 'Transactional messaging'}</p>
             <h3>${crm ? 'Kanika AI CRM' : 'Notifications &amp; OTPs'}</h3>
-            <p class="description">${crm ? 'Your AI assistant for customer conversations, trip enquiries, and follow-ups.' : 'A dedicated connection for WhatsApp notifications and one-time passwords.'}</p>
+            <p class="description">${crm ? 'Customer conversations, booking updates and itineraries, with human chat and optional scheduled AI replies.' : 'Your separate number for one-time passwords. Pair the customer-support number with CRM.'}</p>
             <div class="tags">${crm ? '<span class="tag">AI assistant</span><span class="tag">Customer replies</span><span class="tag">Follow-ups</span>' : '<span class="tag">Notifications</span><span class="tag">OTP delivery</span><span class="tag">Dedicated number</span>'}</div>
         </div>
         <div class="card-footer"><span class="connection-label">${icon('phone')}${connected ? 'WhatsApp connected' : 'Connect your WhatsApp'}</span><a class="button" href="${crm ? '/qr-crm' : '/qr-notifications'}" aria-label="View QR code for ${crm ? 'Kanika AI CRM' : 'Notifications and OTPs'}">${icon('qr')} View QR code ${icon('arrow')}</a></div>
@@ -182,6 +182,7 @@ function renderBotPage(crm, state, qrImageDataURL = '') {
     return page(`${name} · Tripanza`, `
         <a class="back-link" href="/">${icon('back')} Back to dashboard</a>
         <section class="setup-heading"><div class="bot-icon ${crm ? 'crm' : ''}">${icon(crm ? 'spark' : 'bell')}</div><p class="eyebrow">${state === 'connected' ? 'Connection complete' : 'WhatsApp setup'}</p><h1>${name}</h1><p class="lead">${state === 'connected' ? 'Your WhatsApp connection is ready.' : 'One quick scan to get your bot connected.'}</p></section>
+        ${crm ? '<p><a class="button" href="/admin/bot">Manage AI replies and schedule</a></p>' : ''}
         <section class="pairing-card" aria-label="WhatsApp connection"><div class="pairing-instructions"><h2>Connect in three simple steps</h2><p>Keep your phone handy and open WhatsApp on the number you want to use.</p>${steps()}</div><div class="pairing-visual" role="status">${visual}</div></section>
     `, state === 'qr' ? 30000 : state === 'starting' ? 5000 : 0);
 }

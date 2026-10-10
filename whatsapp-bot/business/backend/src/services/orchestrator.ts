@@ -28,7 +28,8 @@ import { deliverWebsiteMedia } from "./websiteMedia.js";
 import { areToursAllowed } from "./website.js";
 import type { GroundedReply } from "./groundedChat.js";
 import { isAiResumeRequest } from "./consultantFlow.js";
-import { resumeWaitingConversation } from "./conversationControls.js";
+import { resumeWaitingConversation, canGenerateReply } from "./conversationControls.js";
+import { crmAutoRepliesAllowed, queueCrmHumanConversation } from "./crmReplyControls.js";
 import { handleAccountIncoming, incomingText, keywordReply } from "./automation.js";
 import { teamHandoffMessage } from "./handoffPolicy.js";
 
@@ -92,7 +93,7 @@ async function processIncomingMessage(msg: proto.IWebMessageInfo): Promise<boole
 
   const content = extractMessageText(msg);
 
-  if (content && content.trim().toLowerCase() === "!jid") {
+  if (content && content.trim().toLowerCase() === "!jid" && await crmAutoRepliesAllowed()) {
     try {
       await sendWaMessage(jid, { text: `JID: ${jid}` });
     } catch (err) {
@@ -101,7 +102,7 @@ async function processIncomingMessage(msg: proto.IWebMessageInfo): Promise<boole
     return true;
   }
 
-  if (jid.includes("@g.us")) { if (await handleAccountIncoming("crm", msg)) await keywordReply("crm", jid, content || ""); return true; }
+  if (jid.includes("@g.us")) { if (await handleAccountIncoming("crm", msg) && await crmAutoRepliesAllowed()) await keywordReply("crm", jid, content || ""); return true; }
 
   const contentType = getMessageContentType(msg);
 
@@ -138,7 +139,7 @@ async function processIncomingMessage(msg: proto.IWebMessageInfo): Promise<boole
       const ratingNum = parseInt(content.trim(), 10);
       await updateConversationRating(lastConv.id, ratingNum);
       try {
-        await sendWaMessage(jid, { text: "Thank you for your rating!" });
+        if (await crmAutoRepliesAllowed()) await sendWaMessage(jid, { text: "Thank you for your rating!" });
       } catch (err) {
         logger.error("[orchestrator] Failed to send rating thanks", err);
       }
@@ -269,6 +270,18 @@ async function processIncomingMessage(msg: proto.IWebMessageInfo): Promise<boole
     });
   }
 
+  // Keep incoming messages in the inbox, without acknowledgements or AI calls.
+  if (!await crmAutoRepliesAllowed() && !activeConv.claimed_by && (activeConv.status === "bot" || activeConv.status === "waiting")) {
+    const queued = await queueCrmHumanConversation(activeConv.id);
+    if (queued) {
+      broadcast("conversation:status", { conversationId: queued.id, status: "waiting", claimedBy: null });
+      broadcast("conversation:ai", { conversationId: queued.id, paused: queued.ai_paused, revision: queued.ai_revision, status: "waiting", claimedBy: null });
+      await emitQueueCount(); requestDashboardBroadcast();
+      sendNotificationToAllCs({ title: `${pushName} is waiting for an agent`, body: content ? content.substring(0, 100) : "New attachment", url: `/cs/${queued.id}`, tag: "new-queue" }).catch(error => logger.error("[notif] Failed:", error));
+    }
+    return true;
+  }
+
   if (config.website.enabled && content) {
     if (/^(?:forget (?:my |our )?(?:memory|preferences|context)|reset (?:my )?memory|\/forget)$/i.test(content.trim())) {
       await clearMemory(customer.id);
@@ -332,7 +345,7 @@ async function processIncomingMessage(msg: proto.IWebMessageInfo): Promise<boole
 
       // An agent may claim the chat while the provider is still generating.
       const latest = await getConversation(activeConv.id);
-      if (!latest || latest.status !== "bot" || latest.claimed_by || latest.ai_paused || latest.ai_revision !== aiState.ai_revision || !response.trim()) return true;
+      if (!latest || latest.status !== "bot" || latest.claimed_by || latest.ai_paused || latest.ai_revision !== aiState.ai_revision || !response.trim() || !await canGenerateReply(activeConv.id, aiState.ai_revision)) return true;
       const sent = await sendWaMessage(jid, { text: response });
       const botMsg = await addMessage({
         conversationId: activeConv.id,

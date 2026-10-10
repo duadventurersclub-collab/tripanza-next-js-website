@@ -28,6 +28,7 @@ import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { config } from "../config.js";
 import { setConversationAi, deleteWorkspaceConversation, ConversationControlError } from "../services/conversationControls.js";
+import { crmAutoRepliesAllowed } from "../services/crmReplyControls.js";
 
 const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10 MB
 
@@ -415,7 +416,7 @@ router.post("/:id/claim", async (req: AuthRequest, res: Response) => {
 
     const csConfig = await getCsConfig();
 
-    if (csConfig.autoReplyClaimEnabled && csConfig.autoReplyClaim) {
+    if (csConfig.autoReplyClaimEnabled && csConfig.autoReplyClaim && await crmAutoRepliesAllowed()) {
       const claimMessage = csConfig.autoReplyClaim.replace("{name}", csName);
       try {
         if (conv.wa_number) {
@@ -518,7 +519,7 @@ router.post("/:id/resolve", requireConversationAccess, async (req: AuthRequest, 
 
     const csConfig = await getCsConfig();
 
-    if (csConfig.autoReplyResolveEnabled && csConfig.autoReplyResolve) {
+    if (csConfig.autoReplyResolveEnabled && csConfig.autoReplyResolve && await crmAutoRepliesAllowed()) {
       const resolveMessage = csConfig.autoReplyResolve.replace("{name}", csName);
       try {
         if (conv.wa_number) {

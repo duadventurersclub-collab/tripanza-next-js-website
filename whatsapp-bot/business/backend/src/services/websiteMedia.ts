@@ -8,8 +8,9 @@ import { sendWaMessage } from "./waGateway.js";
 import { addMessage, getConversation } from "./conversation.js";
 import { broadcast } from "../ws/index.js";
 import { logger } from "../utils/logger.js";
+import { crmAutoRepliesAllowed } from "./crmReplyControls.js";
 
-async function botOwns(id: string, revision?: number) { const chat = await getConversation(id); return !!chat && chat.status === "bot" && !chat.claimed_by && !chat.ai_paused && (revision === undefined || chat.ai_revision === revision); }
+async function botOwns(id: string, revision?: number) { if (!await crmAutoRepliesAllowed()) return false; const chat = await getConversation(id); return !!chat && chat.status === "bot" && !chat.claimed_by && !chat.ai_paused && (revision === undefined || chat.ai_revision === revision); }
 export async function deliverWebsiteMedia(conversationId: string, jid: string, assets: SiteAsset[], evidenceSlugs: string[] = [], revision?: number) {
   const canDeliver = async () => await botOwns(conversationId, revision) && await areToursAllowed(evidenceSlugs);
   for (const asset of assets.slice(0, 6)) {

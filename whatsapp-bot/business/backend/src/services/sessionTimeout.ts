@@ -10,6 +10,7 @@ import { createAuditLog } from "../utils/audit.js";
 import { logger } from "../utils/logger.js";
 import { generateId } from "../utils/id.js";
 import { generateAndSaveSummary } from "./orchestrator.js";
+import { crmAutoRepliesAllowed } from "./crmReplyControls.js";
 
 let timeoutInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -46,6 +47,7 @@ async function checkSessionTimeout() {
         );
 
       for (const conv of warningConvs) {
+        if (!await crmAutoRepliesAllowed()) continue;
         const id = conv.id;
         const warnText = `This conversation will close automatically in ${warningMins} minutes because it has been inactive. Please reply if you still need help.`;
 
@@ -133,7 +135,7 @@ async function checkSessionTimeout() {
           }
         }
 
-        if (csConfig.autoReplyResolveEnabled && csConfig.autoReplyResolve) {
+        if (csConfig.autoReplyResolveEnabled && csConfig.autoReplyResolve && await crmAutoRepliesAllowed()) {
           const resolveMessage = csConfig.autoReplyResolve.replace("{name}", csName);
           try {
             await sendWaMessage(conv.wa_number, { text: resolveMessage });

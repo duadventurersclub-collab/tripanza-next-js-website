@@ -27,6 +27,7 @@ import privateTripRoutes from "./routes/privateTrips.js";
 import { startWebsiteSync, stopWebsiteSync } from "./services/website.js";
 import automationRoutes, { cloudHooks } from "./routes/automation.js";
 import { initAutomation, stopAutomation, handleAccountIncoming, publishEvent } from "./services/automation.js";
+import { getCrmReplyState } from "./services/crmReplyControls.js";
 
 export async function createBusinessWorkspace(server: Server, adapter: GatewayAdapter) {
   await runMigrations(); await bootstrapWorkspace(); setGatewayAdapter(adapter);
@@ -74,7 +75,7 @@ export async function createBusinessWorkspace(server: Server, adapter: GatewayAd
   startWebsiteSync();
   await initAutomation({ recordOutgoing: recordOutgoingMessage });
   return {
-    app, handleIncoming: handleIncomingMessage, recordOutgoing: recordOutgoingMessage,
+    app, handleIncoming: handleIncomingMessage, recordOutgoing: recordOutgoingMessage, getCrmReplyState,
     handleGatewayIncoming: handleAccountIncoming, publishGatewayEvent: publishEvent,
     async close() {
       clearInterval(timer); stopStockSync(); stopUploadCleanup(); stopSessionTimeoutCheck();
